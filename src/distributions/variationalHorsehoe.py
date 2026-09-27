@@ -135,7 +135,7 @@ class variationalHorsehoe:
         """Draws a sample from the variational posterior q(theta)."""
         # theta ~ N(mu, sigma^2)
         mu = params['theta']['mu']
-        sigma = jnp.exp(params['theta']['log_sigma'])
+        sigma = jnp.exp(0.5 * params['theta']['log_var'])
         noise = jax.random.normal(key, shape=(self.D,))
         return mu + sigma * noise
 
