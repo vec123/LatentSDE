@@ -7,7 +7,7 @@ from src.distributions.divergences import kl_ig, kl_gamma
 # --- Core Model: Horseshoe Posterior ---
 class variationalHorsehoe:
     def __init__(self, D, tau_0 = 1,
-                 local_shape=2.0, local_rate=1.0,
+                 local_shape=0.5, local_rate=1.0,
                  global_shape=0.5, global_rate=1.0):
         """
         A Variational Horseshoe Posterior model for sparse feature selection.
