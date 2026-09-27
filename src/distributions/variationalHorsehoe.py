@@ -101,8 +101,8 @@ class variationalHorsehoe:
         )
 
         kl_scales = (
-            kl_gamma(s_a['mu'], ls_s_a, self.global_shape, rate) +
-            kl_ig(s_b['mu'], ls_s_b, self.global_shape, self.global_rate) +
+            jnp.sum(kl_gamma(s_a['mu'], ls_s_a, self.global_shape, rate)) +
+            jnp.sum(kl_ig(s_b['mu'], ls_s_b, self.global_shape, self.global_rate)) +
             jnp.sum(kl_gamma(z_a['mu'], ls_z_a, self.local_shape, self.local_rate)) +
             jnp.sum(kl_ig(z_b['mu'], ls_z_b, self.local_shape, self.local_rate))
         )
