@@ -97,11 +97,12 @@ class HorseshoePosterior:
         ls_z_b = get_log_sigma(z_b)
         
         # Use these in your KL formulas
+        # Half-Cauchy scales z = sqrt(z_a*z_b), s = sqrt(s_a*s_b), so the prior variance is z^2 s^2 = z_a*z_b*s_a*s_b
         log_z_s = z_a['mu'] + z_b['mu'] + s_a['mu'] + s_b['mu']
-        z_sq_s_sq = jnp.exp(2 * log_z_s)
+        z_sq_s_sq = jnp.exp(log_z_s)
         
         kl_theta = 0.5 * jnp.sum(
-            (2 * log_z_s) - 2 * ls_theta - 1 +
+            log_z_s - 2 * ls_theta - 1 +
             (jnp.exp(2 * ls_theta) + theta['mu']**2) / (z_sq_s_sq + 1e-8)
         )
         
@@ -131,8 +132,8 @@ class HorseshoePosterior:
         z_a = jax.random.gamma(k3, 0.5, shape=(self.D,))
         z_b = 1.0 / jax.random.gamma(k4, 0.5, shape=(self.D,))
         
-        # Combine scales: theta ~ N(0, (z_a*z_b)^2 * (s_a*s_b)^2)
-        scale = (z_a * z_b) * (s_a * s_b)
+        # Combine scales: theta ~ N(0, (z_a*z_b) * (s_a*s_b)), since sqrt(Gamma * IG) is half-Cauchy
+        scale = jnp.sqrt((z_a * z_b) * (s_a * s_b))
         theta = jax.random.normal(k1, (self.D,)) * scale
         return theta
     
