@@ -45,16 +45,16 @@ def make_elbo_loss(gp, sde, H, R, t_nodes, w_nodes, num_samples=32, num_data=Non
     and batch = (t_obs, y_obs).
 
     gp:  build(gp_params, G_fn) -> GaussianPathSDE
-    sde: sample(sde_params, key) -> (drift_fn, G_fn), one reparameterized sample of the drift coefficients and G,
+    sde: sample(sde_params, key) -> PriorSDE, one reparameterized sample of the drift parameters and G,
          kl_divergence(sde_params) -> KL of the drift and noise priors
     The same sample of G is used in the residual and in the GaussianPathSDE's Lyapunov solve.
     """
     def loss_fn(params, key, batch, beta):
         k_sde, k_residual = jax.random.split(key)
-        drift_fn, G_fn = sde.sample(params["sde"], k_sde)
-        path = gp.build(params["gp"], G_fn)
+        prior = sde.sample(params["sde"], k_sde)
+        path = gp.build(params["gp"], prior.diffusion)
         t_obs, y_obs = batch
-        terms = elbo_terms(k_residual, path, drift_fn, t_obs, y_obs, H, R, t_nodes, w_nodes,
+        terms = elbo_terms(k_residual, path, prior.drift, t_obs, y_obs, H, R, t_nodes, w_nodes,
                            sde.kl_divergence(params["sde"]), num_samples, num_data)
         value = terms["log_likelihood"] - terms["residual"] - beta * terms["kl"]
         return -value, {**terms, "beta": beta}

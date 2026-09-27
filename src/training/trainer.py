@@ -16,7 +16,7 @@ class Trainer:
     The Python-side loop (keys, beta schedule, minibatches, callbacks) lives here; the step itself is jitted (step.py).
 
     gp:  init_params(key), build(gp_params, G_fn) -> GaussianPathSDE
-    sde: init_params(key), sample(sde_params, key) -> (drift_fn, G_fn), kl_divergence(sde_params)
+    sde: init_params(key), sample(sde_params, key) -> PriorSDE, kl_divergence(sde_params)
     loss_fn(params, key, batch, beta) -> (loss, terms), e.g. from losses.elbo.make_elbo_loss(gp, sde, ...)
     optimizers: {"gp": optax optimizer, "sde": optax optimizer}, one per parameter group
     callbacks: callables callback(step, params, loss, terms), run after every step
