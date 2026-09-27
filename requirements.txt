@@ -1,0 +1,11 @@
+jax
+jaxlib
+optax
+dm-haiku
+numpy
+scipy
+pandas
+matplotlib
+numpyro
+diffrax
+pyyaml

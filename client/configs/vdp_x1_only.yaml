@@ -1,0 +1,49 @@
+# Van der Pol (mu = 1, G = 0.05 I) from test_data/data/trajectories.csv: estimate both states and the drift
+# from observations of x1 only. Floats need a decimal point (1.0e-3, not 1e-3), or YAML reads them as strings.
+name: vdp_x1_only
+seed: 0
+
+data:
+  path: test_data/data/trajectories.csv
+  trajectory: 0
+  dt: 0.001            # time step of the stored trajectories (simulate.py)
+  every: 100           # keep every 100th point: 100 observations over T = 10
+  observed: [0]        # observe x1 only
+  obs_std: 0.05        # measurement noise std, R = obs_std^2 I
+  add_noise: false     # the CSV is noise-free; true adds N(0, obs_std^2) noise
+
+gp:
+  type: matern
+  num_support: 50
+  num_basis: 40
+  mean_length_scale: 0.04   # in warped time, which runs over [0, 1]
+  cov_length_scale: 0.04
+  cov_type: full
+  init_mean_from_data: true
+
+sde:
+  type: sparse_symbolic
+  degree: 3
+  include_bias: true
+  noise_init_scale: 0.1
+  horseshoe:
+    tau_0: 1.0
+
+loss:
+  num_samples: 16
+  quad_nodes: 3
+  quad_intervals: 100
+
+train:
+  num_steps: 20000
+  batch_size: null
+  beta_warmup: 5000
+  lr: {gp: 1.0e-3, sde: 1.0e-2}
+  lr_decay: null
+
+callbacks:
+  log_every: 500
+  history_every: 10
+  checkpoint_every: 5000
+  equations_every: 2000
+  equation_threshold: 0.01
