@@ -25,26 +25,16 @@ class GaussianPathSDE:
         return jax.random.multivariate_normal(key, mu0, sigma0)
     
     def _compute_A_spectral(self, t):
-        """Solves the Lyapunov equation for A(t) using spectral decomposition."""
+        """
+        Solves the Lyapunov equation A S + S A = dS/dt - G G^T for symmetric A(t) via the Kronecker sum
+        (S ⊕ S) vec(A) = vec(dS/dt - G G^T), as in Course & Nair (2023). Unlike an eigendecomposition of S,
+        this has finite gradients when eigenvalues of S coincide.
+        """
         Sigma = self.Sigma_fn(t)
-        dSigma_dt = self.dSigma_dt_fn(t)
-        Q = self.G_fn(t) @ self.G_fn(t).T
-        
-        # R @ Lambda @ R.T = Sigma
-        eigvals, R = jnp.linalg.eigh(Sigma)
-        
-        # Transform the Lyapunov equation into the eigenbasis:
-        # B = R.T @ A @ R
-        # RHS = R.T @ (dSigma/dt - G@G.T) @ R
-        # B_ij * (lambda_i + lambda_j) = RHS_ij
-        rhs = R.T @ (dSigma_dt - Q) @ R
-        denom = eigvals[:, None] + eigvals[None, :]
-        
-        # B_ij = RHS_ij / (lambda_i + lambda_j)
-        # Note: B_ii = RHS_ii / (2 * lambda_i)
-        B = rhs / (denom + 1e-10) 
-        
-        return R @ B @ R.T
+        D = Sigma.shape[0]
+        I = jnp.eye(D)
+        rhs = self.dSigma_dt_fn(t) - self.G_fn(t) @ self.G_fn(t).T
+        return jnp.linalg.solve(jnp.kron(Sigma, I) + jnp.kron(I, Sigma), rhs.ravel()).reshape(D, D)
 
     def _compute_b(self, t):
         """b(t) = dmu/dt - A(t)mu(t)"""
