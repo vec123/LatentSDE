@@ -1,8 +1,8 @@
 import jax
 import jax.numpy as jnp
 
-from distributions.fixed.learnable import init_gaussian_params
-from distributions.fixed.divergences import kl_ig, kl_gamma
+from src.distributions.learnable import init_gaussian_params
+from src.distributions.divergences import kl_ig, kl_gamma
 
 # --- Core Model: Horseshoe Posterior ---
 class variationalHorsehoe:
