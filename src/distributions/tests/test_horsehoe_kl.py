@@ -101,7 +101,7 @@ class HorseshoePosterior:
         z_sq_s_sq = jnp.exp(2 * log_z_s)
         
         kl_theta = 0.5 * jnp.sum(
-            (2 * log_z_s) - ls_theta - 1 + 
+            (2 * log_z_s) - 2 * ls_theta - 1 +
             (jnp.exp(2 * ls_theta) + theta['mu']**2) / (z_sq_s_sq + 1e-8)
         )
         
