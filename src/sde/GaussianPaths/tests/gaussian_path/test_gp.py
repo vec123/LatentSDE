@@ -1,7 +1,7 @@
 import jax
 import jax.numpy as jnp
 
-from src.sde.GaussianPaths.gaussian_path import GaussianPathSDE
+from src.sde.GaussianPaths.core.gp_path import GaussianPathSDE
 from src.sde.tests.gp_ground_truths import get_ground_truth_cov, get_ground_truth_mean
 from src.sde.tests.plot_helper import plot_covar_components_dxd, plot_trajs
 from src.sde.tests.data_helper import generate_vanderpol_data

@@ -1,7 +1,7 @@
 import jax
 import jax.numpy as jnp
 
-from src.sde.GaussianPaths.gaussian_path import GaussianPathSDE
+from src.sde.GaussianPaths.core.gp_path import GaussianPathSDE
 from src.sde.GaussianPaths.means.matern_52_mean import MaternMeanModel
 from src.sde.GaussianPaths.Variances.matern_52_var import MaternCovariance
 
