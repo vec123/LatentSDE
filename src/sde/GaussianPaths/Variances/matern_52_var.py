@@ -1,7 +1,7 @@
 import jax
 import jax.numpy as jnp
 from jax.scipy.linalg import expm
-from src.models.matern_kernels import kumaraswamy_warping, matern_52_kernel
+from src.kernels.matern_kernels import kumaraswamy_warping, matern_52_kernel
 from src.sde.GaussianPaths.Variances.base import CovarianceModel
 
 class MaternCovariance(CovarianceModel):

@@ -3,7 +3,7 @@ import jax.numpy as jnp
 import haiku as hk
 from scipy.interpolate import make_lsq_spline, BSpline
 
-from src.models.matern_kernels import matern_52_kernel
+from src.kernels.matern_kernels import matern_52_kernel
 from src.models.NNs import nn_forward
 
 class MaternMeanModel(BaseMeanModel):

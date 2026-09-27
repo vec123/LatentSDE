@@ -3,9 +3,9 @@ import jax.numpy as jnp
 import haiku as hk
 from scipy.interpolate import make_lsq_spline, BSpline
 
-from src.models.matern_kernels import matern_52_kernel
+from src.kernels.matern_kernels import matern_52_kernel
 from src.sde.GaussianPaths.means.base import BaseMeanModel
-from src.models.matern_kernels import kumaraswamy_warping, matern_52_kernel
+from src.kernels.matern_kernels import kumaraswamy_warping, matern_52_kernel
 
     
 class MaternMeanModel(BaseMeanModel):
