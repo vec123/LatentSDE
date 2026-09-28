@@ -14,7 +14,7 @@ from src.sde.GaussianPaths.matern_path import MaternGaussianPath
 from src.sde.PathSpacePriors.sparse_symbolic_sde import SparseSymbolicSDE
 from src.training.callbacks import Checkpoint, EquationPrinter, History, PrintLogger
 from src.training.losses.elbo import make_elbo_loss
-from src.training.losses.quadrature import gauss_legendre
+from src.training.losses.unbiased_quadrature import UnbiasedGaussLegendreQuad
 from src.training.trainer import Trainer, linear_warmup
 
 GP_PATHS = {"matern": MaternGaussianPath}
@@ -80,9 +80,11 @@ def build_sde(cfg, data):
 
 
 def build_loss(cfg, gp, sde, data, batch_size):
-    t_nodes, w_nodes = gauss_legendre(0.0, data["T"], int(cfg["quad_nodes"]), int(cfg["quad_intervals"]))
+    quad = UnbiasedGaussLegendreQuad(0.0, data["T"], int(cfg["quad_nodes"]),
+                                     int(cfg["quad_intervals"]),
+                                     num_mc_times=int(cfg.get("num_mc_times", 0)))
     num_data = data["t_obs"].shape[0] if batch_size is not None else None
-    return make_elbo_loss(gp, sde, data["H"], data["R"], t_nodes, w_nodes,
+    return make_elbo_loss(gp, sde, data["H"], data["R"], quad,
                           num_samples=int(cfg["num_samples"]), num_data=num_data)
 
 

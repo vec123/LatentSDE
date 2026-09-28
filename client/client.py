@@ -25,7 +25,7 @@ DEFAULTS = {
     "data": {"trajectory": 0, "every": 1, "observed": None, "obs_std": 0.05, "add_noise": False},
     "gp": {},
     "sde": {},
-    "loss": {"num_samples": 16, "quad_nodes": 3, "quad_intervals": 100},
+    "loss": {"num_samples": 16, "quad_nodes": 3, "quad_intervals": 100, "num_mc_times": 0},
     "train": {"batch_size": None, "beta_warmup": 0, "lr": {"gp": 1e-3, "sde": 1e-2}, "lr_decay": None},
     "callbacks": {"log_every": 500, "history_every": 10, "checkpoint_every": None,
                   "equations_every": None, "equation_threshold": 0.01},

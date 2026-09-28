@@ -1,0 +1,55 @@
+# Lorenz-63, with all three states observed through Gaussian measurement noise.
+# The CSV contains noisy x1/x2/x3 columns and clean x1_true/x2_true/x3_true columns.
+name: lorenz_x123_noisy
+seed: 0
+
+data:
+  path: test_data/data/lorenz_trajectories.csv
+  trajectory: 0
+  dt: 0.01
+  every: 10
+  state_columns: [x1, x2, x3]
+  truth_columns: [x1_true, x2_true, x3_true]
+  observed: [0, 1, 2]
+  obs_std: 1.0
+  add_noise: false
+
+gp:
+  type: matern
+  num_support: 200
+  num_basis: 40
+  mean_length_scale: 0.02
+  cov_length_scale: 0.02
+  cov_type: full
+  init_mean_from_data: true
+
+sde:
+  type: sparse_symbolic
+  degree: 2
+  include_bias: true
+  noise_init_scale: 0.1
+  feature_normalization:
+    momentum: 0.1
+    epsilon: 1.0e-5
+  horseshoe:
+    tau_0: 0.000001
+
+loss:
+  num_samples: 32
+  quad_nodes: 102       # M: global Gauss-Legendre nodes used by the hybrid residual estimator
+  quad_intervals: 1
+  num_mc_times: 26      # K: stratified random correction times
+
+train:
+  num_steps: 20000
+  batch_size: null
+  beta_warmup: 5000
+  lr: {gp: 1.0e-3, sde: 1.0e-2}
+  lr_decay: null
+
+callbacks:
+  log_every: 250
+  history_every: 10
+  checkpoint_every: 5000
+  equations_every: 2000
+  equation_threshold: 0.01

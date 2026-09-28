@@ -3,9 +3,12 @@ import jax.numpy as jnp
 from jax.scipy.linalg import cho_factor, cho_solve
 
 
-def residual_term(key, path, prior_drift, t_nodes, w_nodes, num_samples=32):
-    """1/2 int E_q ||f_theta(t, x) - f_q(t, x)||^2_{(G G^T)^-1} dt: quadrature in t, reparameterized Monte Carlo in x."""
-    def at_node(t, k):
+def residual_term(key, path, prior_drift, quad, num_samples=32):
+    """
+    1/2 int E_q ||f_theta(t, x) - f_q(t, x)||^2_{(G G^T)^-1} dt: the time integral by `quad`
+    (e.g. UnbiasedGaussLegendreQuad), the expectation over x by reparameterized Monte Carlo.
+    """
+    def at_time(t, k):
         m, S = path.mean_fn(t), path.Sigma_fn(t)
         A, b = path.A_fn(t), path.b_fn(t)
         G = path.diffusion(t)
@@ -14,5 +17,7 @@ def residual_term(key, path, prior_drift, t_nodes, w_nodes, num_samples=32):
         Q_chol = cho_factor(G @ G.T, lower=True)
         return jnp.mean(jnp.sum(r * cho_solve(Q_chol, r.T).T, axis=-1))
 
-    keys = jax.random.split(key, t_nodes.shape[0])
-    return 0.5 * jnp.sum(w_nodes * jax.vmap(at_node)(t_nodes, keys))
+    def integrand(times, k):
+        return jax.vmap(at_time)(times, jax.random.split(k, times.shape[0]))
+
+    return 0.5 * quad(integrand, key)
