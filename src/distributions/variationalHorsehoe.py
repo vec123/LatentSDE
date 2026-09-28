@@ -4,12 +4,11 @@ import jax.numpy as jnp
 from src.distributions.learnable import init_gaussian_params
 from src.distributions.divergences import kl_ig, kl_gamma
 
-# --- Core Model: Horseshoe Posterior ---
-class variationalHorsehoe:
-    def __init__(self, D, tau_0 = 1,
-                 local_shape=0.5, local_rate=1.0,
-                 global_shape=0.5, global_rate=1.0):
-        """
+import jax
+import jax.numpy as jnp
+from jax.scipy.special import gammaln
+
+"""
         A Variational Horseshoe Posterior model for sparse feature selection.
 
         The Horseshoe prior models sparse coefficients by expressing variances as the product
@@ -52,96 +51,171 @@ class variationalHorsehoe:
           you expect a denser model where a larger percentage of features are active.
         * HIGHER global_rate: Increases the rate parameter of the global Inverse-Gamma,
           which squashes the global scale down closer to zero, amplifying overall shrinkage.
-        """
+"""
 
+
+# --- Core Model: Horseshoe Posterior ---
+class VariationalHorseshoe:
+    """Variational Horseshoe Posterior model for sparse feature selection."""
+
+    def __init__(
+        self,
+        D: int,
+        tau_0: float = 1.0,
+        local_shape: float = 0.5,
+        local_rate: float = 1.0,
+        global_shape: float = 0.5,
+        global_rate: float = 1.0,
+        noise_std: float = 0.7071,
+    ):
         self.D = D
         self.tau_0 = tau_0
         self.local_shape = local_shape
         self.local_rate = local_rate
         self.global_shape = global_shape
         self.global_rate = global_rate
+        self.noise_std = noise_std
 
     def init_params(self, key):
-            k1, k2, k3, k4, k5 = jax.random.split(key, 5)
-            # Pass type='diagonal' to ensure 'log_var' is created
+        """Initializes variational parameters (means and log-variances)."""
+        keys = jax.random.split(key, 5)
+
+        def make_param(k, shape):
+            k1, k2 = jax.random.split(k)
             return {
-                'theta': init_gaussian_params(k1, self.D, type='diagonal'),
-                's_a': init_gaussian_params(k2, 1, type='diagonal'),
-                's_b': init_gaussian_params(k3, 1, type='diagonal'),
-                'z_a': init_gaussian_params(k4, self.D, type='diagonal'),
-                'z_b': init_gaussian_params(k5, self.D, type='diagonal')
+                "mu": jax.random.normal(k1, shape) * 0.01,
+                "log_var": jax.random.normal(k2, shape) * 0.1 - 2.0,
             }
 
+        return {
+            "theta": make_param(keys[0], (self.D,)),
+            "z_a": make_param(keys[1], (self.D,)),
+            "z_b": make_param(keys[2], (self.D,)),
+            "s_a": make_param(keys[3], ()),
+            "s_b": make_param(keys[4], ()),
+        }
+
+    def _get_log_sigma(self, p):
+        if "log_sigma" in p:
+            return p["log_sigma"]
+        if "log_var" in p:
+            return 0.5 * p["log_var"]
+        raise KeyError(
+            "Parameters must contain either 'log_sigma' or 'log_var'"
+        )
+
+    def _kl_lognormal_gamma(self, mu, log_sigma, alpha, beta):
+        """KL( LogNormal(mu, sigma^2) || Gamma(alpha, beta) )"""
+        sigma = jnp.exp(log_sigma)
+        return (
+            -0.5
+            - log_sigma
+            - gammaln(alpha)
+            + alpha * jnp.log(beta)
+            + (alpha - 1.0) * mu
+            + beta * jnp.exp(mu + 0.5 * sigma**2)
+        )
+
+    def _kl_lognormal_ig(self, mu, log_sigma, alpha, beta):
+        """KL( LogNormal(mu, sigma^2) || InverseGamma(alpha, beta) )"""
+        sigma = jnp.exp(log_sigma)
+        return (
+            -0.5
+            - log_sigma
+            - gammaln(alpha)
+            + alpha * jnp.log(beta)
+            - (alpha + 1.0) * mu
+            + beta * jnp.exp(-mu + 0.5 * sigma**2)
+        )
+
     def kl_divergence(self, params):
-        # Helper to get the correct log_sigma from whatever init_params returned
-        def get_log_sigma(p):
-            if 'log_sigma' in p: return p['log_sigma']
-            if 'log_var' in p: return 0.5 * p['log_var']
-            raise KeyError("Parameters must contain either 'log_sigma' or 'log_var'")
+        s_a, s_b = params["s_a"], params["s_b"]
+        z_a, z_b = params["z_a"], params["z_b"]
+        theta = params["theta"]
 
-        rate = 1.0 / (self.tau_0**2)
-        # Extract parameters
-        s_a, s_b, z_a, z_b, theta = params['s_a'], params['s_b'], params['z_a'], params['z_b'], params['theta']
+        ls_theta = self._get_log_sigma(theta)
+        ls_s_a = self._get_log_sigma(s_a)
+        ls_s_b = self._get_log_sigma(s_b)
+        ls_z_a = self._get_log_sigma(z_a)
+        ls_z_b = self._get_log_sigma(z_b)
 
-        # Calculate log_sigma for all components
-        ls_theta = get_log_sigma(theta)
-        ls_s_a = get_log_sigma(s_a)
-        ls_s_b = get_log_sigma(s_b)
-        ls_z_a = get_log_sigma(z_a)
-        ls_z_b = get_log_sigma(z_b)
+        # Expected log variance under Log-Normal approximations
+        sum_mu = z_a["mu"] + z_b["mu"] + s_a["mu"] + s_b["mu"]
+        sum_var = (
+            jnp.exp(2 * ls_z_a)
+            + jnp.exp(2 * ls_z_b)
+            + jnp.exp(2 * ls_s_a)
+            + jnp.exp(2 * ls_s_b)
+        )
+        exponent = jnp.clip(-sum_mu + 0.5 * sum_var, a_min=-50.0, a_max=50.0)
+        E_inv_var = jnp.exp(exponent)
 
-        # Use these in your KL formulas
-        # Half-Cauchy scales z = sqrt(z_a*z_b), s = sqrt(s_a*s_b), so the prior variance is z^2 s^2 = z_a*z_b*s_a*s_b
-        log_z_s = z_a['mu'] + z_b['mu'] + s_a['mu'] + s_b['mu']
-        z_sq_s_sq = jnp.exp(log_z_s)
-
+        # KL for Gaussian theta parameters
+        var_theta = jnp.exp(2 * ls_theta)
         kl_theta = 0.5 * jnp.sum(
-            log_z_s - 2 * ls_theta - 1 +
-            (jnp.exp(2 * ls_theta) + theta['mu']**2) / (z_sq_s_sq + 1e-8)
+            sum_mu - 2 * ls_theta - 1.0 + (var_theta + theta["mu"] ** 2) * E_inv_var
         )
 
+        global_rate_a = 1.0 / (self.tau_0**2)
+
+        # KL divergence terms for hyper-priors
         kl_scales = (
-            jnp.sum(kl_gamma(s_a['mu'], ls_s_a, self.global_shape, rate)) +
-            jnp.sum(kl_ig(s_b['mu'], ls_s_b, self.global_shape, self.global_rate)) +
-            jnp.sum(kl_gamma(z_a['mu'], ls_z_a, self.local_shape, self.local_rate)) +
-            jnp.sum(kl_ig(z_b['mu'], ls_z_b, self.local_shape, self.local_rate))
+            self._kl_lognormal_gamma(
+                s_a["mu"], ls_s_a, self.global_shape, global_rate_a
+            )
+            + self._kl_lognormal_ig(
+                s_b["mu"], ls_s_b, self.global_shape, self.global_rate
+            )
+            + jnp.sum(
+                self._kl_lognormal_gamma(
+                    z_a["mu"], ls_z_a, self.local_shape, self.local_rate
+                )
+            )
+            + jnp.sum(
+                self._kl_lognormal_ig(
+                    z_b["mu"], ls_z_b, self.local_shape, self.local_rate
+                )
+            )
         )
+
         return kl_theta + kl_scales
 
     def loss(self, params, y):
-            # ELBO = NLL + KL
-            nll = jnp.sum((params['theta']['mu'] - y)**2)
-            total_loss = nll + self.kl_divergence(params)
+        noise_var = self.noise_std**2
+        ls_theta = self._get_log_sigma(params["theta"])
+        var_theta = jnp.exp(2 * ls_theta)
 
-            # Ensure the output is a 0-D scalar
-            return jnp.sum(total_loss)
+        nll = (0.5 / noise_var) * jnp.sum((params["theta"]["mu"] - y) ** 2 + var_theta)
+        return nll + self.kl_divergence(params)
 
     def sample_prior(self, key):
         """Draws a sample from the Horseshoe prior distribution."""
-        k1, k2, k3, k4 = jax.random.split(key, 4)
+        k_sa, k_sb, k_za, k_zb, k_theta = jax.random.split(key, 5)
 
-        # Draw scales from Gamma and Inverse-Gamma priors
-        s_a = jax.random.gamma(k1, 0.5) / 1.0  # Gamma(0.5, 1.0)
-        s_b = 1.0 / jax.random.gamma(k2, 0.5)  # IG(0.5, 1.0) -> 1/Gamma
-        z_a = jax.random.gamma(k3, 0.5, shape=(self.D,))
-        z_b = 1.0 / jax.random.gamma(k4, 0.5, shape=(self.D,))
+        global_rate_a = 1.0 / (self.tau_0**2)
 
-        # Combine scales: theta ~ N(0, (z_a*z_b) * (s_a*s_b)), since sqrt(Gamma * IG) is half-Cauchy
+        s_a = jax.random.gamma(k_sa, self.global_shape) / global_rate_a
+        s_b = self.global_rate / jax.random.gamma(k_sb, self.global_shape)
+
+        z_a = (
+            jax.random.gamma(k_za, self.local_shape, shape=(self.D,))
+            / self.local_rate
+        )
+        z_b = self.local_rate / jax.random.gamma(
+            k_zb, self.local_shape, shape=(self.D,)
+        )
+
         scale = jnp.sqrt((z_a * z_b) * (s_a * s_b))
-        theta = jax.random.normal(k1, (self.D,)) * scale
-        return theta
+        return jax.random.normal(k_theta, (self.D,)) * scale
 
     def sample_posterior(self, key, params):
         """Draws a sample from the variational posterior q(theta)."""
-        # theta ~ N(mu, sigma^2)
-        mu = params['theta']['mu']
-        sigma = jnp.exp(0.5 * params['theta']['log_var'])
-        noise = jax.random.normal(key, shape=(self.D,))
-        return mu + sigma * noise
+        mu = params["theta"]["mu"]
+        std = jnp.exp(self._get_log_sigma(params["theta"]))
+        return mu + std * jax.random.normal(key, shape=(self.D,))
 
     def get_uncertainty(self, params):
         """Returns the mean and standard deviation for the posterior."""
-        mu = params['theta']['mu']
-        # Convert log_var to standard deviation: std = exp(0.5 * log_var)
-        std = jnp.exp(0.5 * params['theta']['log_var'])
+        mu = params["theta"]["mu"]
+        std = jnp.exp(self._get_log_sigma(params["theta"]))
         return mu, std
