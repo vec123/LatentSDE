@@ -95,9 +95,8 @@ class DeepGaussianKernel(nn.Module):
         return softplus(self.rawsigma)
 
     def forward(self, t1: Tensor, t2: Tensor, return_grad=False) -> Union[Tensor, Tuple[Tensor, Tensor]]:
-        """t1 (n, 1), t2 (m, 1) -> (n, m), and dk/dt1 if return_grad."""
-        w2 = self.warping(t2)
-        if return_grad:
-            w1, dw1 = self.warping(t1, return_grad=True)
-            return _squared_exponential(w1, w2, self.lens, self.sigma, dw1)
-        return _squared_exponential(self.warping(t1), w2, self.lens, self.sigma)
+        """t1 (..., n, 1), t2 (..., m, 1) -> (..., n, m), and dk/dt1 if return_grad."""
+        w1, dw1 = self.warping(t1, return_grad=True)
+        diff = w1 - self.warping(t2).transpose(-2, -1)
+        k = self.sigma * torch.exp(-0.5 * diff.pow(2) / self.lens.pow(2))
+        return (k, -k * diff / self.lens.pow(2) * dw1) if return_grad else k
