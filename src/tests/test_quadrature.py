@@ -9,11 +9,9 @@ use_float64()
 
 
 def test_gauss_legendre_matches_svise_fastgl():
-    """Same nodes and weights; fastgl's order depends on n (ascending up to 100 nodes), so compare sorted."""
-    for n in (5, 26, 102, 128):
+    """Same nodes and weights in the same order (ascending up to 100 nodes, descending above)."""
+    for n in (5, 26, 100, 101, 102, 128):
         w_ref, x_ref = svise_module("quadrature").gauss_legendre_vecs(n, 0.0, 20.0)
-        order = torch.argsort(x_ref)
-        w_ref, x_ref = w_ref[order], x_ref[order]
         w, x = gauss_legendre_vecs(n, 0.0, 20.0)
         torch.testing.assert_close(x, x_ref, rtol=0, atol=1e-12)
         torch.testing.assert_close(w, w_ref, rtol=0, atol=1e-12)

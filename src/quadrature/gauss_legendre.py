@@ -2,8 +2,9 @@
 Quadrature nodes and weights.
 
 Adapted from SVISE, reference/svise/svise/quadrature/_quadrature.py (GPL-3.0). Change: the Gauss-Legendre
-nodes come from numpy.polynomial.legendre.leggauss in place of the vendored fastgl (LGPL), in the same
-ascending order.
+nodes come from numpy.polynomial.legendre.leggauss in place of the vendored fastgl (LGPL), in fastgl's order:
+ascending up to 100 nodes, descending above. The order sets which latent sample goes to which node, so seeded
+runs match SVISE only with this order.
 """
 from typing import Tuple
 
@@ -22,7 +23,9 @@ def gauss_legendre_vecs(N: int, a: float = -1.0, b: float = 1.0, dtype: torch.dt
     if dtype is None:
         dtype = torch.get_default_dtype()
     x, w = np.polynomial.legendre.leggauss(N)
-    wq = torch.tensor(w, dtype=dtype) * (b - a) / 2
+    if N > 100:
+        x, w = x[::-1].copy(), w[::-1].copy()
+    wq =torch.tensor(w, dtype=dtype) * (b - a) / 2
     xq = torch.tensor(x, dtype=dtype) * (b - a) / 2 + (a + b) / 2
     return (wq, xq)
 
