@@ -1,10 +1,13 @@
 import math
 
+import numpy as np
 import torch
 import torch.distributions as D
+from scipy.integrate import quad
 
 from ..bayes import (CenteredHorseshoePrior, CollapsedHorseshoe, LinearCollapsedHorseshoe, SVIHalfCauchyPrior,
                      kl_lognormal_gamma, kl_lognormal_inverse_gamma)
+from ..bayes.collapsed_horseshoe import log_horseshoe_density
 from ..bayes.fixed_priors import KINDS, sample_observations
 from ._reference import run_tests, svise_module, use_float64
 
@@ -110,7 +113,43 @@ def test_centered_pruning_masks_small_weights():
     assert prior.get_reparam_weights(5).shape == (5, 4)
 
 
-def test_collapsed_global_kl_is_bounded_below_and_matches_monte_carlo():
+def _log_horseshoe_by_quadrature(theta, tau):
+    """log int N(theta | 0, lambda^2 tau^2) HalfCauchy(lambda | 0, 1) dlambda, split at the peak lambda = theta / tau."""
+    f = lambda lam: math.exp(-theta**2 / (2 * lam**2 * tau**2)) / math.sqrt(2 * math.pi * lam**2 * tau**2) \
+        * 2 / (math.pi * (1 + lam**2))  # noqa: E731
+    return math.log(quad(f, 0, theta / tau, limit=500)[0] + quad(f, theta / tau, np.inf, limit=500)[0])
+
+
+def test_horseshoe_density_matches_quadrature_and_has_exact_gradient():
+    for theta in (1e-3, 0.1, 1.0, 3.0, 30.0):
+        for tau in (0.01, 1.0):
+            value = log_horseshoe_density(torch.tensor(theta**2), torch.tensor(tau)).item()
+            assert abs(value - _log_horseshoe_by_quadrature(theta, tau)) < 1e-6, (theta, tau)
+    theta_sq = torch.logspace(-3, 4, 40).requires_grad_(True)  # both branches of e^u E1(u), above the FD step
+    assert torch.autograd.gradcheck(lambda x: log_horseshoe_density(x, torch.tensor(0.3)), (theta_sq,))
+
+
+def test_collapsed_prior_is_at_least_the_mean_field_prior():
+    """For fixed q(theta) and tau, the collapsed term is the maximum over q(lambda): no log-normal q does better."""
+    model = CollapsedHorseshoe(1, tau_0=0.1)
+    with torch.no_grad():
+        model.log_tau_log_sigma.fill_(-10.0)  # q(tau) a point mass at tau = 0.1
+    z, w = (torch.tensor(a) for a in np.polynomial.hermite_e.hermegauss(60))
+    w = w / math.sqrt(2 * math.pi)
+    for mu, sigma in ((0.0, 0.01), (0.05, 0.02), (1.0, 0.1)):
+        collapsed = model.collapsed_log_prior(torch.tensor([mu]), torch.tensor([sigma])).item()
+        best = -math.inf
+        for m in torch.linspace(-6, 4, 81):
+            for s in (0.05, 0.2, 0.5, 1.0, 2.0):
+                lam = torch.exp(m + s * z)
+                e_log_p = (w * (-0.5 * torch.log(2 * math.pi * lam**2 * 0.01) - (mu**2 + sigma**2) / (2 * lam**2 * 0.01)
+                                + math.log(2 / math.pi) - torch.log1p(lam**2))).sum()
+                entropy = m + 0.5 * math.log(2 * math.pi * math.e * s**2)
+                best = max(best, (e_log_p + entropy).item())
+        assert best <= collapsed + 1e-6 and collapsed - best < 0.2, (mu, sigma, best, collapsed)
+
+
+def test_collapsed_global_kl_is_bounded_below_and_exact():
     model = CollapsedHorseshoe(3, tau_0=0.1)
     values = []
     with torch.no_grad():
@@ -119,10 +158,14 @@ def test_collapsed_global_kl_is_bounded_below_and_matches_monte_carlo():
             values.append(model.kl_global_scale().item())
         assert values[0] < values[1] < values[2]
         model.log_tau_mu.fill_(math.log(0.05))
-        model.log_tau_log_sigma.fill_(-6.0)  # nearly a point mass, so taking E[tau] inside the log is exact enough
+        model.log_tau_log_sigma.fill_(math.log(0.8))  # a wide q(tau)
         q = D.LogNormal(model.log_tau_mu, model.log_tau_log_sigma.exp())
-        expected = -q.entropy() - D.HalfCauchy(0.1).log_prob(q.sample((NUM_MC,))).mean()
-        assert abs(model.kl_global_scale() - expected) < 1e-4
+        cross = quad(lambda t: math.exp(q.log_prob(torch.tensor(t)).item() + D.HalfCauchy(0.1).log_prob(
+            torch.tensor(t)).item()), 0, np.inf, limit=500)[0]
+        expected_log_p = quad(lambda t: math.exp(q.log_prob(torch.tensor(t)).item())
+                              * D.HalfCauchy(0.1).log_prob(torch.tensor(t)).item(), 0, np.inf, limit=500)[0]
+        assert cross > 0
+        assert abs(model.kl_global_scale().item() - (-q.entropy().item() - expected_log_p)) < 1e-6
 
 
 def test_linear_collapsed_horseshoe_recovers_sparse_signal():
