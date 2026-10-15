@@ -20,6 +20,16 @@ def test_polynomial_features_order_and_names():
     assert SparsePolynomialFeatures(2, degree=5).num_features == 21
 
 
+def test_polynomial_features_match_per_monomial_products():
+    """One gather and one product give SVISE's products, one per monomial, also for a subset of the features."""
+    features = SparsePolynomialFeatures(3, degree=3)
+    x = torch.randn(4, 5, 3)
+    expected = torch.stack([p(x) for p in features.full_polynomial], dim=-1)
+    torch.testing.assert_close(features(x), expected)
+    features.update_basis(torch.tensor([0, 4, 7, 19]))
+    torch.testing.assert_close(features(x), expected[..., [0, 4, 7, 19]])
+
+
 def test_neighbour_features_shape():
     features = SparsePolynomialNeighbour1D(6, degree=2)
     assert features(torch.randn(4, 6)).shape == (4, 6, features.num_features)

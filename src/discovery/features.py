@@ -2,8 +2,9 @@
 Feature libraries for sparse drift models: polynomials, polynomials of sines and cosines, polynomials of
 neighbouring states, and precomputed features. A sparse_index selects the features that are kept.
 
-Adapted from SVISE, reference/svise/svise/variationalsparsebayes/sparse_glm.py (GPL-3.0), unchanged apart from
-imports. Feature order: all monomials in graded order, as the old JAX MultivariatePolynomialLibrary.
+Adapted from SVISE, reference/svise/svise/variationalsparsebayes/sparse_glm.py (GPL-3.0). Changes: imports, and
+SparsePolynomialFeatures computes all monomials with one gather and one product (SVISE: one product per monomial).
+Feature order: all monomials in graded order, as the old JAX MultivariatePolynomialLibrary.
 """
 from abc import ABC, abstractmethod
 from itertools import chain, combinations_with_replacement, tee
@@ -188,12 +189,20 @@ class SparsePolynomialFeatures(SparseFeaturesLibrary):
         Returns:
             Tensor: sparse dictionary evaluated at input (..., num_features[sparse_index])
         """
-        # `full_polynomial` is a NumPy array of callables, so its selector must
-        # stay on the host even when the input tensor and model are on CUDA.
-        sparse_index = self.sparse_index.detach().cpu().numpy()
-        return torch.stack(
-            [f_i(x) for f_i in self.full_polynomial[sparse_index]], dim=-1
-        )
+        x_ext = torch.cat([x, torch.ones_like(x[..., :1])], dim=-1)
+        return x_ext[..., self._monomial_index(x.device)[self.sparse_index]].prod(-1)
+
+    def _monomial_index(self, device) -> Tensor:
+        """
+        (num_features, degree) indices into x with a 1 appended (index dim), one row per monomial, so that a
+        monomial is one product. Built from full_polynomial on first use, also in models saved without it.
+        """
+        index = getattr(self, "_monomial_index_cache", None)
+        if index is None or index.device != device:
+            rows = [p.ind + (self.dim,) * (self.degree - len(p.ind)) for p in self.full_polynomial]
+            index = torch.tensor(rows, dtype=torch.long, device=device).reshape(len(rows), self.degree)
+            self._monomial_index_cache = index
+        return index
 
     def __str__(self) -> str:
         return " + ".join(self.feature_names[self.sparse_index])
