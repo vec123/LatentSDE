@@ -2,12 +2,13 @@
 Input warpings w(t) of the time axis, with their derivative dw/dt for kernels that return time derivatives.
 
 InputWarping, IdentityWarp, KumaraswamyWarping: adapted from SVISE, reference/svise/svise/kernels/_utils.py
-(GPL-3.0), unchanged.
+(GPL-3.0), unchanged; fixed_bounds is new.
 NeuralWarping: the time map of ROM-VISDE's deep kernel, reference/rom-visde/visde/kernel.py (GPL-3.0),
 phi(t) = u + net(u) with u = (t - offset) / scale, written as an InputWarping.
 """
 from abc import ABC, abstractmethod
-from typing import Sequence, Tuple, Union
+from contextlib import contextmanager
+from typing import Iterator, Sequence, Tuple, Union
 
 import torch
 from torch import Tensor
@@ -90,6 +91,27 @@ class KumaraswamyWarping(InputWarping):
         w = w.add(-self.t0).div(self.dt)
         t = (1 - (1 - w).pow(1 / beta)).pow(1 / alpha)
         return t.mul(self.dt).add(self.t0)
+
+
+@contextmanager
+def fixed_bounds(module: nn.Module, times: Tensor) -> Iterator[None]:
+    """
+    Extends the bounds of every KumaraswamyWarping in module to cover times, then skips their bound checks inside
+    the block; each check costs two reductions per call and, on a GPU, a wait for the device. All inputs in the
+    block must lie in [times.min(), times.max()]. The results are then the same as with the checks if the bounds
+    already cover times (the normal case: the GLMs pad their time span by 1); otherwise the bounds grow here once,
+    not at the first call outside them.
+    """
+    warpings = [m for m in module.modules() if isinstance(m, KumaraswamyWarping)]
+    previous = [w._update_buffers for w in warpings]
+    for w in warpings:
+        w.update_buffers(times)
+        w._update_buffers = False
+    try:
+        yield
+    finally:
+        for w, value in zip(warpings, previous):
+            w._update_buffers = value
 
 
 def make_mlp(hidden_sizes: Sequence[int] = (128, 128), activation=nn.ReLU) -> nn.Sequential:

@@ -3,6 +3,7 @@ import torch.nn as nn
 
 from ..kernels import (DeepGaussianKernel, KumaraswamyWarping, Matern12, Matern32, Matern52, NeuralWarping,
                        SquaredExponential)
+from ..kernels.warping import fixed_bounds
 from ._reference import run_tests, svise_module, use_float64, visde_module
 
 use_float64()
@@ -27,6 +28,17 @@ def _check_time_derivative(kernel, t=T, tau=TAU):
     weights = torch.randn_like(k)
     expected, = torch.autograd.grad((k * weights).sum(), t)
     torch.testing.assert_close((dk * weights).sum(-1), expected.reshape(-1))
+
+
+def test_fixed_bounds_extends_once_and_restores_checks():
+    module = nn.Sequential(KumaraswamyWarping((0.0, 1.0)))
+    warp = module[0]
+    with fixed_bounds(module, torch.tensor([-1.0, 0.5])):
+        assert warp.t0 < -1.0 and warp.tf < 1.1
+        warp(torch.tensor([3.0]))
+        assert warp.tf < 1.1  # no check inside the block
+    warp(torch.tensor([3.0]))
+    assert warp.tf > 3.0
 
 
 def test_matern_time_derivatives_with_warping():
