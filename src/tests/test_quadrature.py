@@ -34,6 +34,22 @@ def test_unbiased_quadrature_is_unbiased():
     assert abs(estimates.mean() - exact) < 4 * estimates.std() / math.sqrt(len(estimates))
 
 
+def test_single_call_quadrature_matches_two_calls():
+    """For an f without random numbers, one call at all times gives the same estimate as two calls."""
+    calls = []
+
+    def f(t):
+        calls.append(len(t))
+        return torch.sin(3 * t) + t**2 / 50
+
+    estimates = []
+    for single_call in (False, True):
+        torch.manual_seed(0)
+        estimates.append(UnbiasedGaussLegendreQuad(0.0, 20.0, 16, quad_percent=0.5, single_call=single_call)(f))
+    torch.testing.assert_close(estimates[1], estimates[0])
+    assert calls == [8, 8, 16]
+
+
 def test_stratified_sampling_estimates_integral():
     torch.manual_seed(1)
     quad = StratifiedSampling(0.0, 1.0, 2000)

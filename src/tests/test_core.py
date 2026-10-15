@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-from ..core.interpolation import BarycentricInterpolate, linterp
+from ..core.interpolation import BarycentricInterpolate, barycentric_weights, linterp
 from ..core.linalg import SkewSymMatrixExp, solve_least_squares, solve_lyapunov_diag, solve_lyapunov_spectral
 from ..core.nn import FCNN, check_nn_dims
 from ..core.sdeint import sdeint_euler
@@ -71,6 +71,12 @@ def test_barycentric_interpolation_reproduces_polynomial():
     interp = BarycentricInterpolate(x, x**5 - 2 * x**2)
     xq = torch.tensor([-0.9, 0.1, 0.33, x[2].item()])
     torch.testing.assert_close(interp(xq), xq**5 - 2 * xq**2)
+
+
+def test_barycentric_interpolation_with_given_weights():
+    x, xq = torch.linspace(-1, 1, 6), torch.tensor([-0.9, 0.1, 0.33])
+    expected = BarycentricInterpolate(x, x.sin())(xq)
+    torch.testing.assert_close(BarycentricInterpolate(x, x.sin(), barycentric_weights(x))(xq), expected, rtol=0, atol=0)
 
 
 def test_sdeint_euler_without_noise_is_euler():

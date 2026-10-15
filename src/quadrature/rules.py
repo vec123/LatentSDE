@@ -2,7 +2,9 @@
 Quadrature rules for integrals over [a, b] of functions evaluated on batches of times.
 
 Adapted from SVISE, reference/svise/svise/quadrature/_unbiased_quadrature.py (GPL-3.0). Changes: imports,
-and the class StartifiedSampling is renamed StratifiedSampling (the old name stays as an alias).
+the class StartifiedSampling is renamed StratifiedSampling (the old name stays as an alias), and
+UnbiasedGaussLegendreQuad keeps the barycentric weights of its nodes and can evaluate f once at all times
+(single_call).
 """
 from abc import ABC, abstractmethod
 from typing import Callable, Union
@@ -12,7 +14,7 @@ import torch
 from torch import Tensor
 import torch.nn as nn
 
-from ..core.interpolation import BarycentricInterpolate
+from ..core.interpolation import BarycentricInterpolate, barycentric_weights
 from .gauss_legendre import gauss_legendre_vecs
 
 
@@ -143,6 +145,8 @@ class UnbiasedGaussLegendreQuad(QuadRule1D):
         b (Union[float, Tensor]): upper bound of integration
         N (int): number of quadrature nodes
         quad_percent (float): percentage of quad nodes to use for Legendre
+        single_call (bool): evaluate f once at the nodes and the Monte Carlo times together; fewer operations,
+            but random numbers drawn inside f come in another order than in SVISE
     """
 
     def __init__(
@@ -152,6 +156,7 @@ class UnbiasedGaussLegendreQuad(QuadRule1D):
         N: int,
         quad_percent: float,
         gamma: Union[float, Tensor] = 1.0,
+        single_call: bool = False,
     ):
         super().__init__(a, b, N)
         err_msg = "Percent of quadrature points must be between 0 and 1"
@@ -166,6 +171,8 @@ class UnbiasedGaussLegendreQuad(QuadRule1D):
         self.register_buffer("gamma", torch.tensor(gamma))
         self.register_buffer("wq", wq)
         self.register_buffer("xq", xq)
+        self.register_buffer("interp_weights", barycentric_weights(xq))
+        self.single_call = single_call
 
     def forward(self, f: Callable):
         # xmc = torch.rand(self.nmc, dtype=self.dtype) * (self.b - self.a) + self.a
@@ -174,12 +181,16 @@ class UnbiasedGaussLegendreQuad(QuadRule1D):
         )
         dtype = xmc.dtype
         # evaluating function at quadrature nodes + monte-carlo
-        fxq = f(self.xq)
-        fmc = f(xmc)
+        if getattr(self, "single_call", False):
+            f_all = f(torch.cat([self.xq, xmc]))
+            fxq, fmc = f_all[: self.nq], f_all[self.nq :]
+        else:
+            fxq = f(self.xq)
+            fmc = f(xmc)
         Iq = (fxq @ self.wq).mean()
         Imc = fmc.mean() * (self.b - self.a)
-        # interpolating
-        interp = BarycentricInterpolate(self.xq, fxq)
+        # interpolating; models saved before interp_weights existed compute the weights here
+        interp = BarycentricInterpolate(self.xq, fxq, getattr(self, "interp_weights", None))
         fip = interp(xmc)  # .to(dtype)
         divisor = 1
         while torch.isnan(fip).any():
