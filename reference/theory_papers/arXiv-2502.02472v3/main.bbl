@@ -1,0 +1,339 @@
+\begin{thebibliography}{64}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Albergo et~al.(2023)Albergo, Boffi, and Vanden-Eijnden]{albergo2023stochastic}
+Albergo, M.~S., Boffi, N.~M., and Vanden-Eijnden, E.
+\newblock Stochastic interpolants: A unifying framework for flows and diffusions, 2023.
+\newblock URL \url{https://arxiv.org/abs/2303.08797}.
+
+\bibitem[Archambeau et~al.(2007{\natexlab{a}})Archambeau, Cornford, Opper, and Shawe-Taylor]{archambeau2007gaussian}
+Archambeau, C., Cornford, D., Opper, M., and Shawe-Taylor, J.
+\newblock Gaussian process approximations of stochastic differential equations.
+\newblock In \emph{Gaussian Processes in Practice}, pp.\  1--16. PMLR, 2007{\natexlab{a}}.
+
+\bibitem[Archambeau et~al.(2007{\natexlab{b}})Archambeau, Opper, Shen, Cornford, and Shawe-Taylor]{archambeau2007variational}
+Archambeau, C., Opper, M., Shen, Y., Cornford, D., and Shawe-Taylor, J.
+\newblock Variational inference for diffusion processes.
+\newblock \emph{Advances in neural information processing systems}, 20, 2007{\natexlab{b}}.
+
+\bibitem[Bartosh et~al.(2023)Bartosh, Vetrov, and Naesseth]{bartosh2023neural}
+Bartosh, G., Vetrov, D., and Naesseth, C.~A.
+\newblock Neural diffusion models.
+\newblock \emph{arXiv preprint arXiv:2310.08337}, 2023.
+
+\bibitem[Bartosh et~al.(2024)Bartosh, Vetrov, and Naesseth]{bartosh2024neural}
+Bartosh, G., Vetrov, D., and Naesseth, C.~A.
+\newblock Neural flow diffusion models: Learnable forward process for improved diffusion modelling.
+\newblock \emph{arXiv preprint arXiv:2404.12940}, 2024.
+
+\bibitem[Beskos et~al.(2006)Beskos, Papaspiliopoulos, Roberts, and Fearnhead]{beskos2006exact}
+Beskos, A., Papaspiliopoulos, O., Roberts, G.~O., and Fearnhead, P.
+\newblock Exact and computationally efficient likelihood-based estimation for discretely observed diffusion processes (with discussion).
+\newblock \emph{Journal of the Royal Statistical Society Series B: Statistical Methodology}, 68\penalty0 (3):\penalty0 333--382, 2006.
+
+\bibitem[Bilo{\v{s}} et~al.(2021)Bilo{\v{s}}, Sommer, Rangapuram, Januschowski, and G{\"u}nnemann]{bilovs2021neural}
+Bilo{\v{s}}, M., Sommer, J., Rangapuram, S.~S., Januschowski, T., and G{\"u}nnemann, S.
+\newblock Neural flows: Efficient alternative to neural odes.
+\newblock In \emph{Advances in neural information processing systems}, volume~34, pp.\  21325--21337, 2021.
+
+\bibitem[Bogachev(2007)]{bogachev2007measure}
+Bogachev, V.~I.
+\newblock \emph{Measure theory}.
+\newblock Springer, 2007.
+
+\bibitem[Bradbury et~al.(2018)Bradbury, Frostig, Hawkins, Johnson, Leary, Maclaurin, Necula, Paszke, Vander{P}las, Wanderman-{M}ilne, and Zhang]{jax2018github}
+Bradbury, J., Frostig, R., Hawkins, P., Johnson, M.~J., Leary, C., Maclaurin, D., Necula, G., Paszke, A., Vander{P}las, J., Wanderman-{M}ilne, S., and Zhang, Q.
+\newblock {JAX}: composable transformations of {P}ython+{N}um{P}y programs.
+\newblock 2018.
+\newblock URL \url{http://github.com/google/jax}.
+
+\bibitem[Chen et~al.(2018)Chen, Rubanova, Bettencourt, and Duvenaud]{chen2018neural}
+Chen, R.~T., Rubanova, Y., Bettencourt, J., and Duvenaud, D.~K.
+\newblock Neural ordinary differential equations.
+\newblock \emph{Advances in neural information processing systems}, 31, 2018.
+
+\bibitem[Cho et~al.(2014)Cho, Van~Merri{\"e}nboer, Gulcehre, Bahdanau, Bougares, Schwenk, and Bengio]{cho2014learning}
+Cho, K., Van~Merri{\"e}nboer, B., Gulcehre, C., Bahdanau, D., Bougares, F., Schwenk, H., and Bengio, Y.
+\newblock Learning phrase representations using rnn encoder-decoder for statistical machine translation.
+\newblock \emph{arXiv preprint arXiv:1406.1078}, 2014.
+
+\bibitem[Chopin et~al.(2020)Chopin, Papaspiliopoulos, et~al.]{chopin2020introduction}
+Chopin, N., Papaspiliopoulos, O., et~al.
+\newblock \emph{An introduction to sequential {M}onte {C}arlo}, volume~4.
+\newblock Springer, 2020.
+
+\bibitem[Course \& Nair(2023)Course and Nair]{course2024amortized}
+Course, K. and Nair, P.
+\newblock Amortized reparametrization: efficient and scalable variational inference for latent sdes.
+\newblock \emph{Advances in Neural Information Processing Systems}, 36, 2023.
+
+\bibitem[Daems et~al.(2024)Daems, Opper, Crevecoeur, and Birdal]{daems2024variational}
+Daems, R., Opper, M., Crevecoeur, G., and Birdal, T.
+\newblock Variational inference for {SDE}s driven by fractional noise.
+\newblock In \emph{The Twelfth International Conference on Learning Representations}, 2024.
+\newblock URL \url{https://openreview.net/forum?id=rtx8B94JMS}.
+
+\bibitem[Dinh et~al.(2017)Dinh, Sohl-Dickstein, and Bengio]{dinh2017density}
+Dinh, L., Sohl-Dickstein, J., and Bengio, S.
+\newblock Density estimation using real {NVP}.
+\newblock In \emph{International Conference on Learning Representations}, 2017.
+\newblock URL \url{https://openreview.net/forum?id=HkpbnH9lx}.
+
+\bibitem[Du et~al.(2024)Du, Plainer, Brekelmans, Duan, No{\'e}, Gomes, Aspuru-Guzik, and Neklyudov]{du2024doob}
+Du, Y., Plainer, M., Brekelmans, R., Duan, C., No{\'e}, F., Gomes, C.~P., Aspuru-Guzik, A., and Neklyudov, K.
+\newblock Doob's lagrangian: A sample-efficient variational approach to transition path sampling.
+\newblock \emph{arXiv preprint arXiv:2410.07974}, 2024.
+
+\bibitem[ElGazzar \& van Gerven(2024)ElGazzar and van Gerven]{elgazzar2024generative}
+ElGazzar, A. and van Gerven, M.
+\newblock Generative modeling of neural dynamics via latent stochastic differential equations.
+\newblock \emph{arXiv preprint arXiv:2412.12112}, 2024.
+
+\bibitem[Finlay et~al.(2020)Finlay, Jacobsen, Nurbekyan, and Oberman]{finlay2020train}
+Finlay, C., Jacobsen, J.-H., Nurbekyan, L., and Oberman, A.
+\newblock How to train your neural ode: the world of jacobian and kinetic regularization.
+\newblock In \emph{International conference on machine learning}, pp.\  3154--3164. PMLR, 2020.
+
+\bibitem[Gan et~al.(2015)Gan, Li, Henao, Carlson, and Carin]{gan2015deep}
+Gan, Z., Li, C., Henao, R., Carlson, D.~E., and Carin, L.
+\newblock Deep temporal sigmoid belief networks for sequence modeling.
+\newblock \emph{Advances in Neural Information Processing Systems}, 28, 2015.
+
+\bibitem[Giles \& Glasserman(2006)Giles and Glasserman]{giles2006smoking}
+Giles, M. and Glasserman, P.
+\newblock Smoking adjoints: Fast {M}onte {C}arlo greeks.
+\newblock \emph{Risk}, 19\penalty0 (1):\penalty0 88--92, 2006.
+
+\bibitem[Gobet \& Munos(2005)Gobet and Munos]{gobet2005sensitivity}
+Gobet, E. and Munos, R.
+\newblock Sensitivity analysis using {I}t\^o--{M}alliavin calculus and martingales, and application to stochastic optimal control.
+\newblock \emph{SIAM Journal on control and optimization}, 43\penalty0 (5):\penalty0 1676--1713, 2005.
+
+\bibitem[Grathwohl et~al.(2019)Grathwohl, Chen, Bettencourt, and Duvenaud]{grathwohl2018scalable}
+Grathwohl, W., Chen, R. T.~Q., Bettencourt, J., and Duvenaud, D.
+\newblock Scalable reversible generative models with free-form continuous dynamics.
+\newblock In \emph{International Conference on Learning Representations}, 2019.
+\newblock URL \url{https://openreview.net/forum?id=rJxgknCcK7}.
+
+\bibitem[Ha et~al.(2018)Ha, Park, Chae, Park, and Choi]{ha2018adaptive}
+Ha, J.-S., Park, Y.-J., Chae, H.-J., Park, S.-S., and Choi, H.-L.
+\newblock Adaptive path-integral autoencoders: Representation learning and planning for dynamical systems.
+\newblock \emph{Advances in Neural Information Processing Systems}, 31, 2018.
+
+\bibitem[Heinonen et~al.(2018)Heinonen, Yildiz, Mannerstr{\"o}m, Intosalmi, and L{\"a}hdesm{\"a}ki]{heinonen2018learning}
+Heinonen, M., Yildiz, C., Mannerstr{\"o}m, H., Intosalmi, J., and L{\"a}hdesm{\"a}ki, H.
+\newblock Learning unknown ode models with gaussian processes.
+\newblock In \emph{International conference on machine learning}, pp.\  1959--1968. PMLR, 2018.
+
+\bibitem[Ho et~al.(2020)Ho, Jain, and Abbeel]{ho2020denoising}
+Ho, J., Jain, A., and Abbeel, P.
+\newblock Denoising diffusion probabilistic models.
+\newblock \emph{Advances in neural information processing systems}, 33:\penalty0 6840--6851, 2020.
+
+\bibitem[Hodgkinson et~al.(2020)Hodgkinson, van~der Heide, Roosta, and Mahoney]{hodgkinson2020stochastic}
+Hodgkinson, L., van~der Heide, C., Roosta, F., and Mahoney, M.~W.
+\newblock Stochastic normalizing flows.
+\newblock \emph{arXiv preprint arXiv:2002.09547}, 2020.
+
+\bibitem[Kelly et~al.(2020)Kelly, Bettencourt, Johnson, and Duvenaud]{kelly2020learning}
+Kelly, J., Bettencourt, J., Johnson, M.~J., and Duvenaud, D.~K.
+\newblock Learning differential equations that are easy to solve.
+\newblock \emph{Advances in Neural Information Processing Systems}, 33:\penalty0 4370--4380, 2020.
+
+\bibitem[Kidger et~al.(2021{\natexlab{a}})Kidger, Chen, and Lyons]{kidger2021hey}
+Kidger, P., Chen, R.~T., and Lyons, T.~J.
+\newblock " hey, that's not an ode": Faster ode adjoints via seminorms.
+\newblock In \emph{ICML}, pp.\  5443--5452, 2021{\natexlab{a}}.
+
+\bibitem[Kidger et~al.(2021{\natexlab{b}})Kidger, Foster, Li, and Lyons]{kidger2021efficient}
+Kidger, P., Foster, J., Li, X.~C., and Lyons, T.
+\newblock Efficient and accurate gradients for neural sdes.
+\newblock \emph{Advances in Neural Information Processing Systems}, 34:\penalty0 18747--18761, 2021{\natexlab{b}}.
+
+\bibitem[Kingma(2014)]{kingma2014adam}
+Kingma, D.~P.
+\newblock Adam: A method for stochastic optimization.
+\newblock \emph{arXiv preprint arXiv:1412.6980}, 2014.
+
+\bibitem[Kingma \& Dhariwal(2018)Kingma and Dhariwal]{kingma2018glow}
+Kingma, D.~P. and Dhariwal, P.
+\newblock Glow: Generative flow with invertible 1x1 convolutions.
+\newblock \emph{Advances in neural information processing systems}, 31, 2018.
+
+\bibitem[Lea et~al.(2000)Lea, Allen, and Haine]{lea2000sensitivity}
+Lea, D.~J., Allen, M.~R., and Haine, T.~W.
+\newblock Sensitivity analysis of the climate of a chaotic system.
+\newblock \emph{Tellus A: Dynamic Meteorology and Oceanography}, 52\penalty0 (5):\penalty0 523--532, 2000.
+
+\bibitem[Lee(2012)]{lee2012introduction}
+Lee, J.~M.
+\newblock \emph{Introduction to Smooth Manifolds}.
+\newblock Springer, 2012.
+
+\bibitem[Li et~al.(2020)Li, Wong, Chen, and Duvenaud]{li2020scalable}
+Li, X., Wong, T.-K.~L., Chen, R.~T., and Duvenaud, D.
+\newblock Scalable gradients for stochastic differential equations.
+\newblock In \emph{International Conference on Artificial Intelligence and Statistics}, pp.\  3870--3882. PMLR, 2020.
+
+\bibitem[Lipman et~al.(2023)Lipman, Chen, Ben-Hamu, Nickel, and Le]{lipman2023flow}
+Lipman, Y., Chen, R. T.~Q., Ben-Hamu, H., Nickel, M., and Le, M.
+\newblock Flow matching for generative modeling.
+\newblock In \emph{The Eleventh International Conference on Learning Representations}, 2023.
+\newblock URL \url{https://openreview.net/forum?id=PqvMRDCJT9t}.
+
+\bibitem[Liu et~al.(2023)Liu, Gong, and qiang liu]{liu2023flow}
+Liu, X., Gong, C., and qiang liu.
+\newblock Flow straight and fast: Learning to generate and transfer data with rectified flow.
+\newblock In \emph{The Eleventh International Conference on Learning Representations}, 2023.
+\newblock URL \url{https://openreview.net/forum?id=XVjTT1nw5z}.
+
+\bibitem[Mider et~al.(2021)Mider, Schauer, and Van~der Meulen]{mider2021continuous}
+Mider, M., Schauer, M., and Van~der Meulen, F.
+\newblock Continuous-discrete smoothing of diffusions.
+\newblock \emph{Electronic Journal of Statistics}, 15\penalty0 (2):\penalty0 4295--4342, 2021.
+
+\bibitem[Movellan et~al.(2002)Movellan, Mineiro, and Williams]{movellan2002monte}
+Movellan, J.~R., Mineiro, P., and Williams, R.~J.
+\newblock A monte carlo em approach for partially observable diffusion processes: theory and applications to neural networks.
+\newblock \emph{Neural computation}, 14\penalty0 (7):\penalty0 1507--1544, 2002.
+
+\bibitem[Naesseth et~al.(2019)Naesseth, Lindsten, Sch{\"o}n, et~al.]{naesseth2019elements}
+Naesseth, C.~A., Lindsten, F., Sch{\"o}n, T.~B., et~al.
+\newblock Elements of sequential {M}onte {C}arlo.
+\newblock \emph{Foundations and Trends{\textregistered} in Machine Learning}, 12\penalty0 (3):\penalty0 307--392, 2019.
+
+\bibitem[Nielsen et~al.(2024)Nielsen, Christensen, Dittadi, and Winther]{nielsen2024diffenc}
+Nielsen, B. M.~G., Christensen, A., Dittadi, A., and Winther, O.
+\newblock Diffenc: Variational diffusion with a learned encoder.
+\newblock In \emph{The Twelfth International Conference on Learning Representations}, 2024.
+\newblock URL \url{https://openreview.net/forum?id=8nxy1bQWTG}.
+
+\bibitem[Oh et~al.(2024)Oh, Lim, and Kim]{oh2024stable}
+Oh, Y., Lim, D.-Y., and Kim, S.
+\newblock Stable neural stochastic differential equations in analyzing irregular time series data.
+\newblock \emph{arXiv preprint arXiv:2402.14989}, 2024.
+
+\bibitem[Oksendal(2003)]{oksendal2003stochastic}
+Oksendal, B.
+\newblock \emph{Stochastic differential equations}.
+\newblock Springer, 2003.
+
+\bibitem[Papamakarios et~al.(2021)Papamakarios, Nalisnick, Rezende, Mohamed, and Lakshminarayanan]{papamakarios2021normalizing}
+Papamakarios, G., Nalisnick, E., Rezende, D.~J., Mohamed, S., and Lakshminarayanan, B.
+\newblock Normalizing flows for probabilistic modeling and inference.
+\newblock \emph{The Journal of Machine Learning Research}, 22\penalty0 (1):\penalty0 2617--2680, 2021.
+
+\bibitem[Park et~al.(2024)Park, Lee, and Lee]{park2024amortized}
+Park, B., Lee, H., and Lee, J.
+\newblock Amortized control of continuous state space feynman-kac model for irregular time series.
+\newblock \emph{arXiv preprint arXiv:2410.05602}, 2024.
+
+\bibitem[Paszke et~al.(2017)Paszke, Gross, Chintala, Chanan, Yang, DeVito, Lin, Desmaison, Antiga, and Lerer]{paszke2017automatic}
+Paszke, A., Gross, S., Chintala, S., Chanan, G., Yang, E., DeVito, Z., Lin, Z., Desmaison, A., Antiga, L., and Lerer, A.
+\newblock Automatic differentiation in pytorch.
+\newblock 2017.
+
+\bibitem[Peluchetti \& Favaro(2020)Peluchetti and Favaro]{peluchetti2020infinitely}
+Peluchetti, S. and Favaro, S.
+\newblock Infinitely deep neural networks as diffusion processes.
+\newblock In \emph{International Conference on Artificial Intelligence and Statistics}, pp.\  1126--1136. PMLR, 2020.
+
+\bibitem[Peters et~al.(2022)Peters, Bauer, and Pfister]{peters2022causal}
+Peters, J., Bauer, S., and Pfister, N.
+\newblock Causal models for dynamical systems.
+\newblock In \emph{Probabilistic and Causal Inference: The Works of Judea Pearl}, pp.\  671--690. 2022.
+
+\bibitem[Rubanova et~al.(2019)Rubanova, Chen, and Duvenaud]{rubanova2019latent}
+Rubanova, Y., Chen, R.~T., and Duvenaud, D.~K.
+\newblock Latent ordinary differential equations for irregularly-sampled time series.
+\newblock \emph{Advances in neural information processing systems}, 32, 2019.
+
+\bibitem[Rudin(2006)]{rudin2006real}
+Rudin, W.
+\newblock \emph{Differential equations, dynamical systems, and linear algebra}.
+\newblock Tata McGraw-Hill Education, 2006.
+
+\bibitem[Ryder et~al.(2018)Ryder, Golightly, McGough, and Prangle]{ryder2018black}
+Ryder, T., Golightly, A., McGough, A.~S., and Prangle, D.
+\newblock Black-box variational inference for stochastic differential equations.
+\newblock In \emph{International Conference on Machine Learning}, pp.\  4423--4432. PMLR, 2018.
+
+\bibitem[Sahoo et~al.(2024)Sahoo, Gokaslan, Sa, and Kuleshov]{sahoo2024diffusion}
+Sahoo, S.~S., Gokaslan, A., Sa, C.~D., and Kuleshov, V.
+\newblock Diffusion models with learned adaptive noise processes, 2024.
+\newblock URL \url{https://openreview.net/forum?id=8gZtt8nrpI}.
+
+\bibitem[Sarkka \& Solin(2019)Sarkka and Solin]{sarkka2019applied}
+Sarkka, S. and Solin, A.
+\newblock \emph{Applied stochastic differential equations}, volume~10.
+\newblock Cambridge University Press, 2019.
+
+\bibitem[Singhal et~al.(2023)Singhal, Goldstein, and Ranganath]{singhal2023where}
+Singhal, R., Goldstein, M., and Ranganath, R.
+\newblock Where to diffuse, how to diffuse, and how to get back: Automated learning for multivariate diffusions.
+\newblock In \emph{The Eleventh International Conference on Learning Representations}, 2023.
+\newblock URL \url{https://openreview.net/forum?id=osei3IzUia}.
+
+\bibitem[Song et~al.(2021{\natexlab{a}})Song, Durkan, Murray, and Ermon]{song2021maximum}
+Song, Y., Durkan, C., Murray, I., and Ermon, S.
+\newblock Maximum likelihood training of score-based diffusion models.
+\newblock \emph{Advances in Neural Information Processing Systems}, 34:\penalty0 1415--1428, 2021{\natexlab{a}}.
+
+\bibitem[Song et~al.(2021{\natexlab{b}})Song, Sohl-Dickstein, Kingma, Kumar, Ermon, and Poole]{song2021scorebased}
+Song, Y., Sohl-Dickstein, J., Kingma, D.~P., Kumar, A., Ermon, S., and Poole, B.
+\newblock Score-based generative modeling through stochastic differential equations.
+\newblock In \emph{International Conference on Learning Representations}, 2021{\natexlab{b}}.
+\newblock URL \url{https://openreview.net/forum?id=PxTIG12RRHS}.
+
+\bibitem[Tzen \& Raginsky(2019)Tzen and Raginsky]{tzen2019neural}
+Tzen, B. and Raginsky, M.
+\newblock Neural stochastic differential equations: Deep latent gaussian models in the diffusion limit.
+\newblock \emph{arXiv preprint arXiv:1905.09883}, 2019.
+
+\bibitem[Vadillo(2019)]{vadillo2019comparing}
+Vadillo, F.
+\newblock Comparing stochastic lotka--volterra predator-prey models.
+\newblock \emph{Applied Mathematics and Computation}, 360:\penalty0 181--189, 2019.
+
+\bibitem[van~der Meulen \& Schauer(2017)van~der Meulen and Schauer]{van2017bayesian}
+van~der Meulen, F. and Schauer, M.
+\newblock {Bayesian estimation of discretely observed multi-dimensional diffusion processes using guided proposals}.
+\newblock \emph{Electronic Journal of Statistics}, 11\penalty0 (1):\penalty0 2358 -- 2396, 2017.
+\newblock \doi{10.1214/17-EJS1290}.
+\newblock URL \url{https://doi.org/10.1214/17-EJS1290}.
+
+\bibitem[Verma et~al.(2024)Verma, Adam, and Solin]{verma2024variational}
+Verma, P., Adam, V., and Solin, A.
+\newblock Variational {G}aussian process diffusion processes.
+\newblock In \emph{International Conference on Artificial Intelligence and Statistics}, pp.\  1909--1917. PMLR, 2024.
+
+\bibitem[Wang et~al.(2007)Wang, Fleet, and Hertzmann]{wang2007gaussian}
+Wang, J.~M., Fleet, D.~J., and Hertzmann, A.
+\newblock Gaussian process dynamical models for human motion.
+\newblock \emph{IEEE transactions on pattern analysis and machine intelligence}, 30\penalty0 (2):\penalty0 283--298, 2007.
+
+\bibitem[Wu et~al.(2023)Wu, Trippe, Naesseth, Blei, and Cunningham]{wu2023practical}
+Wu, L., Trippe, B., Naesseth, C.~A., Blei, D., and Cunningham, J.~P.
+\newblock Practical and asymptotically exact conditional sampling in diffusion models.
+\newblock In \emph{Advances in Neural Information Processing Systems}, volume~36, pp.\  31372--31403, 2023.
+
+\bibitem[Yang \& Kushner(1991)Yang and Kushner]{yang1991monte}
+Yang, J. and Kushner, H.~J.
+\newblock A {M}onte {C}arlo method for sensitivity analysis and parametric optimization of nonlinear stochastic systems.
+\newblock \emph{SIAM journal on control and optimization}, 29\penalty0 (5):\penalty0 1216--1249, 1991.
+
+\bibitem[Yildiz et~al.(2019)Yildiz, Heinonen, and Lahdesmaki]{yildiz2019ode2vae}
+Yildiz, C., Heinonen, M., and Lahdesmaki, H.
+\newblock Ode2vae: Deep generative second order odes with {B}ayesian neural networks.
+\newblock \emph{Advances in Neural Information Processing Systems}, 32, 2019.
+
+\bibitem[Zhang et~al.(2024)Zhang, Pu, Kawamura, Loza, Bengio, Shung, and Tong]{zhang2024trajectory}
+Zhang, X., Pu, Y., Kawamura, Y., Loza, A., Bengio, Y., Shung, D.~L., and Tong, A.
+\newblock Trajectory flow matching with applications to clinical time series modeling.
+\newblock In \emph{Advances in Neural Information Processing Systems}, volume~37, 2024.
+
+\end{thebibliography}
