@@ -1,0 +1,264 @@
+
+
+In this section, we provide additional technical details of \gls{MLD}. We first discuss a naive approach based on \textit{In-painting} which uses only unconditional score network for both joint and conditional generation.
+We also discuss alternative training scheme based on a work from the caption-text translation literature \cite{bao2023transformer}. Finally, we provide extra technical details for the score network architecture and sampling technique.
+
+\subsection{Modalities Auto-Encoders} 
+Each deterministic autoencoders used in the first stage of \gls{MLD} uses a vector latent space with no size constraints. Instead, \gls{VAE}-based models, generally require the latent space of each individual \gls{VAE} to be exactly of the same size, to allow the definition of a joint latent space.
+
+In our approach, before concatenation, the modality-specific latent spaces are \textit{normalized} by element-wise mean and standard deviation. In practice, we use the statistics retrieved from the first training batch, which we found sufficient to gain sufficient statistical confidence.
+This operation allows the harmonization of different modality-specific latent spaces and, therefore, facilitate the learning of a joint score network.
+
+
+
+
+\begin{figure}[H]
+    \centering
+    \include{figures/plots/gen_arch}
+    \caption{Multi-modal Latent Diffusion. Two-stage model involving: \textbf{  \textit{Top:} }deterministic, modality-specific encoder/decoders, \textbf{ \textit{Bottom:} } score-based diffusion model on the concatenated latent spaces.}
+    \label{fig:my_label}
+\end{figure}
+
+\subsection{Multi-modal diffusion SDE}
+
+In \Cref{sec:method}, we presented our multi-modal latent diffusion process allowing multi-modal joint and conditional  generation. The role of the  \gls{SDE} is to gradually add noise to the data, perturbing its structure until attaining a noise distribution. 
+In this work, we consider \gls{VPSDE} \cite{Song2020}. In this framework we have : $\rho(r) \sim \mathcal{N}(0;I) $,   $\alpha(t) = -\frac{1}{2}\beta(t) $ and $g(t) = \sqrt{\beta(t)}$, where $  \beta(t)  = \beta_{min} + t ( \beta_{max} - \beta_{min} )$. Following \citep{ho2020denoising,Song2020}, we set $\beta_{min} = 0.1 $ and $\beta_{max} = 20$.
+With this configuration and by substitution of \Cref{eq:fw_sde_j}, we obtain the following forward \gls{SDE}:
+
+
+
+
+\begin{equation}\label{eq:fw_sde_beta}
+    \dd R_t =  -\frac{1}{2}\beta(t) R_t\dd t+ \sqrt{\beta(t)} \dd W_t, \qquad t \in [0,T].
+\end{equation}
+
+The corresponding perturbation kernel is given by :
+\begin{equation}\label{eq:diffuson_kernel}
+    q(r|z,t) = \mathcal{N}(r ; e^{-  \frac{1}{4}  t^2 (\beta_{max} - \beta_{min} ) - \frac{1}{2} t \beta_{min}   } z , (1-e^{-  \frac{1}{2}  t^2 (\beta_{max} - \beta_{min} ) - t \beta_{min}   } )\mathbf{I} ).
+\end{equation}
+
+The marginal score $\nabla\log q(R_{t},t)$ is approximated by a score network $ s_\chi (R_{t}, t)$ whose parameters $\chi$ can be optimized by minimizing the \gls{ELBO} in \Cref{elbo_diff_j}, where we found that using the same re-scaling as in \cite{Song2020} is more stable.
+
+The reverse process is described by a different \gls{SDE} (\Cref{eq:bw_sde_j}). When using a variance-preserving \gls{SDE}, \Cref{eq:bw_sde_j} specializes in:
+
+\begin{equation}\label{eq:reverse_sde_beta}
+  \dd R_{t}  = \left[ \frac{1}{2} \beta(T-t) R_{t}  + \beta(T-t) \nabla \log q(R_{t},T-t) \right] \dd t + \sqrt{\beta(T-t)} \dd W_{t},   \\  
+\end{equation}
+With $R_0\sim \rho(r)$ as initial condition and time $t$ flows from $t=0$ to $t=T$.
+
+
+Once the parametric score network is optimized,  trough the simulation of \Cref{eq:reverse_sde_beta}, sampling $R_T \sim q_\psi(r)$ is possible allowing \textbf{joint generation}. A numerical \gls{SDE} solver can be used to sample $ R_{T}$ which can be fed to the modality specific decoders to jointly sample a set of $\hat{X}=\{d^i_\theta(R^{i}_T)\}_{i= 0}^M$. 
+As explained in \Cref{sec:inpainting}, the use of the unconditional score network $ s_\chi (R_t, t)$ allows \textbf{conditional generation} through the approximation described in \cite{Song2020}.
+
+
+As described in \Cref{algo:MLD_inpaint_cond}, one can generate a set of modalities $A_1$ conditioned on the available set of modalities $A_2$. First, the available modalities are encoded into their respective latent space $z^{A_2}$ , the initial missing part is sampled from the stationary distribution $R^{A_1}_0 \sim \rho(r^{A_1})$, using an \gls{SDE} solver (e.g. Euler-Maruyama), the reverse diffusion \gls{SDE} (in \Cref{eq:reverse_sde_beta}) is discretized using a finite time steps $\Delta t = \nicefrac{T}{N} $, starting from $t = 0$ and iterating until $t\approx T$. At each iteration, the available portion of the latent space is diffused and brought to the same noise level as $R_t^{A_1}$ allowing the use of the unconditional score network. Lastly, the reverse diffusion update is done. This process is repeated until arriving at $t\approx T$ and obtaining $R^{A_1}_T = \hat{Z}^{A_1}$ which can be decoded to recover $\hat{x}^{A_1}$.
+Note that the joint generation can be seen as a special case of \Cref{algo:MLD_inpaint_cond} with $A_2 = \emptyset$. We name this first approach \gls{MLD Inpaint} and provide extensive comparison with our method \gls{MLD} in \Cref{apdx:mld_variants}.
+
+
+\begin{algorithm}[hbt!] 
+\DontPrintSemicolon
+\SetAlgoLined
+\SetNoFillComment
+\LinesNotNumbered 
+\caption{\gls{MLD Inpaint} conditional generation}\label{algo:MLD_inpaint_cond}
+\KwData{$ x^{A_2}= \{ x^i\}_{i \in A_2} $ }  
+$z^{A_2} \gets \{ e_{\phi_i}(x^i) \}_{i \in A_2} $   \tcp*{Encode the available modalities $X$ into their latent space} 
+$A_1\gets \{1,\dots,M\}\setminus A_2 $ \tcp*{The set of modalities to generate} 
+$R_0 \gets \mathcal{C} ( R_0^{A_1}, z^{A_2}),  \qquad  R_0^{A_1} \sim \rho(r^{A_1}) $  \tcp*{Compose the initial state} 
+$R \gets R_0$ \\
+$\Delta t \gets \nicefrac{T}{N}$ \\
+\For{$n =0  \quad \textbf{to} \quad N-1 \quad  $}{
+$t' \gets T - n  \ \Delta t  $ \\
+$\bar{R}  \sim  q (r|R_0,t') $ \tcp*{Diffuse the available portion of the latent space(\cref{eq:diffuson_kernel})} 
+$R \gets m(A_1) \odot R +   ( 1- m(A_1) ) \odot \bar{R} $ \\
+$\epsilon \sim \mathcal{N}(0;I)  \quad$  \textbf{if} $ n < (N-1)  $ \textbf{else} $\epsilon= 0$ \\
+$\Delta R  \gets  \Delta t \left[ \frac{1}{2} \beta(t') R  + \beta(t') s_\chi(R,t') \right]  + \sqrt{\beta(t') \Delta t } 
+ \epsilon   $ \\
+$R \gets R +  \Delta R $  \tcp*{The Euler-Maruyama update step }
+ }
+ $\hat{z}^{A_1} \gets R^{A_1}$ \\
+\textbf{Return} $\hat{X}^{A_1} = \{d^i_\theta(\hat{z}^{i} )\}_{i\in A_1}$  
+\end{algorithm}
+
+
+As discussed in \Cref{sec:inpainting}, the approximation enabling the in-painting approach can be efficient in several domains but its generalization to the multi-modal latent space scenario is not trivial. We argue that this is due to the heterogeneity of modalities which induce different latent spaces characteristics. For different modality-specific latent spaces, the loss of information ratio can vary through the diffusion process. We verify this hypothesis through the following experiment.
+
+
+\paragraph{Latent space robustness against diffusion perturbation:}
+We analyse the effect of the forward diffusion perturbation on the latent space through time. We encode the modalities using their respective encoders to obtain their latent space $Z =  [e_{\psi^1}(X^1) \dots e_{\psi^M}(X^M)]$. 
+Given a time $t \in [0,T]$, we diffuse the different latent spaces by applying \Cref{eq:diffuson_kernel} to get $R_t \sim  q(r|z,t)$ with $R_t$ being the perturbed version of the latent space at time $t$. We feed the modality specific decoders with the perturbed latent space $\hat{X}_t=\{d^i_\theta(R^{i}_t)\}_{i= 1}^M$, $\hat{X}_t$ being the output modalities generated using the perturbed latent space. To evaluate the information loss induced by the diffusion process on the different modalities, we assess the coherence preservation in the reconstructed modalities $\hat{X}_t$ by computing the coherence (in \%) as done in \Cref{sec:experiments}.
+
+We expect to obtain high coherence results for $t \approx 0$, when compared to $t \approx T$, the information in the latent space being more preserved at the beginning of the diffusion process than at the last phase of the froward \gls{SDE} where all dependencies on initial conditions vanish. \Cref{fig:robust_exp} shows the coherence as a function of the diffusion time $t \in [0,1]$ for different modalities across multiple data-sets. We observe that within the same data-set, some modalities stand out with a specific level of robustness (using as a proxy the coherence level) against the diffusion perturbation in comparison with the remaining modalities from the same data-set. For instance, we remark that \svhn is less robust than \mnist which should manifest in an under-performance of \svhn to \mnist conditional generation. An intuition that we verify in \Cref{apdx:mld_variants}.
+
+
+
+\begin{figure}[H]
+     \centering
+     \begin{subfigure}{0.3\textwidth}
+         \centering
+         \includegraphics[page=1,width=\linewidth]{figures/plots/ms_latent_robustness}
+         \caption{\mnist-\svhn}
+     \end{subfigure}
+        \begin{subfigure}[b]{0.3\textwidth}
+         \centering
+         \includegraphics[page=1,width=\linewidth]{figures/plots/mhd_latent_robustness}
+          \caption{\mhd}
+     \end{subfigure}
+      \begin{subfigure}[b]{0.3\textwidth}
+         \centering
+         \includegraphics[page=1,width=\linewidth]{figures/plots/mmnist_latent_robustness}
+            \caption{\polymnist}
+     \end{subfigure}
+   
+        \caption{The coherence as a function of the diffusion process time for three datasets.  The diffusion perturbation is applied on the modalities latent space after an element wise normalization.}
+        \label{fig:robust_exp}
+\end{figure}
+
+
+
+
+
+
+\subsection{Multi-time Masked Multi-modal SDE}
+
+To learn the score network capable of both conditional and joint generation, we proposed in \Cref{sec:mld_var} a multi-time masked diffusion process. 
+
+\Cref{algo:MLD_training} presents a pseudo-code for the multi time masked training. The masked diffusion process is applied following a randomization with probably $d$. First, a subset of modalities $A_2$ is selected randomly to be the conditioning modalities and $A_1$ the remaining set of modalities to be the diffused modalities. The time $t$ is sampled uniformly from $[0,T]$ and the portion of the latent space corresponding to the subset $A_1$ is diffused accordingly. Using the masking as shown in \Cref{train_line_mask}, the portion of the latent space corresponding to the subset $A_2$ is not diffused and forced to be equal to $R_0^{A_2} = z^{A_2}$. The multi-time vector $\tau$ is constructed. Lastly, the score network is optimized by minimizing a masked loss corresponding to the diffused part of the latent space. With probability $(1- d)$, all the modalities are diffused at the same time and $A_2 =\emptyset$. In order to calibrate the loss, given that the randomization of $A_1$ and $A_2$ can result in diffusing different sizes of the latent space, we re-weight the loss according to the cardinality of the diffused and freezed portions of the latent space:
+
+\begin{equation} \label{eq:weight_eq}
+    \Omega(A_1,A_2) = 1 + \frac{dim(A_2)}{dim(A_1)}
+\end{equation}
+Where $\dim(.) $ is the sum of each latent space cardinality of a given subset of modalities with $dim(\emptyset) = 0 $ .
+
+
+
+
+
+\begin{algorithm}[hbt!]
+\DontPrintSemicolon
+\SetAlgoLined
+\SetNoFillComment
+\LinesNotNumbered 
+\caption{\gls{MLD} Masked Multi-time diffusion training step}\label{algo:MLD_training}
+\KwData{$ X = \{x^i\}_{i=1}^M $}
+\textbf{Param:} $d$ \\
+$Z \gets \{ e_{\phi_i}(x^i) \}_{i=0}^M $   \tcp*{Encode the modalities $X$ into their latent space } 
+ $A_2 \sim \nu  \quad $ \tcp*{$\nu$ depends on the parameter $d$}
+$A_1\gets \{1,\dots,M\}\setminus A_2 $ \\
+$t \sim \mathcal{U}[0,T]$ \\
+
+$R  \sim  q (r|Z,t) $ \tcp*{Diffuse the available portion of the latent space(\Cref{eq:diffuson_kernel})}
+$R \gets m(A_1) \odot R     + (1- m(A_1) ) \odot Z$ \tcp*{Masked diffusion}  \label{train_line_mask}
+$\tau(A_1,t) \gets \left[\mathds{1}(1\in A_1)t,\dots,\mathds{1}(M\in A_1)t\right]$ \tcp*{Construct the multi time vector} 
+
+\textbf{Return} $ \nabla_{\chi} \left\{  \Omega(A_1,A_2) \quad  \norm{m(A_1)\odot \quad \left [  s_{\chi}(R,\tau(A_1,t))-\nabla \log q(R,t|z^{A_2})  \right]     }^2_2   \quad \right\} $
+
+\end{algorithm}
+
+The optimized score network can approximate both the conditional and unconditional true score:
+\begin{equation}
+    s_\chi(R_t,\tau(A_1,t)) \sim  \nabla\log q(R_t,t\g z^{A_2})).
+\end{equation}
+The joint generation is a special case of the latter with $A_2 = \emptyset$:
+\begin{equation}
+    s_\chi(R_t,\tau(A_1,t)) \sim  \nabla\log q(R_t,t) \quad     ,A_1 = \{1,...,M\}
+\end{equation}
+
+\Cref{algo:MLD_cond_gen} describes the reverse conditional generation pseudo-code. It's pertinent to compare this algorithm with \Cref{algo:MLD_inpaint_cond}. The main difference resides in the use of the multi-time score network, enabling conditional generation with the multi-time vector playing the role of time information and conditioning signal. On the other hand, in \Cref{algo:MLD_inpaint_cond}, we don't have a conditional score network, therefore we resort to the approximation from \Cref{sec:inpainting}, and use the unconditional score. 
+
+
+\begin{algorithm}[hbt!]
+\DontPrintSemicolon
+\SetAlgoLined
+\SetNoFillComment
+\LinesNotNumbered 
+\caption{MLD conditional generation.}\label{algo:MLD_cond_gen}
+\KwData{$ x^{A_2} \gets \{ x^i\}_{i \in A_2} $ }  
+$z^{A_2} \gets \{ e_{\phi_i}(x^i) \}_{i \in A_2} $   \tcp*{Encode the available modalities $X$ into their latent space} 
+$A_1\gets \{1,\dots,M\}\setminus A_2 $ \tcp*{The set of modalities to be generated} 
+$R_0 \gets \mathcal{C} ( R_0^{A_1}, z^{A_2}),  \qquad  R_0^{A_1} \sim \rho(r^{A_1}) $  \tcp*{Compose the initial latent space} 
+$R \gets R_0$\\
+$\Delta t \gets \nicefrac{T}{N}$ \\
+\For{$n = 0  \quad \textbf{to} \quad N-1 \quad  $}{
+$t' \gets T -  n  \ \Delta t $ \\
+$\tau(A_1,t') \gets \left[\mathds{1}(1\in A_1)t',\dots,\mathds{1}(M\in A_1)t'\right]$ \tcp*{Construct the multi-time vector}
+$\epsilon \sim \mathcal{N}(0;I)  \quad$  \textbf{if} $ n < N \quad  $ \textbf{else} $ \quad\epsilon= 0$ \\
+$\Delta R  \gets  \Delta t \left[ \frac{1}{2} \beta(t') R  + \beta(t') s_\chi (R, \tau(A_1,t')) \right]  + \sqrt{\beta(t') \Delta t }  \epsilon   $ \\
+$R \gets R +  \Delta R $ \tcp*{The Euler-Maruyama update step }
+$R \gets m(A_1) \odot R + (1 -  m(A_1) )\odot R_{0} $  \tcp*{ Update the portion corresponding to the unavailable modalities }
+} 
+$ \hat{z}^{A_1} = R^{A_1}$ \\
+\textbf{Return} $\hat{X}^{A_1} = \{d^i_\theta(\hat{z}^{i} )\}_{i\in A_1}$  
+\end{algorithm}
+
+\subsection{Uni-diffuser Training}
+The work presented in \cite{bao2023transformer} is specialized for an image-caption application. The approach is based on a multi-modal diffusion model applied to a unified latent embedding, obtained via pre-trained autoencoders, and incorporating pre-trained models (CLIP \cite{radford2021clip} and GPT-2 \cite{radford2019language}). The unified latent space is composed of an image embedding, a CLIP image embedding and a CLIP text embedding. Note that the CLIP model is pre-trained on a pairs of multi-modal data (image-text), which is expected to enhance the generative performance. Since it is not trivial to have a jointly trained encoder similar to CLIP for any type of modality, the evaluation of this model on different modalities across different data-set (e.g. including audio) is not an easy task.
+
+To compare to this work, we adapt the training scheme presented in \cite{bao2023transformer} to our \gls{MLD} method. Instead of applying a masked multi-modal \gls{SDE} for training the score network, every portion of the latent space is diffused according to a different time $t^i \sim \mathcal{U}(0,1)$ and, therefore, the multi-time vector fed to the score network is $\tau(t) = [t^0 \sim \mathcal{U}(0,1),..., t^M \sim \mathcal{U}(0,1) ] $. For fairness, we use the same score network and reverse process sampler as for our \gls{MLD} version with multi-time training, and call this variant \gls{MLD Uni}.
+
+% {\color{blue}
+\subsection{Intuitive summary: How does MLD capture modality interactions?}
+
+
+
+\gls{MLD} treats the latent spaces of each modality as variables that evolve differently through the diffusion process according to a multi-time vector. %The joint score is learned by diffusing all the modalities at the same diffusion time whereas .
+The masked multi-time training enables the model to learn the score of all the combination of conditionally diffused modalities, using the frozen modalities as the conditioning signal, through a randomized scheme. By learning the score function of the diffused modalities at different time steps, the score model captures the correlation between the modalities. At test time, the diffusion time of each modality is chosen to modulate its influence on the generation, as follows. 
+
+For joint generation the model uses the unconditional score which corresponds to using the same diffusion time for all modalities. Thus, all the modalities influence each other equally. This ensures that modality interaction information is faithful to the one characterizing the observed data distribution. 
+
+The model can also generate modalities conditionally by using the conditional score, by freezing the conditioning modalities during the reverse process. The freezed state is similar to the final state of the revere process where information is not perturbed, thus the influence of the conditioning modalities is maximal. Subsequently, the generated modalities reflect the necessary information from the conditioning modalities and achieve the desired correlation.
+% }
+
+
+\subsection{Technical details}
+
+\paragraph{Sampling schedule:}
+\label{sec:repaint_sche}
+We use the sampling schedule proposed in \cite{lugmayr2022repaint}, which has shown to improve the coherence of the conditional and joint generation. We use the best parameters suggested by the authors: $N = 250$ time-steps, applied $r = 10$ re-sampling times with jump size $j = 10$. For readability in \cref{algo:MLD_inpaint_cond} and \cref{algo:MLD_cond_gen},  we present pseudo code  with a linear sampling schedule which can be easily adapted to any other schedule.
+
+\paragraph{Training the score network: }
+Inspired by the architecture from \citep{dupont22_fucnta}, we use simple Residual \gls{MLP} blocks with skip connections as our score network (see \Cref{fig:score_net}). We fix the \textbf{width} and \textbf{number of blocks} proportionally to the number of the modalities and the latent space size. As in \cite{song2020improved}, we use \gls{EMA} of model parameters with a momentum parameter $m = 0.999$.
+
+
+
+\begin{figure}[h]
+\centering
+\include{figures/plots/arch}
+\caption{Score network $s_\chi$ architecture used in our \gls{MLD} implementation. Residual \gls{MLP} block architecture is shown in \Cref{fig:resmlp}.}
+\label{fig:score_net}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \include{figures/plots/arch_mlpres}
+    \caption{Architecture of ResMLP block.}
+    \label{fig:resmlp}
+\end{figure}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+

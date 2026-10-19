@@ -1,0 +1,349 @@
+\begin{thebibliography}{64}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Alemi et~al.(2018)Alemi, Poole, Fischer, Dillon, Saurous, and Murphy]{alemi2018fixing}
+Alexander Alemi, Ben Poole, Ian Fischer, Joshua Dillon, Rif~A Saurous, and Kevin Murphy.
+\newblock Fixing a broken elbo.
+\newblock In \emph{International conference on machine learning}, pp.\  159--168. PMLR, 2018.
+
+\bibitem[Anderson(1982)]{anderson1982reverse}
+Brian~DO Anderson.
+\newblock Reverse-time diffusion equation models.
+\newblock \emph{Stochastic Processes and their Applications}, 12\penalty0 (3):\penalty0 313--326, 1982.
+
+\bibitem[Antelmi et~al.(2019)Antelmi, Ayache, Robert, and Lorenzi]{pmlr-v97-antelmi19a}
+Luigi Antelmi, Nicholas Ayache, Philippe Robert, and Marco Lorenzi.
+\newblock Sparse multi-channel variational autoencoder for the joint analysis of heterogeneous data.
+\newblock In Kamalika Chaudhuri and Ruslan Salakhutdinov (eds.), \emph{Proceedings of the 36th International Conference on Machine Learning}, volume~97 of \emph{Proceedings of Machine Learning Research}, pp.\  302--311. PMLR, 09--15 Jun 2019.
+\newblock URL \url{https://proceedings.mlr.press/v97/antelmi19a.html}.
+
+\bibitem[Azizi et~al.(2023)Azizi, Kornblith, Saharia, Norouzi, and Fleet]{azizi2023synthetic}
+Shekoofeh Azizi, Simon Kornblith, Chitwan Saharia, Mohammad Norouzi, and David~J. Fleet.
+\newblock Synthetic data from diffusion models improves imagenet classification, 2023.
+
+\bibitem[Bao et~al.(2023)Bao, Nie, Xue, Li, Pu, Wang, Yue, Cao, Su, and Zhu]{bao2023transformer}
+Fan Bao, Shen Nie, Kaiwen Xue, Chongxuan Li, Shi Pu, Yaole Wang, Gang Yue, Yue Cao, Hang Su, and Jun Zhu.
+\newblock One transformer fits all distributions in multi-modal diffusion at scale, 2023.
+
+\bibitem[Blattmann et~al.(2023)Blattmann, Rombach, Ling, Dockhorn, Kim, Fidler, and Kreis]{blattmann2023align}
+Andreas Blattmann, Robin Rombach, Huan Ling, Tim Dockhorn, Seung~Wook Kim, Sanja Fidler, and Karsten Kreis.
+\newblock Align your latents: High-resolution video synthesis with latent diffusion models, 2023.
+
+\bibitem[Chang et~al.(2023)Chang, Zhang, Barber, Maschinot, Lezama, Jiang, Yang, Murphy, Freeman, Rubinstein, Li, and Krishnan]{chang2023muse}
+Huiwen Chang, Han Zhang, Jarred Barber, AJ~Maschinot, Jose Lezama, Lu~Jiang, Ming-Hsuan Yang, Kevin Murphy, William~T. Freeman, Michael Rubinstein, Yuanzhen Li, and Dilip Krishnan.
+\newblock Muse: Text-to-image generation via masked generative transformers, 2023.
+
+\bibitem[Da~Silva–Filarder et~al.(2021)Da~Silva–Filarder, Ancora, Filippone, and Michiardi]{9680207}
+Matthieu Da~Silva–Filarder, Andrea Ancora, Maurizio Filippone, and Pietro Michiardi.
+\newblock Multimodal variational autoencoders for sensor fusion and cross generation.
+\newblock In \emph{2021 20th IEEE International Conference on Machine Learning and Applications (ICMLA)}, pp.\  1069--1076, 2021.
+\newblock \doi{10.1109/ICMLA52953.2021.00175}.
+
+\bibitem[Daunhawer et~al.(2022)Daunhawer, Sutter, Chin-Cheong, Palumbo, and Vogt]{Daunhawer2021}
+Imant Daunhawer, Thomas~M. Sutter, Kieran Chin-Cheong, Emanuele Palumbo, and Julia~E Vogt.
+\newblock On the limitations of multimodal {VAE}s.
+\newblock In \emph{International Conference on Learning Representations}, 2022.
+\newblock URL \url{https://openreview.net/forum?id=w-CPUXXrAj}.
+
+\bibitem[Dieng et~al.(2019)Dieng, Kim, Rush, and Blei]{dieng2019avoiding}
+Adji~B Dieng, Yoon Kim, Alexander~M Rush, and David~M Blei.
+\newblock Avoiding latent variable collapse with generative skip models.
+\newblock In \emph{The 22nd International Conference on Artificial Intelligence and Statistics}, pp.\  2397--2405. PMLR, 2019.
+
+\bibitem[Dupont et~al.(2022)Dupont, Kim, Eslami, Rezende, and Rosenbaum]{dupont22_fucnta}
+Emilien Dupont, Hyunjik Kim, S.~M.~Ali Eslami, Danilo~Jimenez Rezende, and Dan Rosenbaum.
+\newblock From data to functa: Your data point is a function and you can treat it like one.
+\newblock In Kamalika Chaudhuri, Stefanie Jegelka, Le~Song, Csaba Szepesvari, Gang Niu, and Sivan Sabato (eds.), \emph{Proceedings of the 39th International Conference on Machine Learning}, volume 162 of \emph{Proceedings of Machine Learning Research}, pp.\  5694--5725. PMLR, 17--23 Jul 2022.
+\newblock URL \url{https://proceedings.mlr.press/v162/dupont22a.html}.
+
+\bibitem[Franzese et~al.(2023)Franzese, Rossi, Yang, Finamore, Rossi, Filippone, and Michiardi]{howmuch}
+Giulio Franzese, Simone Rossi, Lixuan Yang, Alessandro Finamore, Dario Rossi, Maurizio Filippone, and Pietro Michiardi.
+\newblock How much is enough? a study on diffusion times in score-based generative models.
+\newblock \emph{Entropy}, 25\penalty0 (4), 2023.
+\newblock ISSN 1099-4300.
+\newblock \doi{10.3390/e25040633}.
+\newblock URL \url{https://www.mdpi.com/1099-4300/25/4/633}.
+
+\bibitem[He et~al.(2023)He, Sun, Yu, Xue, Zhang, Torr, Bai, and QI]{he2023is}
+Ruifei He, Shuyang Sun, Xin Yu, Chuhui Xue, Wenqing Zhang, Philip Torr, Song Bai, and XIAOJUAN QI.
+\newblock {IS} {SYNTHETIC} {DATA} {FROM} {GENERATIVE} {MODELS} {READY} {FOR} {IMAGE} {RECOGNITION}?
+\newblock In \emph{The Eleventh International Conference on Learning Representations}, 2023.
+\newblock URL \url{https://openreview.net/forum?id=nUmCcZ5RKF}.
+
+\bibitem[Hessel et~al.(2021)Hessel, Holtzman, Forbes, Bras, and Choi]{hessel2021clipscore}
+Jack Hessel, Ari Holtzman, Maxwell Forbes, Ronan~Le Bras, and Yejin Choi.
+\newblock Clipscore: A reference-free evaluation metric for image captioning.
+\newblock \emph{arXiv preprint arXiv:2104.08718}, 2021.
+
+\bibitem[Heusel et~al.(2017)Heusel, Ramsauer, Unterthiner, Nessler, and Hochreiter]{fid}
+Martin Heusel, Hubert Ramsauer, Thomas Unterthiner, Bernhard Nessler, and Sepp Hochreiter.
+\newblock Gans trained by a two time-scale update rule converge to a local nash equilibrium.
+\newblock In I.~Guyon, U.~Von Luxburg, S.~Bengio, H.~Wallach, R.~Fergus, S.~Vishwanathan, and R.~Garnett (eds.), \emph{Advances in Neural Information Processing Systems}, volume~30. Curran Associates, Inc., 2017.
+\newblock URL \url{https://proceedings.neurips.cc/paper_files/paper/2017/file/8a1d694707eb0fefe65871369074926d-Paper.pdf}.
+
+\bibitem[Ho \& Salimans(2022)Ho and Salimans]{ho2022classifier}
+Jonathan Ho and Tim Salimans.
+\newblock Classifier-free diffusion guidance.
+\newblock \emph{arXiv preprint arXiv:2207.12598}, 2022.
+
+\bibitem[Ho et~al.(2020)Ho, Jain, and Abbeel]{ho2020denoising}
+Jonathan Ho, Ajay Jain, and Pieter Abbeel.
+\newblock Denoising diffusion probabilistic models.
+\newblock \emph{Advances in Neural Information Processing Systems}, 33:\penalty0 6840--6851, 2020.
+
+\bibitem[Hong et~al.(2023)Hong, Ding, Zheng, Liu, and Tang]{hong2023cogvideo}
+Wenyi Hong, Ming Ding, Wendi Zheng, Xinghan Liu, and Jie Tang.
+\newblock Cogvideo: Large-scale pretraining for text-to-video generation via transformers.
+\newblock In \emph{The Eleventh International Conference on Learning Representations}, 2023.
+\newblock URL \url{https://openreview.net/forum?id=rB6TpjAuSRy}.
+
+\bibitem[Hu et~al.(2023)Hu, Zheng, Yang, Cham, Zheng, Wang, Tao, and Suganthan]{Hu2022}
+Minghui Hu, Chuanxia Zheng, Zuopeng Yang, Tat-Jen Cham, Heliang Zheng, Chaoyue Wang, Dacheng Tao, and Ponnuthurai~N. Suganthan.
+\newblock Unified discrete diffusion for simultaneous vision-language generation.
+\newblock In \emph{The Eleventh International Conference on Learning Representations}, 2023.
+\newblock URL \url{https://openreview.net/forum?id=8JqINxA-2a}.
+
+\bibitem[Huang et~al.(2022)Huang, Mallya, Wang, and Liu]{huang2022eccv}
+Xun Huang, Arun Mallya, Ting-Chun Wang, and Ming-Yu Liu.
+\newblock Multimodal conditional image synthesis with product-of-experts gans.
+\newblock In \emph{Computer Vision – ECCV 2022: 17th European Conference, Tel Aviv, Israel, October 23–27, 2022, Proceedings, Part XVI}, pp.\  91–109, Berlin, Heidelberg, 2022. Springer-Verlag.
+\newblock ISBN 978-3-031-19786-4.
+\newblock \doi{10.1007/978-3-031-19787-1_6}.
+\newblock URL \url{https://doi.org/10.1007/978-3-031-19787-1_6}.
+
+\bibitem[Hwang et~al.(2021)Hwang, Kim, Hong, and Kim]{tcmvaehwang21}
+HyeongJoo Hwang, Geon-Hyeong Kim, Seunghoon Hong, and Kee-Eung Kim.
+\newblock Multi-view representation learning via total correlation objective.
+\newblock \emph{Advances in Neural Information Processing Systems}, 34:\penalty0 12194--12207, 2021.
+
+\bibitem[Javaloy et~al.(2022)Javaloy, Meghdadi, and Valera]{Javaloy2022}
+Adrian Javaloy, Maryam Meghdadi, and Isabel Valera.
+\newblock Mitigating modality collapse in multimodal {VAE}s via impartial optimization.
+\newblock In Kamalika Chaudhuri, Stefanie Jegelka, Le~Song, Csaba Szepesvari, Gang Niu, and Sivan Sabato (eds.), \emph{Proceedings of the 39th International Conference on Machine Learning}, volume 162 of \emph{Proceedings of Machine Learning Research}, pp.\  9938--9964. PMLR, 17--23 Jul 2022.
+\newblock URL \url{https://proceedings.mlr.press/v162/javaloy22a.html}.
+
+\bibitem[Kilgour et~al.(2019)Kilgour, Zuluaga, Roblek, and Sharifi]{fad}
+Kevin Kilgour, Mauricio Zuluaga, Dominik Roblek, and Matthew Sharifi.
+\newblock {Fréchet Audio Distance: A Reference-Free Metric for Evaluating Music Enhancement Algorithms}.
+\newblock In \emph{Proc. Interspeech 2019}, pp.\  2350--2354, 2019.
+\newblock \doi{10.21437/Interspeech.2019-2219}.
+
+\bibitem[Kim et~al.(2022)Kim, Kim, Lee, Yoo, and Lee]{kim2022mutual}
+Jin-Hwa Kim, Yunji Kim, Jiyoung Lee, Kang~Min Yoo, and Sang-Woo Lee.
+\newblock Mutual information divergence: A unified metric for multimodal generative models.
+\newblock \emph{arXiv preprint arXiv:2205.13445}, 2022.
+
+\bibitem[Kingma \& Ba(2014)Kingma and Ba]{kingma2014adam}
+Diederik~P Kingma and Jimmy Ba.
+\newblock Adam: A method for stochastic optimization.
+\newblock \emph{arXiv preprint arXiv:1412.6980}, 2014.
+
+\bibitem[Kingma \& Welling(2014)Kingma and Welling]{kingmaW13vae}
+Diederik~P. Kingma and Max Welling.
+\newblock Auto-encoding variational bayes.
+\newblock In Yoshua Bengio and Yann LeCun (eds.), \emph{2nd International Conference on Learning Representations, {ICLR} 2014, Banff, AB, Canada, April 14-16, 2014, Conference Track Proceedings}, 2014.
+\newblock URL \url{http://arxiv.org/abs/1312.6114}.
+
+\bibitem[Lee et~al.(2019{\natexlab{a}})Lee, Liu, Wu, and Luo]{Lee2019MaskGANTD}
+Cheng-Han Lee, Ziwei Liu, Lingyun Wu, and Ping Luo.
+\newblock Maskgan: Towards diverse and interactive facial image manipulation.
+\newblock \emph{2020 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)}, pp.\  5548--5557, 2019{\natexlab{a}}.
+\newblock URL \url{https://api.semanticscholar.org/CorpusID:198967908}.
+
+\bibitem[Lee et~al.(2019{\natexlab{b}})Lee, Ha, and Kim]{lee2018harmonizing}
+Soochan Lee, Junsoo Ha, and Gunhee Kim.
+\newblock Harmonizing maximum likelihood with {GAN}s for multimodal conditional generation.
+\newblock In \emph{International Conference on Learning Representations}, 2019{\natexlab{b}}.
+\newblock URL \url{https://openreview.net/forum?id=HJxyAjRcFX}.
+
+\bibitem[Loaiza-Ganem et~al.(2022)Loaiza-Ganem, Ross, Cresswell, and Caterini]{loaizadiagnosing}
+Gabriel Loaiza-Ganem, Brendan~Leigh Ross, Jesse~C Cresswell, and Anthony~L. Caterini.
+\newblock Diagnosing and fixing manifold overfitting in deep generative models.
+\newblock \emph{Transactions on Machine Learning Research}, 2022.
+\newblock ISSN 2835-8856.
+\newblock URL \url{https://openreview.net/forum?id=0nEZCVshxS}.
+
+\bibitem[Lugmayr et~al.(2022)Lugmayr, Danelljan, Romero, Yu, Timofte, and Van~Gool]{lugmayr2022repaint}
+Andreas Lugmayr, Martin Danelljan, Andres Romero, Fisher Yu, Radu Timofte, and Luc Van~Gool.
+\newblock Repaint: Inpainting using denoising diffusion probabilistic models.
+\newblock In \emph{Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition}, pp.\  11461--11471, 2022.
+
+\bibitem[Min et~al.(2022)Min, Lyu, Holtzman, Artetxe, Lewis, Hajishirzi, and Zettlemoyer]{min2022rethinking}
+Sewon Min, Xinxi Lyu, Ari Holtzman, Mikel Artetxe, Mike Lewis, Hannaneh Hajishirzi, and Luke Zettlemoyer.
+\newblock Rethinking the role of demonstrations: What makes in-context learning work?, 2022.
+
+\bibitem[Nichol et~al.(2022)Nichol, Dhariwal, Ramesh, Shyam, Mishkin, McGrew, Sutskever, and Chen]{nichol2022glide}
+Alex Nichol, Prafulla Dhariwal, Aditya Ramesh, Pranav Shyam, Pamela Mishkin, Bob McGrew, Ilya Sutskever, and Mark Chen.
+\newblock Glide: Towards photorealistic image generation and editing with text-guided diffusion models, 2022.
+
+\bibitem[Oksendal(2013)]{oksendal2013stochastic}
+Bernt Oksendal.
+\newblock \emph{Stochastic differential equations: an introduction with applications}.
+\newblock Springer Science \& Business Media, 2013.
+
+\bibitem[Palumbo et~al.(2023)Palumbo, Daunhawer, and Vogt]{palumbo2023mmvae}
+Emanuele Palumbo, Imant Daunhawer, and Julia~E Vogt.
+\newblock {MMVAE}+: Enhancing the generative quality of multimodal {VAE}s without compromises.
+\newblock In \emph{The Eleventh International Conference on Learning Representations}, 2023.
+\newblock URL \url{https://openreview.net/forum?id=sdQGxouELX}.
+
+\bibitem[Radford et~al.(2019)Radford, Wu, Child, Luan, Amodei, Sutskever, et~al.]{radford2019language}
+Alec Radford, Jeffrey Wu, Rewon Child, David Luan, Dario Amodei, Ilya Sutskever, et~al.
+\newblock Language models are unsupervised multitask learners.
+\newblock \emph{OpenAI blog}, 1\penalty0 (8):\penalty0 9, 2019.
+
+\bibitem[Radford et~al.(2021)Radford, Kim, Hallacy, Ramesh, Goh, Agarwal, Sastry, Askell, Mishkin, Clark, Krueger, and Sutskever]{radford2021clip}
+Alec Radford, Jong~Wook Kim, Chris Hallacy, Aditya Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sastry, Amanda Askell, Pamela Mishkin, Jack Clark, Gretchen Krueger, and Ilya Sutskever.
+\newblock Learning transferable visual models from natural language supervision.
+\newblock In Marina Meila and Tong Zhang (eds.), \emph{Proceedings of the 38th International Conference on Machine Learning}, volume 139 of \emph{Proceedings of Machine Learning Research}, pp.\  8748--8763. PMLR, 18--24 Jul 2021.
+\newblock URL \url{https://proceedings.mlr.press/v139/radford21a.html}.
+
+\bibitem[Ramesh et~al.(2022)Ramesh, Dhariwal, Nichol, Chu, and Chen]{ramesh2022hierarchical}
+Aditya Ramesh, Prafulla Dhariwal, Alex Nichol, Casey Chu, and Mark Chen.
+\newblock Hierarchical text-conditional image generation with clip latents, 2022.
+
+\bibitem[Rombach et~al.(2022)Rombach, Blattmann, Lorenz, Esser, and Ommer]{Rombach_2022_CVPR}
+Robin Rombach, Andreas Blattmann, Dominik Lorenz, Patrick Esser, and Bj\"orn Ommer.
+\newblock High-resolution image synthesis with latent diffusion models.
+\newblock In \emph{Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)}, pp.\  10684--10695, June 2022.
+
+\bibitem[Ruan et~al.(2023)Ruan, Ma, Yang, He, Liu, Fu, Yuan, Jin, and Guo]{Ruan2022}
+Ludan Ruan, Yiyang Ma, Huan Yang, Huiguo He, Bei Liu, Jianlong Fu, Nicholas~Jing Yuan, Qin Jin, and Baining Guo.
+\newblock Mm-diffusion: Learning multi-modal diffusion models for joint audio and video generation, 2023.
+
+\bibitem[Saharia et~al.(2022)Saharia, Chan, Saxena, Li, Whang, Denton, Ghasemipour, Gontijo-Lopes, Ayan, Salimans, Ho, Fleet, and Norouzi]{saharia2022photorealistic}
+Chitwan Saharia, William Chan, Saurabh Saxena, Lala Li, Jay Whang, Emily Denton, Seyed Kamyar~Seyed Ghasemipour, Raphael Gontijo-Lopes, Burcu~Karagol Ayan, Tim Salimans, Jonathan Ho, David~J. Fleet, and Mohammad Norouzi.
+\newblock Photorealistic text-to-image diffusion models with deep language understanding.
+\newblock In Alice~H. Oh, Alekh Agarwal, Danielle Belgrave, and Kyunghyun Cho (eds.), \emph{Advances in Neural Information Processing Systems}, 2022.
+\newblock URL \url{https://openreview.net/forum?id=08Yk-n5l2Al}.
+
+\bibitem[Sariyildiz et~al.(2023)Sariyildiz, Alahari, Larlus, and Kalantidis]{sariyildiz2023fake}
+Mert~Bulent Sariyildiz, Karteek Alahari, Diane Larlus, and Yannis Kalantidis.
+\newblock Fake it till you make it: Learning transferable representations from synthetic imagenet clones, 2023.
+
+\bibitem[Shi et~al.(2019)Shi, N, Paige, and Torr]{mmvaeShi2019}
+Yuge Shi, Siddharth N, Brooks Paige, and Philip Torr.
+\newblock Variational mixture-of-experts autoencoders for multi-modal deep generative models.
+\newblock In H.~Wallach, H.~Larochelle, A.~Beygelzimer, F.~d\textquotesingle Alch\'{e}-Buc, E.~Fox, and R.~Garnett (eds.), \emph{Advances in Neural Information Processing Systems}, volume~32. Curran Associates, Inc., 2019.
+\newblock URL \url{https://proceedings.neurips.cc/paper_files/paper/2019/file/0ae775a8cb3b499ad1fca944e6f5c836-Paper.pdf}.
+
+\bibitem[Shi et~al.(2021)Shi, Paige, Torr, and N]{contrastShi2020}
+Yuge Shi, Brooks Paige, Philip Torr, and Siddharth N.
+\newblock Relating by contrasting: A data-efficient framework for multimodal generative models.
+\newblock In \emph{International Conference on Learning Representations}, 2021.
+\newblock URL \url{https://openreview.net/forum?id=vhKe9UFbrJo}.
+
+\bibitem[Singer et~al.(2022)Singer, Polyak, Hayes, Yin, An, Zhang, Hu, Yang, Ashual, Gafni, Parikh, Gupta, and Taigman]{singer2022makeavideo}
+Uriel Singer, Adam Polyak, Thomas Hayes, Xi~Yin, Jie An, Songyang Zhang, Qiyuan Hu, Harry Yang, Oron Ashual, Oran Gafni, Devi Parikh, Sonal Gupta, and Yaniv Taigman.
+\newblock Make-a-video: Text-to-video generation without text-video data, 2022.
+
+\bibitem[Sohl-Dickstein et~al.(2015)Sohl-Dickstein, Weiss, Maheswaranathan, and Ganguli]{diff}
+Jascha Sohl-Dickstein, Eric Weiss, Niru Maheswaranathan, and Surya Ganguli.
+\newblock Deep unsupervised learning using nonequilibrium thermodynamics.
+\newblock In Francis Bach and David Blei (eds.), \emph{Proceedings of the 32nd International Conference on Machine Learning}, volume~37 of \emph{Proceedings of Machine Learning Research}, pp.\  2256--2265, Lille, France, 07--09 Jul 2015. PMLR.
+\newblock URL \url{https://proceedings.mlr.press/v37/sohl-dickstein15.html}.
+
+\bibitem[Song \& Ermon(2020)Song and Ermon]{song2020improved}
+Yang Song and Stefano Ermon.
+\newblock Improved techniques for training score-based generative models.
+\newblock In H.~Larochelle, M.~Ranzato, R.~Hadsell, M.F. Balcan, and H.~Lin (eds.), \emph{Advances in Neural Information Processing Systems}, volume~33, pp.\  12438--12448. Curran Associates, Inc., 2020.
+\newblock URL \url{https://proceedings.neurips.cc/paper_files/paper/2020/file/92c3b916311a5517d9290576e3ea37ad-Paper.pdf}.
+
+\bibitem[Song et~al.(2021{\natexlab{a}})Song, Durkan, Murray, and Ermon]{song2021maximum}
+Yang Song, Conor Durkan, Iain Murray, and Stefano Ermon.
+\newblock Maximum likelihood training of score-based diffusion models.
+\newblock \emph{Advances in Neural Information Processing Systems}, 34:\penalty0 1415--1428, 2021{\natexlab{a}}.
+
+\bibitem[Song et~al.(2021{\natexlab{b}})Song, Sohl-Dickstein, Kingma, Kumar, Ermon, and Poole]{Song2020}
+Yang Song, Jascha Sohl-Dickstein, Diederik~P Kingma, Abhishek Kumar, Stefano Ermon, and Ben Poole.
+\newblock Score-based generative modeling through stochastic differential equations.
+\newblock In \emph{International Conference on Learning Representations}, 2021{\natexlab{b}}.
+\newblock URL \url{https://openreview.net/forum?id=PxTIG12RRHS}.
+
+\bibitem[Sutter et~al.(2020)Sutter, Daunhawer, and Vogt]{jsdSutter2020}
+Thomas~M. Sutter, Imant Daunhawer, and Julia~E. Vogt.
+\newblock Multimodal generative learning utilizing jensen-shannon-divergence.
+\newblock \emph{CoRR}, abs/2006.08242, 2020.
+\newblock URL \url{https://arxiv.org/abs/2006.08242}.
+
+\bibitem[Sutter et~al.(2021)Sutter, Daunhawer, and Vogt]{sutter2021generalized}
+Thomas~M. Sutter, Imant Daunhawer, and Julia~E Vogt.
+\newblock Generalized multimodal {ELBO}.
+\newblock In \emph{International Conference on Learning Representations}, 2021.
+\newblock URL \url{https://openreview.net/forum?id=5Y21V0RDBV}.
+
+\bibitem[Tang et~al.(2023)Tang, Yang, Zhu, Zeng, and Bansal]{tang2023anytoany}
+Zineng Tang, Ziyi Yang, Chenguang Zhu, Michael Zeng, and Mohit Bansal.
+\newblock Any-to-any generation via composable diffusion, 2023.
+
+\bibitem[Tao et~al.(2022)Tao, Tang, Wu, Jing, Bao, and Xu]{tao2022dfgan}
+Ming Tao, Hao Tang, Fei Wu, Xiao-Yuan Jing, Bing-Kun Bao, and Changsheng Xu.
+\newblock Df-gan: A simple and effective baseline for text-to-image synthesis, 2022.
+
+\bibitem[Tran et~al.(2021)Tran, Rossi, Milios, Michiardi, Bonilla, and Filippone]{tran2021model}
+Ba-Hien Tran, Simone Rossi, Dimitrios Milios, Pietro Michiardi, Edwin~V Bonilla, and Maurizio Filippone.
+\newblock Model selection for bayesian autoencoders.
+\newblock \emph{Advances in Neural Information Processing Systems}, 34:\penalty0 19730--19742, 2021.
+
+\bibitem[Tran et~al.(2017)Tran, Liu, Zhou, and Jin]{Tran_2017_CVPR}
+Luan Tran, Xiaoming Liu, Jiayu Zhou, and Rong Jin.
+\newblock Missing modalities imputation via cascaded residual autoencoder.
+\newblock In \emph{Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR)}, July 2017.
+
+\bibitem[Vahdat et~al.(2021)Vahdat, Kreis, and Kautz]{Vahdat2021}
+Arash Vahdat, Karsten Kreis, and Jan Kautz.
+\newblock Score-based generative modeling in latent space.
+\newblock In A.~Beygelzimer, Y.~Dauphin, P.~Liang, and J.~Wortman Vaughan (eds.), \emph{Advances in Neural Information Processing Systems}, 2021.
+\newblock URL \url{https://openreview.net/forum?id=P9TYG0j-wtG}.
+
+\bibitem[Vasco et~al.(2022)Vasco, Yin, Melo, and Paiva]{Vasco2022}
+Miguel Vasco, Hang Yin, Francisco~S. Melo, and Ana Paiva.
+\newblock Leveraging hierarchy in multimodal generative models for effective cross-modality inference.
+\newblock \emph{Neural Networks}, 146:\penalty0 238--255, 2 2022.
+\newblock ISSN 18792782.
+\newblock \doi{10.1016/j.neunet.2021.11.019}.
+
+\bibitem[Vinay \& Lerch(2022)Vinay and Lerch]{audiomet}
+Ashvala Vinay and Alexander Lerch.
+\newblock Evaluating generative audio systems and their metrics.
+\newblock \emph{arXiv preprint arXiv:2209.00130}, 2022.
+
+\bibitem[Wah et~al.(2011)Wah, Branson, Welinder, Perona, and Belongie]{wah2011caltech}
+Catherine Wah, Steve Branson, Peter Welinder, Pietro Perona, and Serge Belongie.
+\newblock The caltech-ucsd birds-200-2011 dataset.
+\newblock 2011.
+
+\bibitem[Wesego \& Rooshenas(2023)Wesego and Rooshenas]{wesego2023scorebased}
+Daniel Wesego and Amirmohammad Rooshenas.
+\newblock Score-based multimodal autoencoders, 2023.
+
+\bibitem[Wu et~al.(2022)Wu, Liu, Hao, He, and Cheng]{Wu_2022_CVPR}
+Fuxiang Wu, Liu Liu, Fusheng Hao, Fengxiang He, and Jun Cheng.
+\newblock Text-to-image synthesis based on object-guided joint-decoding transformer.
+\newblock In \emph{Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)}, pp.\  18113--18122, June 2022.
+
+\bibitem[Wu \& Goodman(2018)Wu and Goodman]{mvaeWu2018}
+Mike Wu and Noah Goodman.
+\newblock Multimodal generative models for scalable weakly-supervised learning.
+\newblock In S.~Bengio, H.~Wallach, H.~Larochelle, K.~Grauman, N.~Cesa-Bianchi, and R.~Garnett (eds.), \emph{Advances in Neural Information Processing Systems}, volume~31. Curran Associates, Inc., 2018.
+\newblock URL \url{https://proceedings.neurips.cc/paper_files/paper/2018/file/1102a326d5f7c9e04fc3c89d0ede88c9-Paper.pdf}.
+
+\bibitem[Wu et~al.(2023)Wu, Fei, Qu, Ji, and Chua]{wu2023nextgpt}
+Shengqiong Wu, Hao Fei, Leigang Qu, Wei Ji, and Tat-Seng Chua.
+\newblock Next-gpt: Any-to-any multimodal llm, 2023.
+
+\bibitem[Xie et~al.(2022)Xie, Raghunathan, Liang, and Ma]{xie2022an}
+Sang~Michael Xie, Aditi Raghunathan, Percy Liang, and Tengyu Ma.
+\newblock An explanation of in-context learning as implicit bayesian inference.
+\newblock In \emph{International Conference on Learning Representations}, 2022.
+\newblock URL \url{https://openreview.net/forum?id=RdJVFCHjUMI}.
+
+\bibitem[Zhang et~al.(2023)Zhang, Peng, Wang, Song, Li, and Zhou]{zhang2023unified}
+Yue Zhang, Chengtao Peng, Qiuli Wang, Dan Song, Kaiyan Li, and S.~Kevin Zhou.
+\newblock Unified multi-modal image synthesis for missing modality imputation, 2023.
+
+\end{thebibliography}

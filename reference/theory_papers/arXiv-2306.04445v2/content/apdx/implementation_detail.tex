@@ -1,0 +1,83 @@
+
+We report in this section the implementation details for each benchmark. We used the same unified code-base for all the baselines, using the \textit{PyTorch} framework. The \gls{VAE} implementation is adapted from the official code whenever it's available (\gls{MVAE}, \gls{MMVAE} and \gls{MOPOE} as in \footnote{\url{https://github.com/thomassutter/MoPoE}}, \gls{MVTCAE} \footnote{\url{https://github.com/gr8joo/MVTCAE}} and \gls{NEXUS}\footnote{\url{https://github.com/miguelsvasco/nexus_pytorch}} ). For fairness, \gls{MLD} and all the \gls{VAE}-based models use the same autoencoder architecture. We use the best hyper-parameters suggested by the authors. Across all the data-sets, we use the \textit{Adam optimizer} \cite{kingma2014adam} for training.
+
+\subsection{MLD}
+\gls{MLD} uses the same autoencoders architecture used for \gls{VAE}-based models, except that these are deterministic autoencoders. The autoencoders are trained using the same reconstruction loss term as for the \gls{VAE}-based models. \Cref{table:mld_ae_implementation} and \Cref{table:mld_score_hyper} summarize the hyper-parameters used during the two phases of \gls{MLD} training.
+Note that for the image modality in the \cub dataset, to overcome over-fitting in training the deterministic autoencoder, data augmentation was necessary (we used \textit{TrivialAugmentWide} from the Torchvision library). 
+
+\begin{table}[h]
+\caption{\gls{MLD}: The deterministic autoencoders hyper-parameters}
+\centering
+\begin{tabular}{l|ccccccccc}
+\toprule
+Dataset & Modality & Latent space & Batch size & Lr & Epochs & Weight decay    \\
+\midrule 
+\multirow{2}{*}{ \textbf{\mnist-\svhn} }
+& \mnist & 16 &  \multirow{2}{*}{ 128 } & \multirow{2}{*}{ 1e-3 } & \multirow{2}{*}{ 150 }   \\
+& \svhn & 64 &  \\\midrule
+\multirow{3}{*}{ \textbf{\mhd} }
+& Image & 64 &\multirow{3}{*}{ 64 } & \multirow{3}{*}{ 1e-3 } & \multirow{3}{*}{ 500 }\\
+& Trajectory & 16   \\
+& Sound & 128   \\ \midrule
+\multirow{1}{*}{ \textbf{\polymnist} }
+& All modalities & 160 & 128 & 1e-3  &300 \\ \midrule
+\multirow{2}{*}{ \textbf{\cub} } 
+& Caption & 32 & \multirow{2}{*}{ 128 } & 1e-3 & 500 \\
+& Image  & 64 &  & 1e-4 &  300 & 1e-6   \\
+\midrule
+\multirow{3}{*}{ \textbf{CelebAMask-HQ} }
+& Image & 256 &\multirow{3}{*}{ 64 } & \multirow{3}{*}{ 1e-3 } & \multirow{3}{*}{ 200 }\\
+& Mask & 128   \\
+& Attributes & 32  \\
+
+
+\bottomrule
+\end{tabular}
+\label{table:mld_ae_implementation}
+\end{table}
+
+
+
+\begin{table}[h]
+\caption{\gls{MLD}: The score network hyper-parameters}
+\centering
+\begin{tabular}{l|ccccccccc}
+\toprule
+Dataset & $ d $ &  Blocks & Width &Time embed & Batch size & Lr & Epochs  \\
+\midrule 
+\textbf{\mnist-\svhn}& 0.5  & 2 & 512 &256& 128 &  \multirow{4}{*}{ 1e-4 } & 150   \\
+\textbf{\mhd}& 0.3  & 2 & 1024 & 512 &128&  & 3000   \\
+\textbf{\polymnist}& 0.5  & 2 & 1536 &512 &256&  & 3000   \\
+\textbf{\cub}& 0.7 & 2 & 1024 & 512 &64&  & 3000   \\
+\textbf{CelebAMask-HQ}& 0.5 & 2 & 1536 & 512 &64&  & 3000   \\
+\bottomrule
+\end{tabular}
+\label{table:mld_score_hyper}
+\end{table}
+
+\subsection{VAE-based models}
+For \textbf{\mnist-\svhn}, we follow \cite{sutter2021generalized,mmvaeShi2019} and use the same autoencoder architecture and pre-trained classifier.The latent space size is set to $20$, $\beta = 5.0 $. For \gls{MVTCAE} $\alpha = \frac{5}{6} $. For both modalities, the likelihood is estimated using Laplace distribution.
+For \gls{NEXUS}, we use the same modalities latent space sizes as in \gls{MLD}, the joint \gls{NEXUS} latent space is set to $20$, $\beta_i = 1.0 $ and $\beta_c = 5.0$. We train all the \gls{VAE}-models for $150$ epochs with $256$ batch size and learning rate of $1e-3$.
+
+
+For \textbf{\mhd}, we reuse the autoencoders architecture and pre-trained classifier of \cite{Vasco2022}. We adopt the hyper-parameters of \cite{Vasco2022} to train \gls{NEXUS} model with the same settings, besides discarding the label modality. For the remaining \gls{VAE}-based models, the latent space size is set to $128$, $\beta = 1.0 $ and $\alpha = \frac{5}{6} $ for \gls{MVTCAE}. For all the modalities, \gls{MSE} is used to compute the reconstruction loss, similar to \cite{Vasco2022}. These models are trained for $600$ epochs with  $128$ batch size and learning rate of $1e-3$.
+
+
+
+For \textbf{\polymnist}, we use the same autoencoders architecture and pretrained classifier used by \cite{sutter2021generalized, tcmvaehwang21}.
+We set the latent space size to $512$, $\beta = 2.5 $ and $\alpha = \frac{5}{6} $ for \gls{MVTCAE}. For all the modalities, the likelihood is estimated using Laplace distribution. For \gls{NEXUS}, we use the same modality latent space size as in \gls{MLD}, the joint \gls{NEXUS} latent space to $64$, $\beta_i = 1.0 $ and $\beta_c = 2.5$. We train all the models for $300$ epochs with $256$ batch size and learning rate of $1e-3$.
+
+
+For \textbf{\cub}, we use the same autoencoders architecture and implementation settings as in \cite{Daunhawer2021}. Laplace and one-hot categorical distributions are used to estimate likelihoods of the image and caption modalities respectively. The latent space size is set to $64$, $\beta = 9.0 $ for \gls{MVAE}, \gls{MVTCAE} and \gls{MOPOE} and $\beta =1$ for \gls{MMVAE}. We set $\alpha = \frac{5}{6} $ for \gls{MVTCAE}.
+For \gls{NEXUS}, we use the same modalities latent space sizes as in \gls{MLD}, the joint \gls{NEXUS} latent space is set to $64$, $\beta_i = 1.0 $ and $\beta_c = 1$. We train all the models for $150$ epochs with $64$ batch size, with learning rate of $5e-4$ for \gls{MVAE}, \gls{MVTCAE} and \gls{MOPOE} and $1e-3$ for the remaining models.
+
+Finally, note that in the official implementation of \cite{sutter2021generalized} and \cite{tcmvaehwang21}, for the \textbf{\polymnist} and \textbf{\mnist-\svhn} data-sets, the classifiers were used for evaluation using dropout. In our implementation, we make sure to deactivate dropout during evaluation step.
+
+\subsection{MLD with powerfull autoencoder}
+
+Here we provide more detail about the CUB experiment using 
+ more powerful autoencoder denoted \gls{MLD}* in \Cref{cap_image_cub}. We use an architecture similar to \cite{Rombach_2022_CVPR} adapted to (64X64) resolution images. We modified the autoencoder architecture to be deterministic and train the model with a simple Mean square error loss. We kept the same configuration of the CUB experiment described in the previous experiment on the same dataset including the text autoencoder, score network and hyper-parameters. 
+We also perform experiments with the same settings on (128X128) resolution images. We included the qualitative results in \cref{cub128}.
+
+\subsection{Computation Resources}
+In our experiments, we used 4 A100 GPUs, for a total of roughly 4 months of experiments.

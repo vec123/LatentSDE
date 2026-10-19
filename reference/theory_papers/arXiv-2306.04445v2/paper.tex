@@ -1,0 +1,86 @@
+
+\documentclass{article}
+
+\usepackage{iclr2024_conference}
+\usepackage{times}
+\iclrfinalcopy
+
+
+\usepackage{hyperref}
+\usepackage{url}
+
+\usepackage{amsmath}
+\usepackage{tikz}
+\usetikzlibrary{fit}
+\usetikzlibrary{shapes,arrows}
+\usetikzlibrary{arrows,calc,positioning}
+\usepackage{algorithmic}
+\usepackage{nicefrac} 
+\usepackage{comment}
+\usepackage{mathtools}
+
+\input{config/packages2.tex}
+\input{config/acronyms.tex}
+\input{config/math.tex}
+% \usepackage{cleveref}
+\usepackage{algorithm2e}
+\RestyleAlgo{ruled} 
+\usepackage{dsfont}
+
+
+
+\title{Multi-modal Latent Diffusion}
+
+
+\author{Mustapha Bounoua  \\\small{Renault Software Factory}:
+ \\ \small{Department of Data Science}
+  \\ \small{EURECOM, France}  \\ \small{\texttt{bounoua@eurecom.fr}}  \And
+	 Giulio Franzese \\ \small{Department of Data Science} \\
+  \small{EURECOM, France} \And
+	 Pietro Michiardi \\ \small{Department of Data Science }
+  \\ \small{EURECOM, France}
+}
+
+\newcommand{\fix}{\marginpar{FIX}}
+\newcommand{\new}{\marginpar{NEW}}
+
+
+\begin{document}
+
+
+\maketitle
+
+\begin{abstract}
+\input{content/abstract.tex}
+\end{abstract}
+
+\section{Introduction}\label{sec:introduction}
+\input{content/introduction.tex}
+\section{Limitations of Multi-modal VAEs}\label{sec:motivation}
+\input{content/motivation.tex}
+
+\section{Our Approach: Multi-modal Latent Diffusion}\label{sec:method}
+\input{content/section_3}
+
+\section{Guidance Mechanisms to Learn the Conditional Score Network}\label{sec:mld_var}
+\input{content/section_4}
+
+\section{Experiments}\label{sec:experiments}
+\label{sec:exp}
+\input{content/experiments}
+
+\section{Conclusion and Limitations}\label{sec:conclusion}
+\input{content/conclusions}
+
+
+\bibliography{paper.bib}
+\bibliographystyle{iclr2024_conference}
+
+\appendix
+
+\newpage
+\section{Appendix}\label{sec:apdx}
+\input{content/apdx}
+
+
+\end{document}
