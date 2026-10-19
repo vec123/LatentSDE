@@ -1,0 +1,571 @@
+\section{Background on variational inference for latent SDEs}\label{app:sec:background}
+
+In this section, we provide background on variational inference for latent SDEs. 
+First, in \Cref{app:subsec:assumptions} we describe our formal assumptions necessary for the probabilistic model and variational inference objective to be well-posed.   
+In \Cref{app:subsec:elbo} we derive the evidence lower bound (ELBO) on the observed data log likelihood.
+In \Cref{app:subsec:div-free} we provide further discussion of divergence-free vector fields and prove \Cref{prop:div_free}.
+In \Cref{app:subsec:gaussian} we characterize the affine divergence-free vector fields for Gaussian one-time marginals (\Cref{app:prop:gaussian-compatible-drift}).
+We conclude in \Cref{app:subsec:svise-sde-compare} by discussing two simulation-free VI algorithms, SVISE (\citet{course2023state, course2023amortized}) and SDE Matching (\citet{bartosh2025sde}). For each algorithm we derive the choice of posterior drift and discuss how this choice relates to Helmholtz-SDE.
+
+For full generality, we allow the prior drift $\mbf_p$ to be time-dependent and for the diffusion coefficient $\mbSigma$ to be both space- and time-dependent.
+
+\subsection{Technical Assumptions}\label{app:subsec:assumptions}
+ 
+In this subsection, we detail our formal assumptions on the prior \eqref{eqn:prior_sde} and posterior \eqref{eqn:variational_family} processes. 
+The assumptions are stated abstractly here and are verified for the variational family considered by Helmholtz-SDE in \Cref{app:subsec:verify-assumptions}.
+They are required for every admissible choice of model parameters $\mbtheta$ and variational parameters $\mbphi$.  
+Here, $\mbf_q$ denotes the \emph{full} posterior drift in \cref{eqn:variational_family}; for Helmholtz-SDE, this is the sum of the reference drift and the Helmholtz correction.
+
+\paragraph{Existence and uniqueness.}
+We first require that the prior and posterior SDEs, \cref{eqn:prior_sde} and \cref{eqn:variational_family}, respectively, admit unique strong solutions.
+ 
+\begin{assumption}[SDE existence and uniqueness]\label{app:assum:regularity}
+The prior and posterior SDEs admit unique strong solutions on $[0,T]$.
+\end{assumption}
+
+For the prior SDE, we follow the classical route of imposing Lipschitz continuity and linear growth on the drift and diffusion coefficient (see, e.g., \citet[Theorem 5.2.1]{oksendal2013stochastic}): there exist constants $C_1, C_2 > 0$ such that for all $\mbx, \mby \in \bbR^K$ and $t \in [0, T]$
+\begin{equation*}
+\begin{aligned}
+    &\|\mbf_p(\mbx,t)- \mbf_p(\mby,t)\|_2 + \| \mbSigma(\mbx, t)^{1/2} -  \mbSigma(\mby, t)^{1/2} \|_F \leq  C_1\|\mbx - \mby\|_2, \quad &\text{(Lipschitz)}\\ 
+    &\|\mbf_p(\mbx,t)\|_2 + \|\mbSigma(\mbx, t)^{1/2}\|_F \leq  C_2(1+\|\mbx\|_2). \quad &\text{(linear growth)}
+\end{aligned}
+\end{equation*}
+For example, if $\mbf_p$ is a neural network that takes as input $\mbx$ and $t$, then Lipschitz continuity and linear growth can be ensured by restricting the operator norm of the weight matrices and choosing (globally) Lipschitz activation functions. 
+
+For the posterior SDE, the polynomial approximation to the Helmholtz correction will not satisfy linear growth when the polynomial degree is $\ell > 1$.
+We will therefore pursue an alternate route to ensure existence and uniqueness.
+
+\paragraph{Densities.}
+We additionally require that, for every $0 \leq t \leq T$, the one-time marginals of $\bbP$ and of any $\bbQ \in \cQ$ are absolutely continuous with respect to the $K$-dimensional Lebesgue measure. The corresponding densities are written as $\{p(\mbx, t)\}_{0 \leq t \leq T}$ and $\{q(\mbx, t)\}_{0 \leq t \leq T}$, respectively. 
+ 
+\begin{assumption}[Marginal densities]\label{app:assum:densities}
+For every $t\in[0,T]$, the one-time marginals of $\bbP$ and $\bbQ$ admit Lebesgue densities.
+Moreover, $\mbSigma(\mbx,t)$ is positive-definite for all $(\mbx,t)\in\bbR^K\times[0,T]$.
+\end{assumption}
+ 
+\paragraph{Absolute continuity.}
+In order for the upper bound to the negative marginal log likelihood (negative ELBO) to be well-defined, we need the approximate posterior SDE $\bbQ \in \cQ$ to possess a probability density with respect to the prior $\bbP$ and for the KL divergence between $\bbQ$ and $\bbP$ to be finite. 
+These two requirements are the subjects of the following two assumptions.
+ 
+\begin{assumption}[Absolute continuity]\label{app:ass:path-ac}
+The posterior SDE \cref{eqn:variational_family} admits a probability density $d\bbQ/d\bbP(\mbx)$ with respect to the prior SDE.
+\end{assumption}
+
+\begin{assumption}[Finite relative entropy]\label{app:ass:finite-kl}
+   The initial distributions satisfy
+   \begin{equation*}
+       \KL{q(\mbx,0)}{p(\mbx,0)}<\infty
+   \end{equation*}
+    and the difference between the prior and posterior drifts satisfies
+    \begin{equation*}
+        \int_0^{T} \bbE_{\bbQ}\| \mbSigma(\mbx(t), t)^{-1/2}\{\mbf_p(\mbx(t),t) -  \mbf_q(\mbx(t), t)\}\|_2^2 dt < \infty.
+    \end{equation*}
+\end{assumption}
+ 
+
+Under these assumptions, we can obtain an expression for the probability density of $\bbQ$ with respect to $\bbP$ via Girsanov's theorem (see e.g., \citet[Corollary 3.5.13]{karatzas2014brownian}).
+\begin{theorem}[Girsanov's theorem for SDEs]\label{app:thm:girsanov}
+Suppose \Cref{app:assum:regularity,app:assum:densities,app:ass:path-ac,app:ass:finite-kl} hold. Then the probability density of $\bbQ \in \cQ$ with respect to $\bbP$ is
+{\small
+\begin{equation*}
+\begin{aligned}
+&\frac{d \bbQ}{d \bbP}(\mbx) = \frac{ q(\mbx, 0)}{p(\mbx, 0)}\exp\left\{ \int_0^{T} \sum_{i=1}^{K} \left[\mbSigma^{-1/2} \mbb(\mbx(t), t)\right]_i d\mbw_i(t) - \frac{1}{2} \int_0^{T} \sum_{i=1}^{K} \left[\mbSigma^{-1/2} \mbb(\mbx(t), t)\right]_i^2 dt \right\},\\
+&\mbb(\mbx, t) = \mbf_q(\mbx, t) - \mbf_p(\mbx, t),
+\end{aligned}
+\end{equation*}
+}
+where $(\mbw(t))_{0 \leq t \leq T}$ is a $K$-dimensional Brownian motion with respect to $\bbP$. 
+
+\smallskip
+In particular, for any bounded, measurable function $\Phi$ defined on $K$-dimensional continuous functions $\mbx$ having domain $[0, T]$,
+\begin{equation*}
+    \bbE_{\bbQ}[\Phi(\mbx)] = \bbE_{\bbP}\left[\Phi(\mbx) \frac{d \bbQ}{d \bbP}(\mbx) \right].
+\end{equation*}
+\end{theorem}
+
+As a direct corollary of \Cref{app:thm:girsanov}, we obtain an expression for the KL divergence between the posterior and prior
+{\small
+\begin{align}
+    &\KL{\bbQ}{\bbP} = \bbE_{\bbQ}\left[\log\left(\frac{d\bbQ}{d\bbP}(\mbx)\right)\right]\nonumber\\
+    &= \KL{q(\mbx, 0)}{p(\mbx, 0)} + \frac{1}{2} \int_0^{T} \bbE_{\bbQ}\| \mbSigma(\mbx(t), t)^{-1/2}\{\mbf_p(\mbx(t),t) -  \mbf_q(\mbx(t), t)\}\|_2^2 dt. \label{app:eqn:path-kl}
+\end{align}
+}
+The stochastic integral term vanishes because it is a mean-zero martingale.
+
+\paragraph{Fokker-Planck equation.}
+For a drift $\mbf$ and initial density $\rho(\mbx,0)$, we call $\{\rho(\mbx,t)\}_{0\leq t\leq T}$ a \emph{weak solution} to the Fokker--Planck equation if for every infinitely differentiable function $\varphi: \bbR^K \to \bbR$  having compact support,
+\begin{equation*}
+    t \longmapsto \int \varphi(\mbx)\rho(d\mbx, t)
+\end{equation*}
+is absolutely continuous and 
+\begin{equation}\label{app:eqn:fpk-weak}
+    \frac{d}{dt} \int \varphi(\mbx) \rho(d\mbx, t) = \int\left( \mbf(\mbx, t) \cdot \nabla_{\mbx} \varphi(\mbx) + \frac{1}{2} \mathrm{tr}(\mbSigma(\mbx, t) \nabla_{\mbx}^2 \varphi(\mbx)) \right) \rho(d\mbx, t), \quad \text{a.e.~$t$}.
+    \end{equation}
+
+Since $\bbQ \in \cQ$ is a solution to the SDE \cref{eqn:variational_family},  we know that $\{q(\mbx, t)\}_{0 \leq t \leq T}$ is a weak Fokker--Planck solution.
+However, in order to argue that two variational SDEs whose drifts differ by a divergence-free vector field induce the same marginals, we need the solution to the Fokker--Planck equation to be unique within a suitable regularity class.
+    
+\begin{assumption}[Uniqueness of the Fokker--Planck solution]\label{app:ass:fpk-unique}
+For every member $\bbQ \in \cQ$ of the variational family having drift $\mbf_q$, the marginal densities belong to the class
+\begin{equation}\label{app:eqn:fpk-regularity-class}
+        \int_0^T\int \left( \|\mbf_q(\mbx,t)\|_2 + \|\mbSigma(\mbx,t)\|_F \right) \rho(d\mbx,t) dt <\infty.
+\end{equation}
+The associated weak Fokker--Planck equation with initial law $q(\mbx, 0)$ has at most one solution belonging to the class \cref{app:eqn:fpk-regularity-class}.
+\end{assumption}
+    
+\subsection{ELBO derivation}\label{app:subsec:elbo}
+In this subsection, we derive the evidence lower bound (ELBO) in the latent SDE model. 
+
+Adopting the notation from \Cref{app:thm:girsanov}, we have
+\begin{equation*}
+\begin{aligned}
+    &\log p(\mby) = \log \int p(\mby | \mbx) \bbP(d\mbx)\\
+    &= \log \int p(\mby | \mbx) \frac{d \bbP(\mbx)}{d \bbQ(\mbx)} \bbQ(d\mbx)\\
+    &\overset{(i)}{\geq}  \int \log \left( p(\mby | \mbx)  \frac{d \bbP(\mbx)}{d \bbQ(\mbx)} \right) \bbQ(d\mbx)
+    \\
+    &= \bbE_{\bbQ}[\log p(\mby | \mbx)] - \KL{\bbQ}{\bbP}\\
+    &\overset{(ii)}{=} \bbE_{\bbQ}[\log p(\mby | \mbx)] - \KL{q(\mbx, 0)}{p(\mbx, 0)} - \frac{1}{2} \int_0^{T} \bbE_{\bbQ}\| \mbSigma^{-1/2}\{\mbf_p(\mbx(t),t) -  \mbf_q(\mbx(t),t)\}\|_2^2 dt.
+\end{aligned}
+\end{equation*}
+Equality (i) is an application of Jensen's inequality and equality (ii) is an application of Girsanov's theorem. Taking the negative of this expression yields the negative ELBO \cref{eqn:elbo}. 
+
+Notice that each term in the negative ELBO depends both on the parameters of the generative model $\mbtheta$ and on the parameters of the variational posterior $\mbphi$.
+
+\subsection{Divergence-free vector fields}\label{app:subsec:div-free}
+In this subsection, we discuss the role of $q$-divergence-free vector fields in determining the expressivity of the variational family $\cQ$. We prove \Cref{prop:div_free}, which characterizes the non-uniqueness in path law that arises from marginal-based parameterizations of the variational posterior.
+
+In \cref{eqn:fpk}, the Fokker-Planck equation is stated as a pointwise equality for $(\mbx, t) \in \bbR^K \times [0, T]$; this is only valid under regularity assumptions on the posterior SDE beyond those in \Cref{app:subsec:assumptions}.
+Still, we can state the divergence-free condition in its \emph{weak form}, i.e., using the weak form of the Fokker--Planck equation \cref{app:eqn:fpk-weak}
+\begin{equation}\label{app:eqn:div-free-weak}
+    \int \mbv(\mbx, t) \cdot \nabla_{\mbx} \varphi(\mbx)  q( d\mbx, t)  = 0 \quad \text{a.e.~$t$}
+\end{equation}
+for all infinitely differentiable test functions $\varphi$ having compact support. Indeed, if $\mbv(\mbx, t)$ and $q(\mbx, t)$ are smooth then integration by parts implies
+\begin{equation*}
+    0 = \int \mbv(\mbx, t) \cdot \nabla_{\mbx} \varphi(\mbx)  q(d\mbx, t) = - \int \nabla_{\mbx} \cdot[ q( \mbx, t) \mbv(\mbx, t)] \varphi(\mbx)  d \mbx \quad \text{a.e.~$t$}
+\end{equation*}
+for all test functions $\varphi$. By Fubini's theorem, this implies $\nabla \cdot[ q( \mbx, t) \mbv(\mbx, t)] = 0$ a.e.~$(\mbx, t)$.
+
+Having stated the weak divergence-free condition, we are prepared to prove \Cref{prop:div_free}, which states that among diffusion processes having a shared diffusion coefficient $\mbSigma^{1/2}$, the only degree of freedom is the choice of divergence-free vector field.
+
+\begin{proof}[Proof of \Cref{prop:div_free}]
+Let $\bbQ,\widetilde{\bbQ}\in\cQ$ have drifts $\mbf$ and
+$\widetilde{\mbf}$, respectively, common diffusion coefficient
+$\mbSigma^{1/2}$, and common initial marginal density $q(\mbx,0)$.
+Let $\{q(\mbx,t)\}_{0\leq t\leq T}$ denote the marginal densities of
+$\bbQ$.
+
+Suppose first that $\bbQ$ and $\widetilde{\bbQ}$ have the same one-time marginals. 
+Since these common marginals solve the weak Fokker--Planck equation for both drifts, and the diffusion coefficients are equal, subtracting the two equations gives
+\begin{equation}\label{app:eqn:div-free-weak-diff}
+    \int \left(\mbf(\mbx,t)-\widetilde{\mbf}(\mbx,t)\right) \cdot\nabla\varphi(\mbx) q(d\mbx,t) =0, \qquad\text{a.e.~$t$},
+\end{equation}
+for every test function $\varphi$. This is precisely the statement that $\mbf-\widetilde{\mbf}$ is $q$-divergence-free.
+
+Conversely, suppose that $\mbf-\widetilde{\mbf}$ is $q$-divergence-free. 
+Since $q$ solves the weak Fokker--Planck equation associated with $\mbf$, \cref{app:eqn:div-free-weak-diff} implies that it also solves the weak Fokker--Planck equation associated with $\widetilde{\mbf}$ and the same initial density. 
+By \Cref{app:ass:fpk-unique}, this solution is unique. 
+It therefore coincides with the marginal densities of $\widetilde{\bbQ}$, so $\bbQ$ and $\widetilde{\bbQ}$ have the same one-time marginals.
+\end{proof}
+
+There are also diffusion processes with different diffusion coefficients that share the same one-time marginals. This fact is leveraged by \citet{bartosh2025sde} to learn the shared prior and posterior diffusion coefficient. 
+However, for a fixed prior SDE \cref{eqn:prior_sde}, the diffusion coefficient of the posterior \cref{eqn:variational_family} must be equal to that of the prior. 
+This is because, by Girsanov's theorem (\Cref{app:thm:girsanov}), diffusion processes whose diffusion coefficients differ are generally not mutually absolutely continuous. 
+In other words, the diffusion coefficient must be viewed as a parameter of the generative model, rather than a degree of freedom in the posterior process. 
+On the other hand, any two diffusion processes with shared diffusion coefficient will be mutually absolutely continuous.
+
+\subsection{Gaussian one-time marginals}
+\label{app:subsec:gaussian}
+
+In the case of Gaussian one-time marginals, the non-uniqueness of the path law described in \Cref{app:subsec:div-free} can be made explicit. In this subsection, we provide a characterization of the affine vector fields that are $q$-divergence free.
+
+Let $(\mbm(t),\mbS(t))_{0\leq t\leq T}$ be continuously differentiable and $\mbS(t)$ be positive definite. 
+For a matrix-valued function $\mbK(t)$, define the affine velocity field
+\begin{equation}\label{eq:gaussian-affine-velocity}
+    \mbv_{\mbK}(\mbx,t) = \frac{d}{d t}\mbm(t) + \mbK(t)(\mbx- \mbm(t)).
+\end{equation}
+And consider the SDE having diffusion coefficient $\mbSigma(\mbx,t)^{1/2}$ and drift
+\begin{equation}\label{app:eq:gaussian-compatible-drift}
+\begin{aligned}
+    &\mbf_{q}(\mbx,t) = \mbv_{\mbK}(\mbx,t) + \frac{1}{2}\mbSigma(\mbx,t)\nabla_{\mbx}\log q(\mbx,t) + \frac{1}{2}\sum_j \partial_{x_j}\mbSigma_{\cdot,j}(\mbx,t)\\
+    &= \frac{d}{dt}\mbm(t) + \mbK(t)(\mbx-\mbm(t)) - \frac{1}{2}\mbSigma(\mbx,t)\mbS(t)^{-1}(\mbx-\mbm(t)) + \frac{1}{2}\sum_j \partial_{x_j}\mbSigma_{\cdot,j}(\mbx,t).
+\end{aligned}
+\end{equation}
+
+In \Cref{app:prop:gaussian-compatible-drift}, we characterize the choices of $\mbK(t)$ for which this SDE produces one-time marginals $q(\mbx,t) = \cN(\mbm(t),\mbS(t))$. 
+\begin{proposition}
+\label{app:prop:gaussian-compatible-drift}
+Fix any continuously differentiable square-root factorization $\mbL(t)$ satisfying
+$\mbL(t)\mbL(t)^\top=\mbS(t)$. Then the following statements are equivalent:
+\begin{enumerate}[label=(\roman*)]
+    \item The SDE
+    \begin{equation*}
+        d\mbx(t) = \mbf_{q}(\mbx(t),t)dt + \mbSigma(\mbx(t),t)^{1/2}d\mbw(t), \quad q(\mbx, 0) =  \cN(\mbm(0),\mbS(0))
+    \end{equation*}
+    has one-time marginals $q(\mbx,t)=\cN(\mbm(t),\mbS(t))$.
+
+    \item $\mbK(t)$ satisfies the matrix Lyapunov equation
+    \begin{equation} \label{app:eq:gaussian-lyapunov}
+        \frac{d}{d t}\mbS(t) = \mbK(t)\mbS(t) + \mbS(t)\mbK(t)^\top, \qquad 0\leq t\leq T.
+    \end{equation}
+
+    \item There exists a unique skew-symmetric matrix-valued function
+    $\mbOmega(t)=-\mbOmega(t)^\top$ such that
+    \begin{equation}\label{app:eq:gaussian-square-root}
+        \mbK(t) = \left(\frac{d}{d t}\mbL(t)\right)\mbL(t)^{-1} + \mbL(t)\mbOmega(t)\mbL(t)^{-1}, \qquad 0\leq t\leq T.
+    \end{equation}
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+Before proving the equivalence of (i), (ii), and (iii), we show that the Fokker--Planck equation associated with
+the drift \eqref{app:eq:gaussian-compatible-drift} and diffusion coefficient $\mbSigma(\mbx, t)^{1/2}$ reduces to a continuity equation. 
+Using $q(\mbx, t)\nabla_{\mbx}\log q(\mbx, t)=\nabla_{\mbx} q(\mbx, t)$,
+\begin{equation*}
+\begin{aligned}
+    q(\mbx,t)\mbf_{q}(\mbx,t) &= q(\mbx,t)\mbv_{\mbK}(\mbx,t) + \frac{1}{2}\mbSigma(\mbx,t)\nabla_{\mbx}q(\mbx,t) + \frac{1}{2}q(\mbx,t) \sum_j\partial_{x_j}\mbSigma_{\cdot,j}(\mbx,t)\\
+    &= q(\mbx,t)\mbv_{\mbK}(\mbx,t) + \frac{1}{2}\sum_j \partial_{x_j}\left[ q(\mbx,t)\mbSigma_{\cdot,j}(\mbx,t)\right].
+\end{aligned}
+\end{equation*}
+Consequently, we can rewrite the Fokker--Planck equation as
+\begin{align}
+    \frac{\partial}{\partial t}q(\mbx,t) &= -\nabla_{\mbx}\cdot \left[ q(\mbx,t)\mbf_{q}(\mbx,t) \right] + \frac{1}{2} \sum_{i,j} \partial_{x_i,x_j} \left[q(\mbx,t)\mbSigma_{ij}(\mbx,t)\right]\nonumber\\
+    &= -\nabla_{\mbx}\cdot\left[q(\mbx,t)\mbv_{\mbK}(\mbx,t) \right].\label{app:eq:continuity-affine}
+\end{align}
+This is the continuity equation corresponding to the affine flow
+\begin{equation}\label{app:eq:affine-flow}
+    \frac{d}{d t}\mbx(t)
+    =
+    \mbv_{\mbK}(\mbx(t),t).
+\end{equation}
+Because the flow map is affine, it maps the Gaussian initial distribution $q(\mbx,0)=\cN(\mbm(0),\mbS(0))$ to a Gaussian distribution at every time.
+
+To prove the equivalence of (i) and (ii), we must show that  $q(\mbx,t)=\cN(\mbm(t),\mbS(t))$ solves \cref{app:eq:continuity-affine} if and only if $\mbK(t)$ satisfies the Lyapunov equation \cref{app:eq:gaussian-lyapunov}.
+
+Let $\widetilde{\mbm}(t) = \bbE[\mbx(t)]$
+denote the mean induced by the affine flow \cref{app:eq:affine-flow}. 
+By the weak form of the continuity equation \cref{app:eq:continuity-affine}, $\widetilde{\mbm}(t)$ satisfies the ODE
+\begin{equation*}
+    \frac{d}{d t}\widetilde{\mbm}(t) = \frac{d}{d t}\mbm(t) + \mbK(t) \left(\widetilde{\mbm}(t)-\mbm(t) \right), \quad 
+    \widetilde{\mbm}(0) = \mbm(0).
+\end{equation*}
+It is immediate that $\mbm(t)$ satisfies the ODE for the mean of $\mbx(t)$. 
+For the covariance, we define the centered state $\mbz(t) = \mbx(t)-\mbm(t)$, which satisfies the affine flow
+\begin{equation*}
+    \frac{d}{d t}\mbz(t) = \mbK(t)\mbz(t).
+\end{equation*}
+Therefore, if $\widetilde{\mbS}(t) = \bbE \left[ \mbz(t)\mbz(t)^\top \right]$ denotes the covariance induced by the affine flow, the weak form of continuity equation yields the ODE
+\begin{equation*}
+    \frac{d}{d t}\widetilde{\mbS}(t) =\bbE\left[ \mbK(t)\mbz(t)\mbz(t)^\top + \mbz(t)\mbz(t)^\top\mbK(t)^\top\right] = \mbK(t)\widetilde{\mbS}(t) + \widetilde{\mbS}(t)\mbK(t)^\top, \quad  \widetilde{\mbS}(0)=\mbS(0).
+\end{equation*}
+If $\mbK(t)$ satisfies the Lyapunov equation
+\cref{app:eq:gaussian-lyapunov}, uniqueness of solutions to the covariance ODE implies $\widetilde{\mbS}(t)=\mbS(t)$. 
+
+Conversely, if $q(\mbx,t)=\cN(\mbm(t),\mbS(t))$ solves
+\cref{app:eq:continuity-affine}, then its covariance must satisfy the same equation, so
+\begin{equation*}
+    \frac{d}{d t}\mbS(t) = \mbK(t)\mbS(t) + \mbS(t)\mbK(t)^\top.
+\end{equation*}
+This proves the equivalence of \textnormal{(i)} and \textnormal{(ii)}.
+
+Suppose next that $\mbK(t)$ has the representation in
+\eqref{app:eq:gaussian-square-root}. Since
+$\mbS(t)=\mbL(t)\mbL(t)^\top$, we obtain
+\begin{equation*}
+\begin{aligned}
+    \mbK(t)\mbS(t)+\mbS(t)\mbK(t)^\top &= \left(\frac{d}{d t}\mbL(t) \right)\mbL(t)^\top + \mbL(t) \left(\frac{d}{t}\mbL(t)  \right)^\top + \mbL(t) \left( \mbOmega(t)+\mbOmega(t)^\top\right)\mbL(t)^\top\\
+    &= \frac{d}{d t} \left[\mbL(t)\mbL(t)^\top\right] =
+    \frac{d}{d t}\mbS(t).
+\end{aligned}
+\end{equation*}
+Thus, (iii) implies (ii).
+
+Conversely, suppose that $\mbK(t)$ satisfies \eqref{app:eq:gaussian-lyapunov} and define
+\begin{equation*}
+    \mbOmega(t) = \mbL(t)^{-1}\mbK(t)\mbL(t) - \mbL(t)^{-1}\frac{d}{d t}\mbL(t).
+\end{equation*}
+Then
+\begin{equation*}
+    \mbOmega(t) + \mbOmega(t)^\top  = \mbL(t)^{-1} \left[    \mbK(t)\mbS(t) + \mbS(t)\mbK(t)^\top - \frac{d}{d t}\mbS(t) \right] \mbL(t)^{-\top} =\mb{0}.
+\end{equation*}
+Hence, $\mbOmega(t)$ is skew-symmetric. 
+Its definition also shows that it is unique for the fixed square root $\mbL(t)$, proving the equivalence of (ii) and (iii).
+\end{proof}
+
+For a fixed square root $\mbL(t)$, the skew-symmetric matrix $\mbOmega(t)$ parameterizes the
+freedom among compatible affine velocities. In particular, changing $\mbOmega(t)$ adds the vector
+field
+\begin{equation*}
+    \mbh_{\mbOmega}(\mbx,t) =  \mbL(t)\mbOmega(t)\mbL(t)^{-1}(\mbx - \mbm(t)),
+\end{equation*}
+which satisfies
+\begin{equation*}
+    \nabla_{\mbx}\cdot \left[ q(\mbx,t)\mbh_{\mbOmega}(\mbx,t) \right] = 0.
+\end{equation*}
+Thus, $\mbh_{\mbOmega}$ changes the path law without changing the one-time marginals. 
+When $K\geq2$, the space of skew-symmetric matrices has dimension $\binom{K}{2}$.
+
+The representation in \eqref{app:eq:gaussian-square-root} depends on the chosen square root $\mbL(t)$.
+Replacing $\mbL(t)$ by another factor of the covariance $\mbS(t)$ reparameterizes $\mbOmega(t)$ but does not change the set of compatible $\mbK(t)$.
+
+Finally, Proposition~\ref{app:prop:gaussian-compatible-drift} characterizes only the subfamily of affine $q$-divergence-free vector fields. 
+There also exist nonlinear $q$-divergence-free vector fields that preserve Gaussian one-time marginals while inducing non-Gaussian multi-time distributions.
+
+% \subsection{Gaussian one-time marginals}\label{app:subsec:gaussian}
+% In the case of Gaussian one-time marginals, the non-uniqueness of the path law described in \Cref{app:subsec:div-free} can be made explicit. 
+% In this subsection, we construct an infinite collection of (distinct) path laws whose one-time marginals are identical. Throughout, we assume $q(\mbx, t) = \cN(\mbm(t), \mbS(t))$, where $\mbm(t), \mbS(t)$ are continuously differentiable on $[0, T]$ and $\mbS$ is positive definite.
+
+% We first characterize these path laws in terms of the solution to a matrix Lyapunov equation. 
+% \begin{proposition}\label{prop:lyapunov}
+% Let $q(\mbx, t) = \cN(\mbm(t), \mbS(t)), 0 \leq t \leq T$ be a family of Gaussian one-time marginal distributions, with $(\mbm(t), \mbS(t))_{0 \leq t \leq T}$ continuously differentiable in $t$ and $\mbS(t)$ positive definite. Let $(\mbK(t))_{0 \leq t \leq T}$ be any solution to the matrix Lyapunov equation
+% \begin{equation}\label{app:eqn:lyapunov}
+%     \frac{d}{dt} \mbS(t) = \mbK(t) \mbS(t) + \mbS(t) \mbK(t)^\top, \quad 0 \leq t \leq T.
+% \end{equation}
+% Then the SDE with drift $\mbf_q(\mbx, t) = \mbA_q(\mbx, t) \mbx + \mbb_q(\mbx, t) + \frac{1}{2}\sum_j \partial_{\mbx_j} \mbSigma_{\cdot, j}(\mbx, t)$,
+% \begin{equation}\label{app:eqn:lyapunov-drift}
+%     \mbA_q(\mbx, t) = \mbK(t) - \frac{1}{2}\mbSigma(\mbx, t) \mbS(t)^{-1}, \quad \mbb_q(\mbx, t) = \frac{d}{dt}\mbm(t) - \mbA_q(\mbx, t)\mbm(t),
+% \end{equation}
+% and diffusion coefficient $\mbSigma(\mbx, t)^{1/2}$ has marginals $q(\mbx, t) = \cN(\mbm(t), \mbS(t))$, $0 \leq t \leq T$.
+% \end{proposition}
+% The Lyapunov equation \eqref{app:eqn:lyapunov} has infinitely many solutions $\mbK(t)$, so a single collection of  Gaussian one-time marginals $\{ q(\mbx, t) \}$ corresponds to infinitely many compatible diffusions. 
+% Note that \Cref{prop:lyapunov} does \emph{not} characterize the complete set of diffusions consistent with Gaussian one-time marginals. 
+% For example, when $\mbSigma$ is state-independent, \Cref{prop:lyapunov} only describes Gaussian processes i.e., stochastic process whose multi-time joint distributions are multivariate Gaussian. There exist stochastic processes with Gaussian one-time marginals that are not Gaussian processes.
+
+% The explicit construction is obtained by plugging the drift from \Cref{prop:lyapunov} into the Fokker-Planck equation, which yields the \emph{continuity equation} \cref{app:eqn:fpk-simple} for Gaussian marginals distributions and a linear vector field. 
+% Unlike the Fokker-Planck equation, the continuity equation does not depend on the diffusion coefficient $\mbSigma^{1/2}$, which is a consequence of the two terms in the posterior drift cancelling with the diffusion term in the Fokker-Planck equation. 
+% The same strategy is used to convert between ODE and SDE samplers for diffusion and flow matching models \cite{bartosh2025sde,songscore2021, albergo2025stochastic}.See also \Cref{app:subsec:svise-sde-compare}.
+
+% \begin{proof}[Proof of \Cref{prop:lyapunov}]
+% Note that since $q(\mbx, t)$ and $\mbf_q$ are sufficiently differentiable, we can work directly with the strong form of the Fokker--Planck equation \cref{eqn:fpk}.
+
+% Starting first with the diffusion term, we have by the chain rule and the formula for the Gaussian density
+% {\small
+% \begin{equation*}
+%     \begin{aligned}
+%     \frac{1}{2}\sum_{i, j} \partial_{\mbx_i, \mbx_j} [q(\mbx, t) \mbSigma_{ij}(\mbx,t)]
+%     &= \frac{1}{2}\sum_i \partial_{\mbx_i}
+%     \left[
+%     q(\mbx,t)\sum_j
+%     \left\{
+%     \partial_{\mbx_j} \mbSigma_{ij}(\mbx,t)
+%     -
+%     [\mbS(t)^{-1}(\mbx-\mbm(t))]_j \mbSigma_{ij}(\mbx,t)
+%     \right\}
+%     \right] \\
+%     &= \frac{1}{2}\nabla_{\mbx} \cdot \left[
+%     - q(\mbx, t)\mbSigma(\mbx,t) \mbS(t)^{-1}(\mbx-\mbm(t))
+%     + q(\mbx, t) \sum_j \partial_{\mbx_j} \mbSigma_{\cdot, j}(\mbx,t)
+%     \right].
+%     \end{aligned}
+% \end{equation*}
+% }
+% Notice that the same terms with the opposite sign appear in the drift term of the Fokker--Planck equation, by our definition of the drift $\mbf_q$. Indeed,
+% {\small
+% \begin{equation*}
+% \begin{aligned}
+%   &-\nabla_{\mbx} \cdot [\mbf_q(\mbx, t) q(\mbx, t)]
+%   =\\
+%   &-\nabla_{\mbx} \cdot \bigg[
+%    \bigg(
+%    \mbK(t)(\mbx-\mbm(t))
+%    + \frac{d}{dt}\mbm(t)
+%    - \frac{1}{2}\mbSigma(\mbx,t)\mbS(t)^{-1}(\mbx-\mbm(t))
+%    + \frac{1}{2} \sum_j \partial_{\mbx_j}\mbSigma_{\cdot,j}(\mbx,t)
+%    \bigg) q(\mbx,t)
+%    \bigg],
+% \end{aligned}
+% \end{equation*}
+% }
+% where we used
+% \begin{equation*}
+%     \mbA_q(\mbx,t)\mbx+\mbb_q(\mbx,t)
+%     =
+%     \mbA_q(\mbx,t)(\mbx-\mbm(t))+\frac{d}{dt}\mbm(t).
+% \end{equation*}
+% Canceling these terms, this shows that the Fokker--Planck equation reduces to the continuity equation
+% \begin{equation}\label{app:eqn:fpk-simple}
+%     \frac{\partial q(\mbx, t)}{\partial t}
+%     =
+%     -\nabla_{\mbx} \cdot
+%     \left[
+%     \left(
+%     \mbK(t)(\mbx-\mbm(t))
+%     + \frac{d}{dt}\mbm(t)
+%     \right) q(\mbx, t)
+%     \right],
+%     \quad 0 \leq t \leq T.
+% \end{equation}
+
+% Next, computing both sides of \Cref{app:eqn:fpk-simple} explicitly and dividing by $q(\mbx,t)$, we obtain
+% {\small
+% \begin{equation*}
+% \begin{aligned}
+% &-\frac{1}{2}\bigg[
+% \mathrm{tr}\left(\mbS(t)^{-1} \frac{d}{dt} \mbS(t)\right)
+% - (\mbx - \mbm(t))^\top  \mbS(t)^{-1} \frac{d}{dt} \mbS(t) \mbS(t)^{-1} (\mbx - \mbm(t))
+% - 2 \frac{d}{dt}\mbm(t)^\top  \mbS(t)^{-1}  (\mbx - \mbm(t))
+% \bigg]\\
+% &=  -\left[
+% \mathrm{tr}(\mbK(t))
+% -
+% \left(
+% \mbK(t)(\mbx-\mbm(t))
+% + \frac{d}{dt}\mbm(t)
+% \right)^\top
+% \mbS(t)^{-1}(\mbx - \mbm(t))
+% \right].
+% \end{aligned}
+% \end{equation*}
+% }
+% The linear terms involving $\frac{d}{dt}\mbm(t)$ cancel, so this further simplifies to
+% \begin{equation}\label{app:eqn:fpk-equality}
+% \begin{aligned}
+% &-\frac{1}{2}\left[
+% \mathrm{tr}\left(\mbS(t)^{-1} \frac{d}{dt} \mbS(t)\right)
+% - (\mbx - \mbm(t))^\top  \mbS(t)^{-1} \frac{d}{dt} \mbS(t) \mbS(t)^{-1}(\mbx - \mbm(t))
+% \right]\\
+% =& -\left[
+% \mathrm{tr}(\mbK(t))
+% - (\mbx - \mbm(t))^\top \mbK(t)^\top \mbS(t)^{-1}(\mbx - \mbm(t))
+% \right].
+% \end{aligned}
+% \end{equation}
+
+% Now, we must determine conditions on $(\mbK(t))_{0 \leq t \leq T}$ under which equality \eqref{app:eqn:fpk-equality} holds. If $\mbK(t)$ solves the Lyapunov equation \eqref{app:eqn:lyapunov}, then
+% \begin{equation*}
+% \begin{aligned}
+%     &\mbS(t)^{-1} \frac{d}{dt} \mbS(t) \mbS(t)^{-1}
+%     =
+%     \mbS(t)^{-1}\mbK(t) + \mbK(t)^\top\mbS(t)^{-1} \\
+%     \implies&
+%     (\mbx - \mbm(t))^\top
+%     \mbS(t)^{-1} \frac{d}{dt} \mbS(t) \mbS(t)^{-1}
+%     (\mbx - \mbm(t)) =
+%     2(\mbx - \mbm(t))^\top
+%     \mbK(t)^\top\mbS(t)^{-1}
+%     (\mbx - \mbm(t)).
+% \end{aligned}
+% \end{equation*}
+% Moreover, $\mathrm{tr}(\mbS(t)^{-1} \frac{d}{dt}\mbS(t)) = 2\mathrm{tr}(\mbK(t))$. Hence, whenever $\mbK(t)$ solves the Lyapunov equation, the diffusion process with drift $\mbf_q$ and diffusion coefficient $\mbSigma^{1/2}$ satisfies the Fokker--Planck equation.
+% \end{proof}
+
+
+% To conclude this subsection, we provide an alternate (but equivalent) characterization of the Lyapunov equation \cref{app:eqn:lyapunov} for SDEs that induce the same one-time Gaussian marginals.
+% We do so via square root factorizations of $\mbS(t)$.
+% \begin{proposition}\label{app:prop:lyapunov-gauge}
+% Fix any continuously differentiable square root factorization $\mbL(t)$ satisfying $\mbL(t)\mbL(t)^\top = \mbS(t)$. Then $\mbK(t)$ solves the Lyapunov equation \eqref{app:eqn:lyapunov} if and only if
+% \begin{equation}\label{app:eqn:lyapunov-gauge}
+% \mbK(t) = \left(\frac{d}{dt}\mbL(t) \right)\mbL(t)^{-1} + \mbL(t)\mbOmega(t)\mbL(t)^{-1}, \quad 0 \leq t \leq T
+% \end{equation}
+% for some skew-symmetric matrix-valued function $\mbOmega(t) = -\mbOmega(t)^\top$.
+% \end{proposition}
+
+% \begin{proof}
+% \textbf{Sufficiency.}
+% Suppose is $\mbK$ defined as in  \cref{app:eqn:lyapunov-gauge}. Substituting this expression into the right-hand side of the Lyapunov equation \cref{app:eqn:lyapunov} yields
+% \begin{equation*}
+% \begin{aligned}
+% \mbK\mbS + \mbS\mbK^\top 
+% &= \left( \left(\frac{d}{dt}\mbL\right)\mbL^{-1} + \mbL\mbOmega\mbL^{-1}\right)\mbL\mbL^\top + \mbL\mbL^\top\left(\mbL^{-\top}\left(\frac{d}{dt}\mbL\right)^\top + \mbL^{-\top}\mbOmega^\top \mbL^\top \right)\\
+% &= \left(\frac{d}{dt}\mbL\right)\mbL^\top + \mbL\mbOmega\mbL^\top + \mbL\left(\frac{d}{dt}\mbL\right)^\top + \mbL\mbOmega^\top\mbL^\top \\
+% &\overset{(\star)}{=} \left(\frac{d}{dt}\mbL\right)\mbL^\top + \mbL\left(\frac{d}{dt}\mbL\right)^\top\\
+% &= \frac{d}{dt}(\mbL\mbL^\top) = \frac{d}{dt}\mbS.
+% \end{aligned}
+% \end{equation*}
+% Equality $(\star)$ holds by skew-symmetry $\mbOmega + \mbOmega^\top = \mb{0}$.
+
+% \textbf{Necessity.} Now suppose $\mbK$ solves the Lyapunov equation. Solving \cref{app:eqn:lyapunov-gauge} for $\mbOmega$ yields  $\mbOmega = \mbL^{-1}\left(\mbK - \left(\frac{d}{dt} \mbL \right) \mbL^{-1} \right)\mbL$. 
+% Hence, we need to show $\mbOmega$ is skew-symmetric.
+% A direct calculation reveals
+% \begin{equation*}
+% \begin{aligned}
+% \mbOmega + \mbOmega^\top &= \mbL^{-1}\left(\mbK\mbS - 
+% \left(\frac{d}{dt}\mbL \right)\mbL^\top \right)\mbL^{-\top} + \mbL^{-1}\left(\mbS\mbK^\top - \mbL\left(\frac{d}{dt}\mbL \right)^\top\right)\mbL^{-\top}\\
+% &= \mbL^{-1}\left(\mbK\mbS + \mbS\mbK^\top - \frac{d}{dt} \mbS \right)\mbL^{-\top} = \mb{0}.
+% \end{aligned}
+% \end{equation*}
+% \end{proof}
+
+% The two terms in \eqref{app:eqn:lyapunov-gauge} have distinct roles. 
+% $(\frac{d}{dt} \mbL)\mbL^{-1}$ depends on the chosen square root and is itself a solution to the Lyapunov equation. 
+% Arbitrarily changing $\mbL$ will change $\mbL \mbL^\top$ and hence the one-time marginals.
+% On the other hand, $\mbL\mbOmega\mbL^{-1}$ is allowed to vary as $\mbOmega$ takes different values in the $\binom{K}{2}$-dimensional vector space of skew-symmetric matrices. For fixed $\mbL$, each choice of $\mbOmega$ yields the same one-time marginals.
+
+\subsection{SVISE (\citet{course2023state}) and SDE Matching (\citet{bartosh2025sde})}\label{app:subsec:svise-sde-compare}
+
+In this subsection, we explain how existing simulation-free VI methods SVISE \cite{course2023state, course2023amortized} and SDE Matching \cite{bartosh2025sde} select a single drift function that realizes a given collection of one-time Gaussian marginal distributions $q(\mbx, t) = \cN(\mbm(t), \mbS(t))$, where $\mbm(t), \mbS(t)$ are continuously differentiable on $[0, T]$ and $\mbS(t)$ is positive definite. 
+We refer to these choices as the symmetric and square root gauges, respectively.
+
+Before describing each choice of posterior drift, we recall \Cref{app:prop:gaussian-compatible-drift} from \Cref{app:subsec:gaussian}, which tells us that
+\begin{equation}\label{app:eqn:variational-drift}
+\mbf_q(\mbx, t) = \frac{d}{dt}\mbm(t) + \mbK(t)(\mbx-\mbm(t)) - \frac{1}{2}\mbSigma(\mbx,t)\mbS(t)^{-1}(\mbx-\mbm(t)) + \frac{1}{2}\sum_j \partial_{x_j}\mbSigma_{\cdot,j}(\mbx,t)
+\end{equation}
+attains the marginals $q(\mbx, t)$ whenever $\mbK(t)$ is a solution to the Lyapunov equation \cref{app:eq:gaussian-lyapunov}.
+As we will see, SVISE and SDE Matching select the variational drift \cref{app:eqn:variational-drift} using different choices of $\mbK$.
+
+\paragraph{Symmetric gauge.}
+Suppose $\mbSigma(t) = \mbSigma(\mbx, t)$ is state-independent and $\mbf_q$ is defined as in \Cref{app:prop:gaussian-compatible-drift}. 
+Then  $\mbA_q(t) = \mbK(t) - \frac{1}{2}\mbSigma(t)\mbS(t)^{-1}$ also satisfies a Lyapunov equation
+\begin{equation}\label{eqn:course-nair}
+    \frac{d}{dt} \mbS(t) - \mbSigma(t)  = \mbA_q(t)\mbS(t) + \mbS(t) \mbA_q(t)^\top, \quad 0 \leq t \leq T.
+\end{equation}
+
+In SVISE \cite{course2023state, course2023amortized}, the authors choose the posterior drift $\mbA_q(t)$ to be the unique symmetric solution to \cref{eqn:course-nair}. They write this solution in closed-form using the Kronecker sum.
+
+Unlike the square root gauge, the symmetric gauge does not naturally extend to the case of a state-dependent diffusion coefficient. This is because, in general, the matrix $\mbK$ for which $\mbA_q(\mbx, t) = \mbK - \frac{1}{2}\mbSigma(\mbx, t) \mbS(t)^{-1}$ is symmetric cannot be chosen to be independent of the state $\mbx$.
+
+\paragraph{Square root gauge.}
+\citet{bartosh2025sde} instead identify the one-time Gaussian marginals with the drift function $\mbf_q$ defined as in \Cref{app:prop:gaussian-compatible-drift} for $\mbK(t) = \bigl(\frac{d}{dt}\mbS(t)^{1/2}\bigr)\mbS(t)^{-1/2}$. 
+Here, $\mbS(t)^{1/2}$ denotes the symmetric square root of $\mbS(t)$.
+It is straightforward to verify that this choice of $\mbK$ satisfies the matrix Lyapunov equation \eqref{app:eq:gaussian-lyapunov}. This choice of $\mbK$ is valid even for a state-dependent diffusion coefficient.
+
+The SDE Matching framework, in theory, allows for any square root $\mbsigma(t)$ such that $\mbS(t) = \mbsigma(t) \mbsigma(t)^\top$, to be chosen. 
+However, in their implementation, $\mbsigma(t)$ is chosen to be diagonal, which yields the symmetric square root $\mbS(t)^{1/2}$.
+At the end of this section, we discuss an extension of SDE Matching that represents all square roots simultaneously.
+
+The authors arrive at the choice of variational drift by converting from a probability flow ODE \cite{songscore2021} to an SDE. In particular, suppose $\mbvarepsilon \sim \cN(\mb{0}, \bbI_K)$ and $F(\mbvarepsilon, t) = \mbm(t) + \mbS(t)^{1/2}\mbvarepsilon$.
+$F$ can be viewed as a map that takes as input a sample $\mbvarepsilon$ as well as a time $t$ and produces a sample from $q(\mbx, t)$.
+If $\tilde{\mbx}(t) = F(\mbvarepsilon, t)$, then each particle $\tilde{\mbx}(t)$ evolves according to the ODE
+\begin{equation}\label{app:eqn:pf-ode}
+    \begin{aligned}
+    \frac{d}{dt} \tilde{\mbx}(t) &= \frac{d}{dt}\mbm(t) + \left(\frac{d}{dt}\mbS(t)^{1/2}\right)\mbvarepsilon\\
+    &= \frac{d}{dt}\mbm(t) + \left(\frac{d}{dt}\mbS(t)^{1/2}\right)\{\mbS(t)^{-1/2}(\tilde{\mbx}(t) - \mbm(t))\}, \quad 0 \leq t \leq T
+    \end{aligned}
+\end{equation}
+with $\tilde{\mbx}(0) \overset{d}{=} F(\mbvarepsilon, 0)$. 
+
+From the ODE \eqref{app:eqn:pf-ode}, the authors construct an SDE with diffusion coefficient $\mbSigma(\mbx, t)^{1/2}$. A straightforward manipulation of the Fokker-Planck equation (see e.g., \citet[][Appendix D.1]{songscore2021}) shows that the solution to the SDE
+\begin{equation*}
+\begin{aligned}
+    d \mbx(t) &= \bigg( \frac{d}{dt}\mbm(t) + \left(\frac{d}{dt}\mbS(t)^{1/2}\right)\{\mbS(t)^{-1/2}(\mbx(t) - \mbm(t))\} + \frac{1}{2} \mbSigma(\mbx, t) \nabla_{\mbx} \log q(\mbx(t), t)\\
+    &+ \frac{1}{2} \sum_{j} \partial_{\mbx_j} \mbSigma_{\cdot, j}(\mbx(t), t) \bigg)dt + \mbSigma(\mbx(t), t)^{1/2} d\mbw(t), \quad \mbx(0) \overset{d}{=} q(\mbx, 0)
+\end{aligned}
+\end{equation*}
+has the same one-time marginal distributions as $\tilde{\mbx}(t)$. Substituting in the Gaussian score and grouping terms yields the drift
+\begin{equation*}
+\begin{aligned}
+   &\left\{ \left(\frac{d}{dt}\mbS(t)^{1/2}\right)\mbS(t)^{-1/2} - \frac{1}{2}\mbSigma(\mbx(t), t)\mbS(t)^{-1}\right\}\mbx(t) +\\
+    &\frac{d}{dt}\mbm(t) - \left\{ \left(\frac{d}{dt}\mbS(t)^{1/2}\right)\mbS(t)^{-1/2} - \frac{1}{2}\mbSigma(\mbx(t), t)\mbS(t)^{-1}\right\} \mbm(t) + \frac{1}{2} \sum_{j} \partial_{\mbx_j} \mbSigma_{\cdot, j}(\mbx(t), t).
+\end{aligned}
+\end{equation*}
+Once we identify $\mbK(t) = \left(\frac{d}{dt}\mbS(t)^{1/2}\right)\mbS(t)^{-1/2}$, the resulting drift is of the form given in \cref{app:eq:gaussian-compatible-drift}.
+
+Although the construction in \citet{bartosh2025sde} allows the marginals $q(\mbx, t)$ to be non-Gaussian (e.g., by parameterizing $F$ as a normalizing flow), the paper itself evaluates the method only in the Gaussian marginal setting. We therefore restrict our discussion to that case.
+
+
+\paragraph{An extension of SDE Matching.}
+The framework of SDE Matching \cite{bartosh2025sde} can in principle be extended to span every solution to the Lyapunov equation \eqref{app:eq:gaussian-lyapunov}.
+This is not discussed or implemented by the authors. 
+As described in the previous paragraph, their parameterization $\mbS(t) = \mbsigma(t)\mbsigma(t)^\top$ induces the linear coefficient $\mbK(t) = (\frac{d}{dt}\mbsigma(t)) \mbsigma(t)^{-1}$. 
+Fixing $\mbsigma$ to a specific square root selects a single path law for each set of one-time marginals. 
+By \Cref{app:prop:gaussian-compatible-drift}, the full set of solutions to the Lyapunov equation is parameterized by an additional skew-symmetric matrix $\mbOmega(t)$ via
+\begin{equation*}
+    \mbK(t) = \left(\frac{d}{dt}\mbsigma(t) \right) \mbsigma(t)^{-1} + \mbsigma(t) \mbOmega(t) \mbsigma(t)^{-1}, \quad 0 \leq t \leq T.
+\end{equation*}
+Augmenting SDE Matching with a learned $\mbOmega(t)$ would in principle allow the posterior to span the full $\binom{K}{2}$-dimensional space of compatible linear drifts.
+
+This extension has two limitations. 
+First, it requires introducing and optimizing over $\mbOmega(t)$, sacrificing the closed-form structure of SDE Matching's original parameterization. 
+Helmholtz-SDE, by contrast, \emph{computes the optimal correction in closed form} via the Helmholtz decomposition of the residual vector field (\Cref{sec:method}). 
+Second, for a state-independent diffusion coefficient, the resulting path law remains a Gaussian process.
+\Cref{app:prop:gaussian-compatible-drift} characterizes only diffusions with affine drift that produce the prescribed Gaussian marginals; non-linear drifts can also yield Gaussian one-time marginals while inducing non-Gaussian multi-time joint distributions. 
+Helmholtz-SDE can produce posterior approximations that lie outside the Gaussian-process family by using higher-order polynomial approximations to the optimal drift (\Cref{app:subsec:resid-approx}).

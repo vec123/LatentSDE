@@ -1,0 +1,54 @@
+\clearpage
+\appendix
+\crefalias{section}{appendix}
+\crefalias{subsection}{appendix}
+\crefalias{subsubsection}{appendix}
+
+\section*{Appendix}
+\begin{itemize}
+    \item[~] \Cref{app:sec:background}: Background on variational inference for latent SDEs
+    \begin{itemize}
+        \item \ref{app:subsec:assumptions}: Technical assumptions
+        \item \ref{app:subsec:elbo}: ELBO derivation
+        \item \ref{app:subsec:div-free}: Divergence-free vector fields
+        \item \ref{app:subsec:gaussian}: Gaussian one-time marginals
+        \item \ref{app:subsec:svise-sde-compare}: SVISE (\citet{course2023state}) and SDE-Matching (\citet{bartosh2025sde})
+    \end{itemize}
+
+    \item[~] \Cref{app:sec:helm-sde}: Helmholtz-SDE
+    \begin{itemize}
+        \item \ref{app:subsec:helmholtz-compute}: Computing the Helmholtz decomposition
+        \item \ref{app:subsec:helmholtz-gaussian}: The Helmholtz decomposition for Gaussian marginals
+        \item \ref{app:subsec:resid-approx}: Polynomial approximation to the optimal correction
+        \item \ref{app:subsec:verify-assumptions}: Verification of assumptions for the Helmholtz-SDE variational family
+        \item \ref{app:subsec:optimality}: Optimality of Helmholtz-SDE
+        \begin{itemize}
+            \item \ref{app:subsec:optimality-conj}: Conjugate setting
+            \item \ref{app:subsec:optimality-nonconj}: Nonconjugate setting
+        \end{itemize}
+        \item \ref{app:subsec:alg-summary}: Algorithm summary
+    \end{itemize}
+    \item[~] \Cref{app:sec:ou-spiral}: Linear SDE experiments: Ornstein-Uhlenbeck spiral
+    \begin{itemize}
+        \item \ref{app:subsec:ou-theory}: Theoretical results for OU spiral
+        \item \ref{app:subsec:ou-spiral-supplement}: Simulation experiment details
+    \end{itemize}
+    \item[~] \Cref{app:sec:nonlinear-sde}: Nonlinear SDE experiments
+    \begin{itemize}
+        \item \ref{app:subsec:lorenz}: Noisy Lorenz attractor
+        \item \ref{app:subsec:predator-prey}: Experimental predator-prey system
+        \item \ref{app:subsec:rom}: Reduced order models for fluid dynamics 
+    \end{itemize}
+    \item[~] \Cref{app:sec:timing}: Runtime comparisons
+\end{itemize}
+
+\clearpage
+
+\paragraph{Notation.} 
+Throughout the Appendix, for ease of notation, we drop the dependence of the prior and likelihood on the model parameters $\mbtheta$, as well as the dependence of the variational posterior on its parameters $\mbphi$.
+
+\input{sections/appendix/99_01_background}
+\input{sections/appendix/99_02_helmholtz}
+\input{sections/appendix/99_03_ou_spiral}
+\input{sections/appendix/99_04_nonlinear_experiments}
+\input{sections/appendix/99_05_timing}

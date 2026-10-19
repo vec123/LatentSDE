@@ -1,0 +1,69 @@
+\section{Runtime comparisons}\label{app:sec:timing}
+
+We compare the runtime of Helmholtz-SDE to all baseline VI algorithms considered. 
+
+We time all algorithms on a single NVIDIA H100 GPU, and we exclude JIT compilation time and ELBO evaluation time from the runtime calculation. 
+For Helmholtz-SDE, SING, SDE Matching, and SVISE, we assess convergence using the ELBO \cref{eqn:elbo} calculated on a dense time grid. 
+For Latent SDE, we approximate the ELBO using 10 samples per trial from the variational SDE. 
+
+\begin{table*}[h!]
+\centering
+\setlength{\tabcolsep}{3.5pt}
+
+% --- (a) Lorenz ---
+\subcaptionbox{Lorenz system\label{tab:lorenz-convergence}}{%
+\begin{tabular}{lccccc}
+\toprule
+& & \multicolumn{2}{c}{nELBO $< 50$} & \multicolumn{2}{c}{nELBO $< 70$} \\
+\cmidrule(lr){3-4}\cmidrule(lr){5-6}
+Method & ms/iter & time (s) & iterations & time (s) & iterations \\
+\midrule
+Helmholtz-SDE & $8.56 \pm 0.05$ & $123.7 \pm 3.4$ & $14400 \pm 427$ & $27.7 \pm 1.2$ & $3200 \pm 158$ \\
+SDE Matching & $8.08 \pm 0.06$ & \textemdash & \textemdash & $185.9 \pm 18.7$ & $22950 \pm 2294$ \\
+SVISE & $39.58 \pm 0.04$ & \textemdash & \textemdash & $336.2 \pm 32.6$ & $8490 \pm 823$ \\
+SING & $1157.8 \pm 0.8$ & $3695.6 \pm 503.8$ & $3192 \pm 435$ & $807.5 \pm 117.8$ & $697 \pm 102$ \\
+Latent SDE & $1068.2 \pm 42.7$ & \textemdash & \textemdash & $9464.9 \pm 930.4$ & $8870 \pm 893$ \\
+\bottomrule
+\end{tabular}}
+
+\vspace{0.75em}
+
+% --- (b) predator-prey ---
+\subcaptionbox{Predator--prey system\label{tab:predator-prey-convergence}}{%
+\begin{tabular}{lccccc}
+\toprule
+& & \multicolumn{2}{c}{nELBO $< 70$} & \multicolumn{2}{c}{nELBO $< 90$} \\
+\cmidrule(lr){3-4}\cmidrule(lr){5-6}
+Method & ms/iter & time (s) & iterations & time (s) & iterations \\
+\midrule
+Helmholtz-SDE & $21.55 \pm 0.01$ & $96.0 \pm 7.6$ & $4450 \pm 352$ & $16.5 \pm 1.6$ & $760 \pm 74$ \\
+SDE Matching & $15.28 \pm 0.01$ & \textemdash & \textemdash & $40.2 \pm 8.1$ & $2620 \pm 528$ \\
+SVISE & $12.80 \pm 0.01$ & \textemdash & \textemdash & $41.3 \pm 7.7$ & $3220 \pm 604$ \\
+\bottomrule
+\end{tabular}}
+
+\vspace{0.75em}
+
+% --- (c) cylinder ---
+\subcaptionbox{Two-dimensional cylinder\label{tab:cylinder-convergence}}{%
+\begin{tabular}{lccccc}
+\toprule
+& & \multicolumn{2}{c}{nELBO $< -2.5 \cdot 10^4$} & \multicolumn{2}{c}{nELBO $< -2.0 \cdot 10^4$} \\
+\cmidrule(lr){3-4}\cmidrule(lr){5-6}
+Method & ms/iter & time (s) & iterations & time (s) & iterations \\
+\midrule
+Helmholtz-SDE & $859.5 \pm 9.6$ & $17094.7 \pm 314.0$ & $19870 \pm 313$ & $5197.9 \pm 72.8$ & $6000 \pm 42$ \\
+SDE Matching & $577.5 \pm 7.0$ & \textemdash & \textemdash & $9017.5 \pm 252.2$ & $15580 \pm 421$ \\
+SVISE & $298.7 \pm 3.2$ & \textemdash & \textemdash & $4178.6 \pm 106.0$ & $13900 \pm 336$ \\
+\bottomrule
+\end{tabular}}
+
+\caption{
+Per-iteration runtime and the time and number of iterations required to reach the indicated nELBO thresholds. 
+Values are mean $\pm$ 2 standard errors over 10 replicates. 
+A dash indicates that the threshold was not reached by every replicate within the training budget.
+}
+\label{tab:convergence}
+\end{table*}
+
+\newpage

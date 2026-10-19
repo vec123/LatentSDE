@@ -1,0 +1,52 @@
+% MATH
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{bm}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Custom Theorem Environments
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Create the environments with their own counters.
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{proposition}{Proposition}
+\newtheorem{assumption}{Assumption}
+\newtheorem{corollary}{Corollary}
+
+% Unnumbered theorem environment
+\newenvironment{theoremnonum}[1][]{\noindent\textbf{Theorem\ifx#1\empty\else\ (#1)\fi: }\normalfont
+}{\par}
+
+% For assumptions: (A1), (A2), etc.
+\renewcommand{\theassumption}{(A\arabic{assumption})}
+
+% Now redefine the environments to include \refstepcounter:
+\renewenvironment{theorem}[1][]{
+  \refstepcounter{theorem}% increment the theorem counter
+  \noindent\textbf{Theorem \thetheorem\ifx#1\empty\else\ (#1)\fi:} \normalfont
+}{\par}
+
+\renewenvironment{lemma}[1][]{
+  \refstepcounter{lemma}% increment the lemma counter
+  \noindent\textbf{Lemma \thelemma\ifx#1\empty\else\ (#1)\fi:} \normalfont
+}{\par}
+
+\renewenvironment{proposition}[1][]{
+  \refstepcounter{proposition}% increment the proposition counter
+  \noindent\textbf{Proposition \theproposition\ifx#1\empty\else\ (#1)\fi:} \normalfont
+}{\par}
+
+\renewenvironment{assumption}[1][]{
+  \refstepcounter{assumption}% increment the assumption counter
+  \noindent\textbf{Assumption \theassumption\ifx#1\empty\else\ (#1)\fi:} \normalfont
+}{\par}
+
+\renewenvironment{corollary}[1][]{
+  \refstepcounter{corollary}% increment the corollary counter
+  \noindent\textbf{Corollary \thecorollary\ifx#1\empty\else\ (#1)\fi:} \normalfont
+}{\par}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

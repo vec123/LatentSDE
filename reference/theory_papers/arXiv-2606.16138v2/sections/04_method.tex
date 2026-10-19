@@ -1,0 +1,145 @@
+\section{Helmholtz-SDE: Augmented simulation-free variational inference}\label{sec:method}
+
+The simulation-free VI framework we described in \Cref{subsec:sim-free} leaves an important ambiguity unresolved: the one-time marginal distributions $\{q(\mbx,t|\mbphi)\}_{0 \leq t \leq T}$ do not uniquely determine the variational path law $\bbQ_{\mbphi}$. 
+In general, many drifts $\mbf_q$ realize the same collection of marginals, and existing simulation-free VI algorithms resolve this ambiguity by selecting a particular compatible drift for each set of marginals, independently of the variational objective in \cref{eqn:elbo}. 
+This choice is not a benign implementation detail: drifts with identical one-time marginals can induce different path laws, including different multi-time joint distributions $(\mbx(s), \mbx(t))$ for $s \neq t$ (\Cref{fig:spiral-overview}). 
+When posterior uncertainty is high, we argue that fixing a single compatible drift can substantially degrade both posterior inference and learned dynamics.
+
+We introduce Helmholtz-SDE, a simulation-free VI algorithm that removes this restriction by optimizing over path laws sharing the same one-time marginals. 
+We first characterize the path-law ambiguity left unresolved by marginal-based parameterizations: drifts realizing the same marginals differ by divergence-free vector fields, which can be added without altering those marginals (\Cref{subsec:fpk}). 
+We then show that the variational objective selects an optimal drift among this class (\Cref{subsec:helmholtz-decomp}).
+Finally, we turn this characterization into a practical algorithm for Gaussian one-time marginals and state-independent diffusion (\Cref{subsec:gaussian-marginals}).
+
+
+\subsection{The Fokker--Planck equation and divergence-free vector fields}\label{subsec:fpk}
+The Fokker--Planck equation characterizes the ambiguity in the posterior path-law that arises from parameterizing the one-time marginals. 
+Let $\bbQ_{\mbphi} \in \cQ$ be a variational distribution with drift $\mbf_q$ and one-time marginals $\{q(\mbx,t | \mbphi)\}_{0 \le t \le T}$. The marginals evolve according to the PDE
+\begin{equation}\label{eqn:fpk}
+    \frac{\partial}{\partial t} q(\mbx, t | \mbphi) = - \nabla_{\mbx} \cdot \bigl[q(\mbx,t | \mbphi)\mbf_q(\mbx,t | \mbphi)\bigr] + \frac{1}{2}\sum_{i,j} \mbSigma_{ij}(\mbtheta) \partial_{\mbx_i \mbx_j} q(\mbx,t | \mbphi), \quad 0 \le t \le T,
+\end{equation}
+known as the \emph{Fokker--Planck equation}, where $\nabla_{\mbx} \cdot \mbf = \sum_i \partial_{\mbx_i} \mbf_i(\mbx)$ is the divergence operator.
+
+\Cref{eqn:fpk} depends on the variational drift $\mbf_q$ only through the divergence of $q(\mbx, t | \mbphi) \mbf_q(\mbx, t | \mbphi)$. 
+Consequently, any vector field $\mbv$ satisfying $\nabla_{\mbx} \cdot [q(\mbx, t | \mbphi) \mbv(\mbx, t)] = 0$ for all  $(\mbx, t)$ leaves the marginals unchanged when added to $\mbf_q$. 
+We call such vector fields \emph{$q$-divergence-free}. The following 
+proposition shows that divergence-free vector fields are the only source of non-uniqueness.
+\begin{proposition}\label{prop:div_free}
+Consider two diffusions having drifts $\mbf$ and $\tilde{\mbf}$ and common diffusion coefficient. They induce the same one-time marginals $\{q(\mbx, t)\}_{0 \leq t \leq T}$ iff $\mbf - \tilde{\mbf}$ is $q$-divergence-free.   
+\end{proposition}
+\noindent\emph{Proof.}
+One analyzes the Fokker--Planck equations for the two diffusions. See \Cref{app:subsec:div-free}.\hfill$\square$
+
+\subsection{Optimizing over path laws at fixed marginals}\label{subsec:helmholtz-decomp}
+In \Cref{subsec:fpk}, we identified the family of drifts compatible with a given set of one-time marginal distributions. 
+Existing simulation-free VI algorithms commit to a single member, independent of the ELBO. 
+We show next that optimizing the ELBO over this family produces an optimal drift.
+
+\paragraph{Problem formulation.} 
+Fix a collection of one-time marginal distributions $\{q(\mbx, t | \mbphi)\}_{0 \le t \le T}$. 
+We call a drift $\mbf_q(\mbx, t | \mbphi)$ a \emph{reference drift} for these marginals if the SDE with drift $\mbf_q$ and diffusion coefficient $\mbSigma^{1/2}$ induces one-time marginals $\{q(\mbx, t | \mbphi)\}_{0 \leq t \leq T}$.
+For Gaussian one-time marginals, \cref{eqn:sym-sqrt-reference} provides an example of a reference drift. 
+By \Cref{prop:div_free}, every other drift with the same one-time marginals can be written as $\mbf_q + \mbv$, where $\mbv(\mbx,t)$ is $q$-divergence-free. Thus, optimizing over all path laws compatible with these marginals is equivalent to optimizing over all divergence-free perturbations to the reference drift. 
+
+In the negative ELBO, the reconstruction loss and the initial-time KL are unchanged by $\mbv$, so the only dependence on the path law is through the path-space KL $\cL_{\mathrm{path}}$. 
+Moreover, since $\mbv$ is $q$-divergence-free, modifying it at time $s$ does not affect the marginal distribution at time $t$.
+Therefore, the problem decouples over times $0 \leq t \leq T$ and the optimal compatible drift solves
+\begin{equation}\label{eqn:optimize}
+    \inf_{\mbv} \; \bbE_\bbQ \| \mbSigma(\mbtheta)^{-1/2}\{\mbf_p(\mbx(t)| \mbtheta) -  \mbf_q(\mbx(t), t | \mbphi) - \mbv(\mbx(t), t) \}\|_2^2, 
+\end{equation}
+subject to $\nabla_{\mbx} \cdot [\mbv(\mbx, t) q(\mbx, t | \mbphi)] = 0, \ (\mbx, t) \in \bbR^K \times [0, T]$.
+
+\paragraph{Solution via the Helmholtz decomposition.}
+Define the \emph{residual vector field} $\mbr(\mbx,t | \mbtheta, \mbphi) = \mbf_p(\mbx | \mbtheta) - \mbf_q(\mbx, t | \mbphi)$ which measures the gap between the prior and the reference posterior drifts. 
+Intuitively, we would like to choose $\mbv = \mbr$ so that \cref{eqn:optimize} becomes zero. 
+However, the divergence-free constraint  prevents us from adding the part of $\mbr$ that would alter the marginals. 
+
+To isolate the part of $\mbr$ that alters the marginals, we appeal to the \emph{$q$-weighted Helmholtz decomposition}
+\begin{equation}\label{eqn:helmholtz-decomp}
+\mbr(\mbx, t | \mbtheta, \mbphi) = \mbSigma(\mbtheta)\nabla_{\mbx} \psi(\mbx,t) + \mbh(\mbx,t),
+\end{equation}
+where $\nabla_{\mbx} \psi$ is a gradient field and $\mbh$ is a $q$-divergence-free vector field \cite{bhatia2012helmholtz}.
+$\mbSigma \nabla_{\mbx} \psi$ points in directions that alter the one-time marginals, while $\mbh$ points in directions that leave them invariant.
+The $q$-weighted Helmholtz decomposition thus separates $\mbr$ into exactly the two components we care about: the part we must leave alone to preserve marginals, and the part we are free to add. 
+
+Substituting $\mbr = \mbf_p - \mbf_q$ into \cref{eqn:optimize} and using the $q$-weighted Helmholtz decomposition yields
+\begin{equation}\label{eqn:helm-pythagorean}
+    \bbE_{\bbQ_{\mbphi}} \| \mbSigma(\mbtheta)^{-1/2}\{\mbh(\mbx(t), t) - \mbv(\mbx(t), t)\}\|_2^2 + \bbE_{\bbQ_{\mbphi}}\|\mbSigma(\mbtheta)^{1/2}  \nabla_{\mbx} \psi(\mbx(t), t)\|_2^2.
+\end{equation}
+The cross term vanishes by integration by parts, using that $\mbh$ and $\mbv$ are $q$-divergence-free. The second term in \cref{eqn:helm-pythagorean} does not depend on $\mbv$, so the optimum of  \cref{eqn:optimize} is achieved by $\mbv^\star = \mbh$. 
+
+In other words, among all diffusions sharing the prescribed marginals, the negative ELBO is minimized by adding the $q$-divergence-free component of $\mbr(\mbx, t | \mbtheta, \mbphi)$ to the reference drift.
+While previous simulation-free VI algorithms commit to a single drift consistent with a set of marginals, we have shown that it is possible, in theory, to optimize over \emph{all} such drifts.
+
+\begin{algorithm}[t]
+\caption{Helmholtz-SDE training}
+\label{alg:helmholtz_sde_main}
+\Require{data $\mathcal D$; prior drift $\mbf_p$; Gaussian marginals $(\mbm,\mbS)$; reference drift $\mbf_q$; degree $\ell$}
+
+\For{gradient iterations}{
+    \AlgStep{Sample observation times, states to estimate $\widehat{\cL}_{\mathrm{rec}}$; compute closed-form Gaussian KL $\cL_{\mathrm{init}}$}
+
+    \smallskip
+    \AlgStep{Sample KL times $s_j \sim \mathrm{Unif}[0,T]$ and states $\mbx_{j,k} \sim \cN(\mbm(s_j | \mbphi),\mbS(s_j | \mbphi))$}
+
+    \smallskip
+    \AlgStep{Compute reference drift 
+    $(\mbf_q)_{j,k} \leftarrow \mbf_q(\mbx_{j,k}|\mbphi)$ and degree $\ell$ Helmholtz correction $\widehat{\mbh}_{j,k}^{(\ell)} \leftarrow \widehat{\mbh}^{(\ell)}(\mbx_{j,k})$ via \Cref{app:alg:helm_correction}}
+
+    \smallskip
+    \AlgStep{Set $(\mbf_{q,\mathrm{full}})_{j,k} \leftarrow (\mbf_q)_{j,k} + \widehat{\mbh}_{j,k}^{(\ell)}$ and estimate $\widehat{\cL}_{\mathrm{path}}$} 
+
+    \smallskip
+    \AlgStep{Update $(\mbtheta,\mbphi)$ by a gradient step}
+}
+\end{algorithm}
+\vspace{-1em}
+
+\subsection{A variational inference algorithm for Gaussian one-time marginals}\label{subsec:gaussian-marginals}
+
+Next, we translate our insights into a simulation-free VI algorithm that optimizes over multiple path laws for each collection of one-time marginals.
+We follow prior works \cite{course2023state,course2023amortized,bartosh2025sde} and take the variational family to have Gaussian one-time marginals $q(\mbx, t | \mbphi) = \cN(\mbm(t | \mbphi), \mbS(t | \mbphi))$ with $\mbm(t | \mbphi)$ and $\mbS(t | \mbphi)$ continuously differentiable in $t$ and $\mbS(t | \mbphi)$ positive definite. 
+We further restrict to state-independent diffusion; we present the time-independent case $\mbSigma(\mbtheta)^{1/2}$ for simplicity.
+
+To leverage the simulation-free stochastic VI framework from \Cref{subsec:sim-free}, we must compute a variational drift for each collection of marginals. 
+By \Cref{subsec:helmholtz-decomp}, the optimal drift is given by the $q$-weighted Helmholtz decomposition of the residual $\mbr = \mbf_p - \mbf_q$, where we choose the reference drift to be that in \cref{eqn:sym-sqrt-reference}. 
+However, even for Gaussian marginals, the weighted Helmholtz decomposition \cref{eqn:helmholtz-decomp} is generally not closed-form. 
+We describe a tractable approximation to the optimal variational drift and then state the resulting theoretical guarantee. 
+\Cref{alg:helmholtz_sde_main} summarizes Helmholtz-SDE.
+
+\paragraph{Polynomial approximation.}
+The vector space of $q$-divergence-free vector fields is infinite-dimensional.
+To obtain a tractable approximation to $\mbh$ in the weighted Helmholtz decomposition of $\mbr$, we restrict the optimization problem in \cref{eqn:optimize} to the finite-dimensional subspace of $q$-divergence-free vector fields whose components are polynomials of degree at most $\ell$.
+
+To do so, we first introduce a change of variable $\tilde\mbx$ such that the one-time marginal at time $t$ is standard Gaussian.
+We then expand the residual vector field $\mbr(\mbx, t)$, transformed into the new coordinates as $\mbrho(\tilde\mbx,t)$, in the basis of Hermite polynomials:
+\begin{equation}\label{eqn:hermite-expansion}
+\mbrho_i(\tilde\mbx,t) = \sum_{\mbalpha} \widetilde{\mbb}_{\mbalpha,i}(t) \hat{H}_{\mbalpha}(\tilde\mbx), \quad \widetilde{\mbb}_{\mbalpha,i}(t)= \bbE_{\tilde\mbx\sim\cN(\mb0,\bbI_K)} \left[\mbrho_i(\tilde\mbx,t)\hat{H}_{\mbalpha}(\tilde\mbx)\right], \quad 1\leq i\leq K.
+\end{equation}
+The functions $\hat{H}_{\mbalpha}(\tilde\mbx)$ are the normalized multivariate probabilists' Hermite polynomials.
+
+We also expand the $q$-divergence-free vector field, written in the new coordinates as $\mbnu(\tilde\mbx,t)$, in the same basis, and we truncate this expansion to basis functions of degree at most $\ell$.
+By orthogonality of the Hermite basis, the terms in  \cref{eqn:optimize} that depend on the truncated vector field $\mbnu^{(\ell)}(\tilde\mbx,t)$ involve only the coefficients of $\mbrho(\tilde\mbx,t)$ up to degree $\ell$.
+Therefore, we can obtain the optimal $q$-divergence-free vector field $\mbh^{(\ell)}$ within this subspace by computing the coefficients $\widetilde{\mbb}_{\mbalpha,i}(t)$ up to degree $\ell$, solving the objective for $\mbnu^{(\ell)}(\tilde\mbx,t)$, and transforming back to $\mbx$. 
+See \Cref{app:subsec:resid-approx} for details.
+
+In general, the Hermite coefficients in \cref{eqn:hermite-expansion} cannot be evaluated in closed-form. 
+One can approximate $\widetilde{\mbb}_{\mbalpha,i}(t)$ using Gauss--Hermite quadrature in low latent dimensions or with Monte Carlo.
+The resulting vector field $\widehat{\mbh}^{(\ell)}$ is $q$-divergence-free but not generally equal to $\mbh^{(\ell)}$.
+In \Cref{app:subsec:resid-approx}, we show that the complexity of computing $\widehat{\mbh}^{(\ell)}$ at a point $\mbx$ is $O(K^{\mathrm{max}(\ell + 1, 3)})$; for linear and quadratic approximations, the complexity is the same as with the fixed reference drift.
+Corrections with $\ell \geq 2$ produce posteriors with Gaussian one-time marginals but non-Gaussian multi-time joint distributions.
+
+\paragraph{Optimality of Helmholtz-SDE.}
+When the prior is linear and the observation model is linear-Gaussian, the true posterior is a Gaussian process given by the Kalman--Bucy smoother \cite{kalman1961new}. 
+Existing simulation-free VI algorithms commit to a single posterior drift for each $(\mbm(t | \mbphi), \mbS(t | \mbphi))_{0 \leq t \leq T}$ and, as we show in \Cref{app:subsec:ou-theory}, can incur an \emph{unbounded KL gap to the true posterior} even in this conjugate setting.
+Helmholtz-SDE provably closes the gap:
+\begin{theorem}[Optimality of Helmholtz-SDE in the conjugate setting]\label{thm:helm-optimal}
+   Suppose the prior $\bbP_{\mbtheta}$ is linear and the observation model is linear-Gaussian.
+   Let $\cQ_{(1)}$ consist of  laws obtained from Helmholtz-SDE with the degree $\ell{=}1$ correction applied to continuously differentiable  $\mbm(t),\mbS(t)$ with  $\mbS(t)$ positive definite.
+   Then $\inf_{\bbQ\in\cQ_{(1)}}\KL{\bbQ}{\bbQ^\star}{=}0$, where $\bbQ^\star$ is the posterior.
+\end{theorem}
+\noindent\emph{Proof.}
+In the conjugate setting, the residual $\mbr(\mbx, t)$ is affine. Gauss–Hermite quadrature with two nodes per latent dimension computes the degree-one Hermite coefficients, and hence the optimal correction, exactly; see \Cref{app:subsec:optimality}. \hfill$\square$
+
+Outside the conjugate setting, the true posterior generally does not have Gaussian one-time marginals, so restricting the variational family to diffusion processes with Gaussian one-time marginals incurs a nonzero KL gap.
+Nonetheless, when the Hermite coefficients are evaluated exactly, Helmholtz-SDE is guaranteed to perform at least as well as using the reference drift alone.
+\Cref{app:subsec:optimality-nonconj} provides an estimable lower bound on the resulting improvement.

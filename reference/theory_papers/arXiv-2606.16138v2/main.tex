@@ -1,0 +1,202 @@
+\documentclass{article}
+\input{styles/preamble}
+\input{styles/preamble_math}
+
+% if you need to pass options to natbib, use, e.g.:
+\PassOptionsToPackage{numbers, compress}{natbib}
+% before loading neurips_2025
+
+% The authors should use one of these tracks.
+% Before accepting by the NeurIPS conference, select one of the options below.
+% 0. "default" for submission
+% the "default" option is equal to the "main" option, which is used for the Main Track with double-blind reviewing.
+% 1. "main" option is used for the Main Track
+ \usepackage[main, final]{neurips_2026}
+% 2. "position" option is used for the Position Paper Track
+%  \usepackage[position]{neurips_2025}
+% 3. "dandb" option is used for the Datasets & Benchmarks Track
+ % \usepackage[dandb]{neurips_2025}
+% 4. "creativeai" option is used for the Creative AI Track
+%  \usepackage[creativeai]{neurips_2025}
+% 5. "sglblindworkshop" option is used for the Workshop with single-blind reviewing
+ % \usepackage[sglblindworkshop]{neurips_2025}
+% 6. "dblblindworkshop" option is used for the Workshop with double-blind reviewing
+%  \usepackage[dblblindworkshop]{neurips_2025}
+
+% After being accepted, the authors should add "final" behind the track to compile a camera-ready version.
+% 1. Main Track
+ % \usepackage[main, final]{neurips_2025}
+% 2. Position Paper Track
+%  \usepackage[position, final]{neurips_2025}
+% 3. Datasets & Benchmarks Track
+ % \usepackage[dandb, final]{neurips_2025}
+% 4. Creative AI Track
+%  \usepackage[creativeai, final]{neurips_2025}
+% 5. Workshop with single-blind reviewing
+%  \usepackage[sglblindworkshop, final]{neurips_2025}
+% 6. Workshop with double-blind reviewing
+%  \usepackage[dblblindworkshop, final]{neurips_2025}
+% Note. For the workshop paper template, both \title{} and \workshoptitle{} are required, with the former indicating the paper title shown in the title and the latter indicating the workshop title displayed in the footnote.
+% For workshops (5., 6.), the authors should add the name of the workshop, "\workshoptitle" command is used to set the workshop title.
+% \workshoptitle{WORKSHOP TITLE}
+
+% "preprint" option is used for arXiv or other preprint submissions
+ % \usepackage[preprint]{neurips_2025}
+
+% to avoid loading the natbib package, add option nonatbib:
+%    \usepackage[nonatbib]{neurips_2025}
+
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+\usepackage{nccmath}
+\usepackage{subcaption}
+
+\usepackage{makecell}
+
+% Color
+\usepackage[table,usenames,dvipsnames]{xcolor}
+\usepackage[colorlinks,linktoc=all]{hyperref}
+\hypersetup{citecolor=MidnightBlue}
+\hypersetup{linkcolor=MidnightBlue}
+\hypersetup{urlcolor=MidnightBlue}
+
+% Cleverref
+\usepackage{cleveref}
+\crefname{appendix}{appendix}{appendices}
+\Crefname{appendix}{Appendix}{Appendices}
+\crefname{assumption}{assumption}{assumptions}
+\Crefname{assumption}{Assumption}{Assumptions}
+\crefname{algocf}{Algorithm}{Algorithms}
+\Crefname{algocf}{Algorithm}{Algorithms}
+\crefname{table}{Table}{Tables}
+\Crefname{table}{Table}{Tables}
+
+% Enumerate
+\usepackage{enumitem}
+
+% Theorem environment boxes
+\usepackage[most]{tcolorbox}
+\newtheorem*{theorem*}{Theorem}
+\tcolorboxenvironment{theorem}{
+  enhanced,
+  breakable,
+  colback=white,
+  colframe=black,
+  boxrule=0.4pt,
+  arc=4pt,
+  left=5pt,
+  right=5pt,
+  top=4pt,
+  bottom=4pt,
+  before skip=6pt,
+  after skip=6pt,
+}
+\tcolorboxenvironment{theoremnonum}{
+  enhanced,
+  breakable,
+  colback=white,
+  colframe=black,
+  boxrule=0.4pt,
+  arc=4pt,
+  left=5pt,
+  right=5pt,
+  top=4pt,
+  bottom=4pt,
+  before skip=6pt,
+  after skip=6pt,
+}
+
+\tcolorboxenvironment{proposition}{
+  enhanced,
+  breakable,
+  colback=white,
+  colframe=black,
+  boxrule=0.4pt,
+  arc=4pt,
+  left=5pt,
+  right=5pt,
+  top=4pt,
+  bottom=4pt,
+  before skip=6pt,
+  after skip=6pt,
+}
+
+% Algorithms
+\usepackage[ruled]{algorithm2e}
+
+\DontPrintSemicolon
+\SetAlgoLined
+\SetKwInput{Require}{Require}
+\SetKwFor{For}{for}{do}{end for}
+
+\SetCommentSty{mycommfont}
+\newcommand{\mycommfont}[1]{\textcolor{gray}{#1}}
+\SetKwComment{tcp}{\#\ }{}
+\SetKwComment{tcpp}{\#\#\ }{}
+\newcommand{\AlgStep}[1]{\(\triangleright\)\hspace{0.5em}#1\;}
+
+\usepackage{bbm}
+
+% Note. For the workshop paper template, both \title{} and \workshoptitle{} are required, with the former indicating the paper title shown in the title and the latter indicating the workshop title displayed in the footnote. 
+\title{Closing the Approximation Gap in Simulation-free Latent SDEs}
+
+
+% The \author macro works with any number of authors. There are two commands
+% used to separate the names and addresses of multiple authors: \And and \AND.
+%
+% Using \And between authors leaves it to LaTeX to determine where to break the
+% lines. Using \AND forces a line break at that point. So, if LaTeX puts 3 of 4
+% authors names on the first line, and the last on the second line, try using
+% \AND instead of \And before the third author name.
+
+
+% \author{
+% Henry D.~Smith\\ Stanford University \\ \texttt{smithhd@stanford.edu} 
+% \And
+% Brian L.~Trippe\thanks{Equal advising}\\
+% Stanford University\\ \texttt{btrippe@stanford.edu}
+% \And
+% Scott W.~Linderman\footnotemark[1] \\
+% Stanford University\\ \texttt{swl1@stanford.edu}
+% }
+\author{
+\begin{tabular}{c}
+Henry D.~Smith
+\qquad Brian L.~Trippe\thanks{Equal advising}
+\qquad Scott W.~Linderman\footnotemark[1] \\
+{\normalfont Stanford University} \\
+\texttt{\{smithhd,btrippe,swl1\}@stanford.edu}
+\end{tabular}
+}
+
+\begin{document}
+
+\maketitle
+
+\input{sections/01_abstract}
+\input{sections/02_introduction}
+\input{sections/03_background}
+\input{sections/04_method}
+\input{sections/05_related_work}
+\input{sections/06_experiments}
+\input{sections/07_conclusion}
+
+\begin{ack}
+HDS is supported by the NSF Graduate Research Fellowship (DGE-2146755) and the Knight--Hennessy graduate fellowship. 
+HDS and SWL are supported by grants from the NIH BRAIN Initiative (U19NS113201, R01NS131987, R01NS113119, \& RF1MH133778), the NSF/NIH CRCNS Program (R01NS130789), and the Sloan, Simons, and McKnight Foundations.
+The authors have no competing interests to declare.
+
+
+We thank Amber Hu, Cole Citrenbaum, Hannah Lee, Joshua Lunger, and Renato Berlinghieri for their helpful feedback on the manuscript. 
+We thank Peter Pao--Huang for discussions at the beginning of the project regarding divergence-free vector fields. 
+\end{ack}
+
+\input{sections/98_bib}
+\input{sections/99_appendix}
+
+\end{document}

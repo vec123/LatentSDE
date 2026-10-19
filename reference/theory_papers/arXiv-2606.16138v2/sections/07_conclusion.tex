@@ -1,0 +1,12 @@
+\section{Discussion}\label{sec:discussion}
+Simulation-free variational inference promises the accuracy of simulation-based algorithms at a fraction of the cost, but only when the variational family is rich enough to represent the posterior.
+We have shown that under high posterior uncertainty, existing simulation-free algorithms fall short of their promise: by committing to an arbitrary drift consistent with their one-time marginals, they restrict the posterior to a subset of the path laws available to simulation-based methods. 
+Helmholtz-SDE removes this restriction. 
+Starting from any reference drift, it adds a closed-form correction that preserves the prescribed marginals while optimizing over a larger family of path laws. 
+The result is a simulation-free algorithm that closes the expressivity gap to simulation-based VI and yields more faithful recovery of the underlying dynamics.
+
+Two limitations point to natural extensions. 
+First, the analytical form for the Helmholtz correction depends on the state independence of the diffusion coefficient and Gaussianity of the marginals. 
+Relaxing either assumption, for example by learning the divergence-free correction, would broaden the algorithm's applicability.
+Second, higher-order polynomial corrections to the residual scale unfavorably as the latent dimension grows; in our experiments we did not observe gains beyond the linear and quadratic approximations, but more efficient parameterizations may be beneficial in settings we have not explored. 
+More broadly, we view simulation-free VI as a promising path toward scalable unsupervised discovery of dynamical systems, and Helmholtz-SDE as a step toward making that path competitive with, and ultimately preferable to, its simulation-based counterpart.

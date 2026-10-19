@@ -1,0 +1,12 @@
+\begin{abstract}
+Recovering dynamical systems from noisy observations is a recurring challenge across scientific domains, including neuroscience and physics. 
+Latent stochastic differential equations (SDEs) address this by modeling the system as an unobserved state that evolves according to a learnable SDE and generates the observations.
+Variational inference (VI) provides a tractable objective for fitting latent SDEs. 
+Traditional VI algorithms evaluate this objective by numerical simulation over a time discretization, trading fidelity for computational cost.
+A recent class of algorithms, simulation-free VI, sidesteps this tradeoff by parameterizing the posterior through its instantaneous marginals rather than its drift.
+In this work, we show that the efficiency of existing simulation-free VI algorithms comes at a price: their parameterizations restrict the approximate posterior to a subset of the SDEs available to simulation-based methods, degrading posterior inference and parameter learning. 
+We propose Helmholtz-SDE, a simulation-free VI algorithm that closes this gap by optimizing over path laws compatible with a prescribed collection of marginals. 
+Helmholtz-SDE recovers dynamics more faithfully than prior simulation-free methods, with the largest gains under high posterior uncertainty.
+It further matches the performance of simulation-based VI at a fraction of the runtime.
+Code is available at \url{https://github.com/lindermanlab/helmholtz-sde}.
+\end{abstract}

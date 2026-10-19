@@ -1,0 +1,1197 @@
+\section{Helmholtz-SDE}\label{app:sec:helm-sde}
+
+In this section, we provide further explanation of our algorithm, Helmholtz-SDE.
+
+First, in \Cref{app:subsec:helmholtz-compute} we describe how the $q$-weighted Helmholtz decomposition can be obtained for arbitrary smooth, strictly positive marginal densities $q$ by inverting a Stein operator.
+For the remainder of \Cref{app:sec:helm-sde}, we then specialize to the setting of Gaussian one-time marginals.
+In \Cref{app:subsec:helmholtz-gaussian}, we provide sufficient conditions under which the Helmholtz decomposition exists uniquely.
+In \Cref{app:subsec:resid-approx}, we translate this theoretical result into a practical formula using an order-$\ell$ polynomial approximation to the optimal divergence-free correction.
+In \Cref{app:subsec:verify-assumptions}, we verify that the resulting variational drift, obtained by adding the polynomial correction to the reference drift, produces an SDE satisfying our assumptions in \Cref{app:subsec:assumptions}.
+In \Cref{app:subsec:optimality}, we discuss the optimality of Helmholtz-SDE in the conjugate and non-conjugate settings.
+In \Cref{app:subsec:alg-summary} we provide pseudocode of our algorithm.
+
+\subsection{Computing the Helmholtz decomposition}\label{app:subsec:helmholtz-compute}
+
+We first discuss how the Helmholtz decomposition can be computed for an arbitrary smooth, strictly positive density $q$ as the inverse of a Stein operator. The resulting probabilistic expression can be approximated via Monte Carlo. For ease of notation, we consider a state-independent diffusion coefficient, although the same construction holds in the state-dependent setting.
+
+\paragraph{The Helmholtz decomposition and diffusion Stein operator.}
+As described in \Cref{subsec:helmholtz-decomp}, the optimal correction to the reference drift $\mbf_q(\mbx, t)$ is obtained by computing the $q$-weighted Helmholtz decomposition of the residual vector field $\mbr(\mbx, t) = \mbf_p(\mbx, t) - \mbf_q(\mbx, t)$ and taking the $q$-divergence-free vector field.
+In particular, we want to find a decomposition of $\mbr$ as
+\begin{equation}\label{app:eqn:helm-decomp}
+    \mbr(\mbx, t) = \mbSigma(t) \nabla_{\mbx} \psi(\mbx, t) + \mbh(\mbx, t), \quad (\mbx, t) \in \bbR^K \times [0, T],
+\end{equation}
+where $\nabla_{\mbx} \psi(\mbx, t)$ is a gradient field and $\mbh(\mbx, t)$ is a $q$-divergence-free vector field.
+
+Suppose $q(\mbx, t)$ is a smooth, strictly positive density.
+To obtain such a decomposition, observe that if \cref{app:eqn:helm-decomp} holds, then multiplying both sides by $q(\mbx, t)$ and computing the divergence yields
+\begin{equation}
+     \nabla_{\mbx} \cdot [q(\mbx, t) \mbSigma(t) \nabla_{\mbx} \psi(\mbx, t)]
+     =
+     \nabla_{\mbx} \cdot [q(\mbx, t) \mbr(\mbx, t)],
+     \quad
+     (\mbx, t) \in \bbR^K \times [0, T],
+\end{equation}
+since $\mbh$ is $q$-divergence-free. 
+Dividing both sides by $q$ and expanding the left-hand side yields
+\begin{equation}\label{app:eqn:stein-operator-eqn}
+    \mathrm{tr}(\mbSigma(t) \nabla_{\mbx}^2 \psi(\mbx, t))
+    +
+    \nabla_{\mbx} \log q(\mbx, t) \cdot
+    \mbSigma(t) \nabla_{\mbx} \psi(\mbx, t)
+    =
+    \frac{1}{q(\mbx, t)}
+    \nabla_{\mbx} \cdot [q(\mbx, t) \mbr(\mbx, t)] .
+\end{equation}
+
+From \cref{app:eqn:stein-operator-eqn}, we make two observations. First, the left-hand side can be written as $[\cL_t^{\mbSigma}\nabla_{\mbx}\psi(\cdot,t)](\mbx)$, where $\cL_t^{\mbSigma}$ is the differential operator
+\begin{equation}\label{app:eqn:diffusion-stein}
+    [\cL_t^{\mbSigma}\mbf](\mbx) = \mathrm{tr}(\mbSigma(t) D_{\mbx} \mbf (\mbx, t))
+    +
+    \mbSigma(t) \nabla_{\mbx} \log q(\mbx, t) \cdot
+    \mbf(\mbx, t)
+\end{equation}
+defined for differentiable vector fields $\mbf: \bbR^K \to \bbR^K$, where $D_{\mbx} \mbf$ represents the Jacobian of $\mbf$.
+This is the \emph{diffusion Stein operator} corresponding to the density $q(\mbx,t)$ and constant covariance coefficient $\mbSigma(t)$ \citep{barbour1990stein,gorham2019measuring}. 
+When $\mbSigma(t)=\bbI_K$, it reduces to the \emph{Langevin Stein} operator
+\begin{equation*}
+    [\cL_t \mbf](\mbx) = \nabla_{\mbx} \cdot \mbf(\mbx)  + \nabla_{\mbx} \log q(\mbx, t) \cdot \mbf(\mbx).
+\end{equation*}
+We refer the reader to \citet{gorham2019measuring} for background on diffusion Stein operators.
+
+Second, whenever $\mbr(\mbx, t)$ and
+$\cL_t^{\mbSigma}[\mbr(\cdot, t)](\mbx)$ are integrable, the right-hand side of \cref{app:eqn:stein-operator-eqn} has expectation
+\begin{equation*}
+    \bbE_{\bbQ}\left[
+    \frac{1}{q(\mbx, t)}
+    \nabla_{\mbx} \cdot [q(\mbx, t) \mbr(\mbx, t)]
+    \right]
+    =
+    \int
+    \nabla_{\mbx} \cdot [q(\mbx, t) \mbr(\mbx, t)]
+    d \mbx = 0
+\end{equation*}
+The final equality holds by the divergence theorem \citep[][Theorem 3.1]{liu2026probabilistic}. 
+
+Overall, we have reduced computing the Helmholtz decomposition to solving
+\begin{equation}\label{app:eqn:helmholtz-stein-eqn}
+\begin{aligned}
+    &[\cL_t^{\mbSigma}\nabla_{\mbx} \psi(\cdot, t)](\mbx)
+    =
+    \eta(\mbx, t),
+    \quad
+    (\mbx, t) \in \bbR^K \times [0, T],\\
+    &\eta(\mbx, t)
+    =
+    \frac{1}{q(\mbx, t)}
+    \nabla_{\mbx} \cdot [q(\mbx, t) \mbr(\mbx, t)]
+\end{aligned}
+\end{equation}
+where $\eta(\mbx, t)$ has mean zero under $q(\mbx,t)$.
+Intuitively, in order to solve \cref{app:eqn:helmholtz-stein-eqn}, we need to find an inverse of the diffusion Stein operator $\cL_t^{\mbSigma}$. 
+Doing so has been the subject of prior literature, namely \citet{barbour1990stein,pardoux2005poisson,gorham2019measuring}.
+
+\paragraph{Inverting the diffusion Stein operator.}
+
+Fix $t \in [0,T]$. Consider the time-homogeneous diffusion in an auxiliary time variable $s$ with diffusion coefficient $\mbSigma(t)^{1/2}$:
+\begin{equation}\label{app:eqn:langevin-diffusion}
+    d\mbz^{(t)}(s)
+    =
+    \frac{1}{2} \mbSigma(t)\nabla_{\mbx}\log q(\mbz^{(t)}(s), t)ds
+    +
+    \mbSigma(t)^{1/2}d\mbw(s). 
+\end{equation}
+When $\mbSigma(t) = \bbI_K$, \cref{app:eqn:langevin-diffusion} is recognizable as the overdamped Langevin diffusion.
+In particular, \cref{app:eqn:langevin-diffusion} has invariant density $q(\mbx, t)$.
+Its \emph{infinitesimal generator} is
+\begin{equation}
+\begin{aligned}
+    [\cA_t u](\mbz)
+    &=
+    \frac{1}{2q(\mbz, t)}
+    \nabla_{\mbx}\cdot
+    \left[
+        q(\mbz, t)\mbSigma(t)\nabla_{\mbz}u(\mbz)
+    \right]\\
+    &= \frac{1}{2} \mathrm{tr}(\mbSigma(t)\nabla_{\mbz}^2 u(\mbz)) + \frac{1}{2} \mbSigma(t) \nabla_{\mbz}\log q(\mbz, t) \cdot \nabla_{\mbz} u(\mbz)
+\end{aligned}
+\end{equation}
+for $u: \bbR^K \to \bbR$ twice continuously differentiable and satisfying integrability conditions \cite{karatzas2014brownian}.
+This implies, by \cref{app:eqn:diffusion-stein}, $\cA_t u = \cL_t^{\mbSigma}(\frac{1}{2}\nabla_{\mbx}u)$. 
+Hence, solving \cref{app:eqn:helmholtz-stein-eqn} is equivalent to solving
+\begin{equation}\label{app:eqn:poisson}
+    [\cA_t u(\cdot, t)](\mbx) = \eta(\mbx, t), \quad  (\mbx, t) \in \bbR^K \times [0, T]
+\end{equation}
+and then setting $\nabla_{\mbx}\psi(\mbx,t) = \frac{1}{2} \nabla_{\mbx}u(\mbx, t)$.
+\Cref{app:eqn:poisson} is known as the \emph{Poisson equation} \cite{pardoux2005poisson,gilbarg1998elliptic}.
+
+Assume that, for each fixed $t$, $\eta(\mbx, t)$ and the coefficients of the above diffusion satisfy the regularity conditions of \citet[][Theorem 5]{gorham2019measuring}. Then \citet[][Theorem 5]{gorham2019measuring} implies that 
+\begin{equation}\label{app:eqn:poisson-soln}
+    u(\mbx, t) = -\int_0^\infty \bbE[\eta(\mbz^{(t)}(s), t) | \mbz^{(t)}(0) = \mbx]ds
+\end{equation}
+solves the Poisson equation. The integrand in \cref{app:eqn:poisson-soln} is computed by starting the diffusion \cref{app:eqn:langevin-diffusion} from $\mbx$ and then running it forward until time $s$.
+
+Therefore,
+\begin{equation}\label{app:eqn:helmholtz-soln}
+    \nabla_{\mbx}\psi(\mbx,t) =  -\frac{1}{2}\nabla_{\mbx} \int_0^\infty \bbE[\eta(\mbz^{(t)}(s), t) | \mbz^{(t)}(0) = \mbx]ds
+\end{equation}
+solves \cref{app:eqn:helmholtz-stein-eqn}. Consequently, defining $\mbh(\mbx,t) = \mbr(\mbx,t) - \mbSigma(t)\nabla_{\mbx}\psi(\mbx,t)$
+gives $\nabla_{\mbx} \cdot \left[ q(\mbx,t)\mbh(\mbx,t) \right] = 0$.
+Thus $\mbh(\cdot,t)$ is the $q$-divergence-free component of the residual vector field.
+
+\subsection{The Helmholtz decomposition for Gaussian marginals}\label{app:subsec:helmholtz-gaussian}
+
+For the remainder of \Cref{app:sec:helm-sde}, we specialize to the setting of Gaussian one-time marginals and a state-independent diffusion coefficient.
+In this subsection, we establish the existence,  uniqueness, and regularity of the weighted Helmholtz decomposition in this setting.
+
+Since we are considering only the existence and uniqueness of the weighted Helmholtz decomposition, and not the implied variational SDE, we do not require the assumptions from \Cref{app:subsec:assumptions}.
+
+First, we show that under minimal assumptions, the $q$-divergence-free vector field $\mbh$ that minimizes \cref{eqn:optimize} exists. It is the orthogonal projection onto the subspace of $q$-divergence-free vector fields.
+\begin{theorem}[Existence and uniqueness of weak Helmholtz decomposition]\label{app:thm:hilbert-projection}
+     Suppose that $\mbr(\mbx, t)$ has polynomial growth and that $\mbSigma(t)$ is positive definite. 
+     Let $\cL^2(q(\mbx, t), \bbR^K, \mbSigma(t))^K$ be the Hilbert space of vector fields $\mbf: \bbR^K \to \bbR^K$ satisfying $\bbE_{q(\mbx, t)}\|\mbf(\mbx)\|^2 < \infty$ equipped with the inner product 
+     \begin{equation}\label{app:eqn:l2-inner-prod}
+         \langle \mbf, \mbg \rangle_{q, t} = \bbE_{q(\mbx, t)} [\mbf(\mbx)^\top \mbSigma(t)^{-1} \mbg(\mbx)], \qquad \| \mbf \|_{q, t} = \langle \mbf, \mbf \rangle_{q, t}^{1/2}
+    \end{equation}
+
+     \smallskip
+     Then $\mbr(\mbx, t) \in \cL^2(q(\mbx, t), \bbR^K, \mbSigma(t))^K$ admits the decomposition 
+     \begin{equation}\label{app:eqn:helmholtz-weak}
+         \mbr(\mbx, t) = \mbg(\mbx, t) + \mbh(x, t)
+     \end{equation}
+     where $\mbh, \mbg \in  \cL^2(q(\mbx, t), \bbR^K, \mbSigma(t))^K$, $\mbh$ is $q$-divergence-free in the weak sense \cref{app:eqn:div-free-weak}, and $\mbg$ is orthogonal to all $q$-divergence-free vector fields.
+     Moreover, this decomposition is unique in $\cL^2(q(\mbx, t), \bbR^K, \mbSigma(t))^K$. 
+\end{theorem}
+\begin{proof}
+    Consider the set $\cV_t$ of all vector fields that are divergence-free in the weak sense \cref{app:eqn:div-free-weak}:
+    \begin{equation}\label{app:eqn:weak-subspace}
+    \cV_t = \left\{ \mbv \in  \cL^2(q(\mbx, t), \bbR^K, \mbSigma(t))^K \ \bigg| \  \int \mbv(\mbx, t)^\top \nabla_{\mbx} \varphi(\mbx) q(d\mbx, t) = 0, \quad \forall \varphi \in \cC \right\},
+    \end{equation}
+    where $\cC$ is the collection of test functions that are infinitely differentiable and have compact support.
+
+    Since $\mbr(\mbx, t)$ has polynomial growth, it belongs to $\cL^2(q(\mbx, t), \bbR^K, \mbSigma(t))^K$.
+    By the Hilbert projection theorem, the result follows once we establish that $\cV_t$ is a closed subspace of $\cL^2(q(\mbx, t), \bbR^K, \mbSigma(t))^K$. 
+   
+    The fact that $\cV_t$ is a subspace is immediate from the definition. To show that it is closed, fix $\varphi \in \cC$ and define
+    \begin{equation*}
+    \cL_\varphi(\mbv) =  \int \mbv(\mbx)^\top\nabla_{\mbx}\varphi(\mbx) q(d\mbx,t).
+    \end{equation*}
+Since $\cL_\varphi(\mbv) = \left\langle \mbv, \mbSigma(t)\nabla_{\mbx}\varphi \right\rangle_{q, t}$, the Cauchy--Schwarz inequality gives
+\begin{equation*}
+|\cL_\varphi(\mbv)| \leq \|\mbv \|_{q, t} \left\| \mbSigma(t)\nabla{\mbx}\varphi \right\|_{q, t}.
+\end{equation*}
+Consequently, $\cL_{\varphi}$ is a continuous linear functional.
+Therefore, $\cV_t = \bigcap_{\varphi\in \cC}
+\mathrm{ker} \cL_{\varphi}$ is closed.
+\end{proof}
+
+The preceding theorem tells us that, among the vector fields that are $q$-divergence-free in the weak sense \cref{app:eqn:div-free-weak}, $\mbh(\mbx,t)$ uniquely minimizes \cref{eqn:optimize}.
+We call \cref{app:eqn:helmholtz-weak} the \emph{weak Helmholtz decomposition}.
+\Cref{app:thm:hilbert-projection} does \emph{not}, however, provide a Helmholtz decomposition as in \cref{eqn:helmholtz-decomp}.
+Specifically, it neither establishes that $\mbh$ satisfies the $q$-divergence-free condition pointwise, nor identifies $\mbg$ with a gradient field of the form $\mbSigma(t)\nabla_{\mbx}\psi$, nor verifies the regularity of $\mbg$, $\mbh$, or $\psi$.
+
+The following result supplies this representation and regularity for the Gaussian marginals used in Helmholtz-SDE.
+ 
+\begin{assumption}\label{app:assum:resid}
+    Assume that the following hold:
+    \begin{enumerate}[label=(\roman*)]
+        \item\label{item:ass:cont} $(\mbm(t), \mbS(t))_{0 \leq t \leq T}$ is continuously differentiable in $t$, and $\mbS(t)$ is positive definite.
+        \item\label{item:ass:diff} $\mbr$ is twice differentiable in $\mbx$, and its derivatives are continuous in $(\mbx, t)$.
+        \item\label{item:ass:poly} $\mbr$, $D_{\mbx} \mbr$, and $D_{\mbx}^{(2)}\mbr$ have polynomial growth in $\mbx$, uniformly in $t$.
+        \item\label{item:ass:cont-sigma} $\mbSigma(t)$ is continuous and positive definite.
+    \end{enumerate}  
+    $D_{\mbx} \mbr \in \bbR^{K \times K}$ and $D_{\mbx}^{(2)} \mbr \in \bbR^{K \times K \times K}$ represent the derivative tensors of the residual vector field $\mbr: \bbR^K \to \bbR^K$. 
+\end{assumption}
+
+\begin{theorem}[Regularity of the Helmholtz decomposition]\label{app:thm:helm-gaussian}
+    Suppose \Cref{app:assum:resid} holds.
+    For every $t\in[0,T]$, the weak Helmholtz decomposition of $\mbr(\mbx, t)$ in \cref{app:eqn:helmholtz-weak} has the pointwise representation
+    \begin{equation*}
+    \mbr(\mbx,t)=\mbSigma(t)\nabla_{\mbx}\psi(\mbx,t)+\mbh(\mbx,t),
+    \end{equation*}
+    where $\mbh$ is $q$-divergence-free in the strong sense
+    \begin{equation*}
+    \nabla_{\mbx}\cdot[q(\mbx,t)\mbh(\mbx,t)]=0, \quad (\mbx, t) \in \bbR^K \times [0, T].
+\end{equation*}
+
+    $\psi$ is twice differentiable in $\mbx$, $\mbh$ is once differentiable in $\mbx$, and their derivatives are continuous in $(\mbx, t)$.
+    Within the stated regularity class, $\mbh$ is unique pointwise, and $\psi(\cdot,t)$ is unique up to an additive constant, which may depend on $t$.
+\end{theorem}
+\begin{proof}
+Fix $t \in [0, T]$.
+Since $\mbS(t)$ is positive definite, $q(\mbx, t)$ is a smooth, strictly positive density on $\bbR^K$. 
+Recall from \Cref{app:subsec:helmholtz-compute} that solving the Stein operator equation \cref{app:eqn:helmholtz-stein-eqn} for $\nabla_{\mbx}\psi$ reduces, via the identity $\cA_t u = \cL_t^{\mbSigma}(\tfrac{1}{2}\nabla_{\mbx} u)$, to solving the Poisson equation \cref{app:eqn:poisson} for $u$:
+\begin{equation}\label{app:eqn:weighted-poisson-theorem}
+    [\cA_t u(\cdot,t)](\mbx) \;=\; \frac{1}{2 q(\mbx, t)} \nabla_{\mbx} \cdot \left[q(\mbx, t)\mbSigma(t)\nabla_{\mbx} u(\mbx,t)\right] \;=\; \eta(\mbx, t),
+\end{equation}
+where $\cA_t$ is the infinitesimal generator of the Langevin diffusion \cref{app:eqn:langevin-diffusion} and $\eta(\mbx, t)$ is the source term in \cref{app:eqn:helmholtz-stein-eqn}.
+The gradient component of the Helmholtz decomposition is then recovered as $\nabla_{\mbx}\psi(\mbx, t) = \tfrac{1}{2}\nabla_{\mbx} u(\mbx, t)$.
+
+Our goal is to show that the candidate $u(\mbx, t)$ in \cref{app:eqn:poisson-soln} satisfies \cref{app:eqn:weighted-poisson-theorem} pointwise, and that $u$ is twice continuously differentiable in $\mbx$ with derivatives continuous in $(\mbx, t)$.
+Once \cref{app:eqn:weighted-poisson-theorem} is established, defining
+\begin{equation}\label{app:eqn:h-definition-theorem}
+    \mbh(\mbx,t) = \mbr(\mbx,t) - \mbSigma(t)\nabla_{\mbx}\psi(\mbx,t)
+\end{equation}
+gives $\nabla_{\mbx} \cdot \left[q(\mbx, t)\mbh(\mbx,t)\right] = 0$, yielding the desired Helmholtz decomposition.
+
+Our proof proceeds in four main steps:
+\begin{enumerate}[label=(\roman*)]
+    \item\label{item:whiten} Reexpress the candidate $u$ in whitened and rotated coordinates, where the associated Langevin diffusion becomes a product of one-dimensional Ornstein--Uhlenbeck (OU) processes.
+    \item\label{item:reg} Prove that the candidate $u$ is well-defined and satisfies the desired regularity conditions.
+    \item\label{item:poisson} Verify that $u$ satisfies the Poisson equation \cref{app:eqn:weighted-poisson-theorem} pointwise.
+    \item\label{item:unique} Identify the constructed vector fields with the unique weak Helmholtz decomposition from \Cref{app:thm:hilbert-projection}.
+\end{enumerate}
+
+\medskip
+\textbf{Step \ref{item:whiten}}:
+The candidate $u$ proposed in \Cref{app:subsec:helmholtz-compute} (\cref{app:eqn:poisson-soln}) is expressed as an integral of expectations along the Langevin diffusion \cref{app:eqn:langevin-diffusion} with invariant law $q(\mbx, t)$. We use the same whitening and rotation as in \Cref{app:subsec:resid-approx}. Define
+\begin{equation*}
+\begin{aligned}
+    \mbC(t) &= \mbS(t)^{-1/2}\mbSigma(t)\mbS(t)^{-1/2} = \mbQ(t)\mbLambda(t)\mbQ(t)^\top,\\
+    \mbLambda(t) &= \diag(\lambda_1(t),\ldots,\lambda_K(t)), \qquad \mbQ(t)^\top\mbQ(t)=\bbI_K,
+\end{aligned}
+\end{equation*}
+and introduce the coordinates
+\begin{equation*}
+    \tilde\mbx = \mbQ(t)^\top\mbS(t)^{-1/2}(\mbx-\mbm(t)), \qquad \chi(\tilde\mbx,t) = u(\mbm(t)+\mbS(t)^{1/2}\mbQ(t)\tilde\mbx,t).
+\end{equation*}
+Transform the residual in the same way:
+\begin{equation*}
+    \widetilde{\mbrho}(\tilde\mbx,t) = \mbQ(t)^\top\mbS(t)^{-1/2} \mbr(\mbm(t)+\mbS(t)^{1/2}\mbQ(t)\tilde\mbx,t).
+\end{equation*}
+Then $q(\tilde\mbx,t)=\cN(\mb0,\bbI_K)$. Since $\mbS(t)$ and $\mbSigma(t)$ are positive definite, every $\lambda_i(t)$ is strictly positive.
+
+After an orthogonal transformation of the driving Brownian motion, the Langevin diffusion \cref{app:eqn:langevin-diffusion} becomes
+\begin{equation}\label{app:eqn:ou-process-theorem}
+    d\tilde\mbz^{(t)}(s) = -\tfrac{1}{2}\mbLambda(t)\tilde\mbz^{(t)}(s)ds + \mbLambda(t)^{1/2}d\mbw(s), \qquad \tilde\mbz^{(t)}(0)=\tilde\mbx.
+\end{equation}
+Thus its coordinates are independent one-dimensional OU processes with invariant law $\cN(0,1)$. Equivalently, each coordinate is a standard OU process after rescaling the artificial time $s$ by $\lambda_i(t)$. The joint invariant law is $\cN(\mb0,\bbI_K)$, and the infinitesimal generator is
+\begin{equation*}
+    (\tilde{\cA}_t f)(\tilde\mbx) = \tfrac{1}{2}\mathrm{tr}\left( \mbLambda(t)\nabla_{\tilde\mbx}^2 f(\tilde\mbx) \right) - \tfrac{1}{2}\tilde\mbx^\top \mbLambda(t)\nabla_{\tilde\mbx}f(\tilde\mbx)
+\end{equation*}
+for $f:\bbR^K\to\bbR$ twice continuously differentiable with derivatives having polynomial growth. Define the transformed source
+\begin{equation}\label{app:eqn:g-definition}
+    g(\tilde\mbx,t) = \nabla_{\tilde\mbx}\cdot\widetilde{\mbrho}(\tilde\mbx,t) - \tilde\mbx^\top\widetilde{\mbrho}(\tilde\mbx,t).
+\end{equation}
+A direct computation shows that
+\begin{equation*}
+    g(\tilde\mbx,t) = \eta(\mbm(t)+\mbS(t)^{1/2}\mbQ(t)\tilde\mbx,t),
+\end{equation*}
+where $\eta$ is the source term in \cref{app:eqn:helmholtz-stein-eqn}. Overall, in the $\tilde\mbx$ coordinates, the Poisson equation becomes
+\begin{equation}\label{app:eqn:whitened-poisson-theorem}
+    (\tilde{\cA}_t \chi(\cdot, t))(\tilde\mbx) = g(\tilde\mbx, t).
+\end{equation}
+
+By \Cref{app:assum:resid}, $\mbr$ is differentiable in $\mbx$, and both $\mbr$ and $D_{\mbx}\mbr$ have polynomial growth; the same therefore holds of $\widetilde{\mbrho}(\cdot,t)$ and $D_{\tilde\mbx}\widetilde{\mbrho}(\cdot,t)$. Stein's identity gives
+\begin{equation*}
+    \E_{\tilde\mbx \sim \cN(\mb0,\bbI_K)}\left[\nabla_{\tilde\mbx}\cdot \widetilde{\mbrho}(\tilde\mbx,t)\right] = \E_{\tilde\mbx \sim \cN(\mb0,\bbI_K)}\left[\tilde\mbx^\top \widetilde{\mbrho}(\tilde\mbx,t)\right],
+\end{equation*}
+so $g(\cdot, t)$ has mean zero under the OU invariant law.
+
+In these whitened coordinates, the candidate from \cref{app:eqn:poisson-soln} takes the form
+\begin{equation}\label{app:eqn:chi-representation-theorem}
+    \chi(\tilde\mbx,t) = -\int_0^\infty (P_s^t g)(\tilde\mbx)\,ds, \qquad (P_s^t g)(\tilde\mbx) = \bbE\left[g\left(\tilde\mbz^{(t)}(s),t\right)\,\big|\,\tilde\mbz^{(t)}(0)=\tilde\mbx\right],
+\end{equation}
+where $(P_s^t)_{s \geq 0}$ is the OU semigroup associated with \cref{app:eqn:ou-process-theorem}.
+Equivalently,
+\begin{equation*}
+    u(\mbx,t) = \chi\left( \mbQ(t)^\top\mbS(t)^{-1/2}(\mbx-\mbm(t)),t \right).
+\end{equation*}
+
+\medskip
+\textbf{Step \ref{item:reg}}:
+We first justify that \cref{app:eqn:chi-representation-theorem} is well-defined.
+For all times $0 \le s < \infty$, the marginal distribution of the OU process
+\eqref{app:eqn:ou-process-theorem} satisfies
+\begin{equation*}
+    \tilde\mbz^{(t)}(s) \overset{d}{=} \mbA_t(s)\tilde\mbx + \mbB_t(s)\mbxi, \qquad \mbxi \sim \cN(\mb0,\bbI_K),
+\end{equation*}
+where
+\begin{equation*}
+    \mbA_t(s) = e^{-s\mbLambda(t)/2}, \qquad \mbB_t(s) = \left(\bbI_K - e^{-s\mbLambda(t)}\right)^{1/2}.
+\end{equation*}
+Thus
+\begin{equation*}
+    (P_s^t g)(\tilde\mbx) = \bbE_{\mbxi \sim \cN(\mb0,\bbI_K)} \left[g\left(\mbA_t(s)\tilde\mbx+\mbB_t(s)\mbxi, t\right) \right].
+\end{equation*}
+Using $\E_{\mbxi \sim \cN(\mb0,\bbI_K)}[g(\mbxi,t)] = 0$, we may write
+\begin{equation*}
+    (P_s^t g)(\tilde\mbx) = \bbE_{\mbxi \sim \cN(\mb0,\bbI_K)} \left[ g\left(\mbA_t(s)\tilde\mbx+\mbB_t(s)\mbxi,t\right) - g(\mbxi,t) \right].
+\end{equation*}
+Hence,
+\begin{equation*}
+    \left|(P_s^t g)(\tilde\mbx)\right| \leq \bbE_{\mbxi \sim \cN(\mb0,\bbI_K)} \left| g\left(\mbA_t(s)\tilde\mbx+\mbB_t(s)\mbxi,t\right)-g(\mbxi,t) \right|.
+\end{equation*}
+Now decompose
+\begin{equation*}
+\begin{aligned}
+    g\left(\mbA_t(s)\tilde\mbx+\mbB_t(s)\mbxi,t\right)-g(\mbxi,t) &= \Big( g\left(\mbA_t(s)\tilde\mbx+\mbB_t(s)\mbxi,t\right) - g\left(\mbB_t(s)\mbxi,t\right) \Big) \\
+    &\quad + \Big( g\left(\mbB_t(s)\mbxi,t\right)-g(\mbxi,t) \Big).
+\end{aligned}
+\end{equation*}
+Applying the mean value theorem to each term and using that $\nabla_{\tilde\mbx} g$ has at most polynomial growth,
+there exist constants $C, m > 0$ such that
+\begin{equation*}
+    \|\nabla_{\tilde\mbx} g(\tilde\mbx,t)\|_2 \le C(1+\|\tilde\mbx\|_2^m).
+\end{equation*}
+Since $\mbxi$ is Gaussian, all of its moments are finite. Moreover,
+\begin{equation*}
+    \|\mbA_t(s)\|_{\mathrm{op}} \leq C_t e^{-c_t s}, \qquad \|\mbB_t(s)-\bbI_K\|_{\mathrm{op}} \leq C_t e^{-c_t s},
+\end{equation*}
+for some constants $C_t, c_t > 0$. It follows that
+\begin{equation*}
+    \left| \bbE\left[g\left(\tilde\mbz^{(t)}(s),t\right)\,\big|\,\tilde\mbz^{(t)}(0)=\tilde\mbx\right] \right| \leq C_t'(1+\|\tilde\mbx\|_2^{m+1})e^{-c_t s},
+\end{equation*}
+for some constant $C_t' > 0$. In particular, \cref{app:eqn:chi-representation-theorem} is finite for every $(\tilde\mbx, t)$.
+
+We next show that, for every fixed $t$, $\chi(\cdot,t)$ is twice continuously differentiable in $\tilde\mbx$. We then establish joint continuity in $(\mbx,t)$ after transforming these derivatives back to the original coordinates. The estimates below also justify passage of the spatial derivatives, and hence of $\tilde{\cA}_t$, under the integral sign in step \ref{item:poisson}.
+
+Using the notation introduced above, we can rewrite
+\cref{app:eqn:chi-representation-theorem} as
+\begin{equation}\label{app:eqn:chi-gaussian-representation-theorem}
+    \chi(\tilde\mbx,t) = -\int_0^\infty \E_{\mbxi \sim \cN(\mb0,\bbI_K)} \left[ g\left(\mbA_t(s)\tilde\mbx+\mbB_t(s)\mbxi,t\right) \right] ds.
+\end{equation}
+
+We first study the gradient of $\chi$.
+To do so, we must justify the exchange of the gradient and integral in \cref{app:eqn:chi-gaussian-representation-theorem}. Applying Stein's identity to the integrand of \cref{app:eqn:chi-gaussian-representation-theorem} yields 
+\begin{equation*}
+    F(\tilde\mbx,t,s) = \nabla_{\tilde\mbx}(P_s^t g)(\tilde\mbx) = \mbA_t(s)\mbB_t(s)^{-1} \bbE_{\mbxi \sim \cN(0,\bbI_K)} \left[ \mbxi \, g\left(\mbA_t(s)\tilde\mbx+\mbB_t(s)\mbxi,t\right) \right].
+\end{equation*}
+The polynomial growth of $g$ implies
+\begin{equation*}
+\begin{aligned}
+    \|F(\tilde\mbx,t,s)\|_2 &\leq \|\mbA_t(s)\mbB_t(s)^{-1}\|_{\mathrm{op}} \bbE_{\mbxi \sim \cN(0,\bbI_K)} \left[ \|\mbxi\|_2\,|g\left(\mbA_t(s)\tilde\mbx+\mbB_t(s)\mbxi,t\right)| \right] \\
+    &\leq C\|\mbA_t(s)\mbB_t(s)^{-1}\|_{\mathrm{op}} \left(1+\|\mbA_t(s)\tilde\mbx\|_2^m\right),
+\end{aligned}
+\end{equation*}
+where we used that $\mbxi$ is Gaussian and $\mbB_t(s)$ is bounded.
+Now, as $s\downarrow 0$, $\|\mbA_t(s)\mbB_t(s)^{-1}\|_{\mathrm{op}} = O(s^{-1/2})$,
+while as $s\to\infty$,
+\begin{equation*}
+    \|\mbA_t(s)\|_{\mathrm{op}} \le C_t e^{-c_t s}, \quad \|\mbB_t(s)^{-1}\|_{\mathrm{op}} \le C_t.
+\end{equation*}
+Therefore
+\begin{equation*}
+    \|F(\tilde\mbx,t,s)\|_2 \leq \begin{cases} C(1+\|\tilde\mbx\|_2^m)s^{-1/2}, & 0 < s \leq 1,\\ C_t(1+\|\tilde\mbx\|_2^m)e^{-c_t s}, & s\geq 1, \end{cases}
+\end{equation*}
+and the right-hand side is integrable on $(0,\infty)$. Moreover, for every compact set $K \subset \bbR^K \times [0,T]$, this integrable bound can be chosen uniformly for $(\tilde\mbx,t)\in K$. By dominated convergence we deduce 
+\begin{equation*}
+    \nabla_{\tilde\mbx} \chi(\tilde\mbx,t) = -\int_0^\infty F(\tilde\mbx, t, s) ds.
+\end{equation*}
+
+We next study the Hessian of $\chi$.
+Since $g$ is continuously differentiable in $\tilde\mbx$, for each fixed $s>0$ the map
+$(\tilde\mbx,t)\mapsto F(\tilde\mbx,t,s)$ is continuously differentiable in $\tilde\mbx$, and
+\begin{equation*}
+    \nabla_{\tilde\mbx} F(\tilde\mbx,t,s) = \nabla_{\tilde\mbx}^2(P_s^t g)(\tilde\mbx) = \mbA_t(s)\mbB_t(s)^{-1} \bbE_{\mbxi \sim \cN(0,\bbI_K)} \left[ \mbxi \, \left(\nabla_{\tilde\mbx} g\left(\mbA_t(s)\tilde\mbx+\mbB_t(s)\mbxi,t\right)\right)^\top \right] \mbA_t(s).
+\end{equation*}
+Using that $\nabla_{\tilde\mbx}g$ has at most polynomial growth, we obtain
+\begin{equation*}
+\begin{aligned}
+    \|\nabla_{\tilde\mbx} F(\tilde\mbx,t,s)\|_2&\leq\|\mbA_t(s)\mbB_t(s)^{-1}\|_{\mathrm{op}} \,\|\mbA_t(s)\|_{\mathrm{op}} \, \bbE_{\mbxi \sim \cN(0,\bbI_K)} \left[\|\mbxi\|_2\,\|\nabla_{\tilde\mbx} g\left(\mbA_t(s)\tilde\mbx+\mbB_t(s)\mbxi,t\right)\|_2 \right] \\
+    &\leq C\|\mbA_t(s)\mbB_t(s)^{-1}\|_{\mathrm{op}}\,\|\mbA_t(s)\|_{\mathrm{op}} \left(1+\|\mbA_t(s)\tilde\mbx\|_2^m\right).
+\end{aligned}
+\end{equation*}
+Hence,
+\begin{equation*}
+    \|\nabla_{\tilde\mbx} F(\tilde\mbx,t,s)\|_2 \leq \begin{cases} C(1+\|\tilde\mbx\|_2^m)s^{-1/2}, & 0 < s \leq 1,\\ C_t(1+\|\tilde\mbx\|_2^m)e^{-c_t s}, & s\ge 1, \end{cases}
+\end{equation*}
+which is again integrable on $(0,\infty)$. Again, for every compact set $K \subset \bbR^K \times [0,T]$, this integrable bound may be chosen uniformly for $(\tilde\mbx,t)\in K$, and dominated convergence yields
+\begin{equation*}
+    \nabla_{\tilde\mbx}^2 \chi(\tilde\mbx,t) = -\int_0^\infty \nabla_{\tilde\mbx}F(\tilde\mbx,t,s)\,ds.
+\end{equation*}
+Hence, $\chi(\cdot,t)$ is twice continuously differentiable in $\tilde\mbx$ for every $t$.
+
+It remains to establish continuity after transforming back to the original coordinates. A continuous choice of the eigenvector matrix $\mbQ(t)$ is not required. Indeed,
+\begin{equation*}
+    \mbQ(t)\mbA_t(s)\mbQ(t)^\top = e^{-s\mbC(t)/2}, \quad  \mbQ(t)\mbB_t(s)\mbQ(t)^\top = \left(\bbI_K-e^{-s\mbC(t)}\right)^{1/2}.
+\end{equation*}
+Consequently, after undoing the rotation, the expressions for the derivatives of $u$ depend on $t$ through $\mbm(t)$, $\mbS(t)$, $\mbr$, and the continuous matrix functions of $\mbC(t)$ displayed above, rather than through the particular choice of $\mbQ(t)$.
+
+Continuity and positive definiteness of $\mbS(t)$ and $\mbSigma(t)$ imply uniform upper and lower spectral bounds for $\mbC(t)$ on $[0,T]$. Therefore the bounds above may be chosen locally uniformly in $(\mbx,t)$. Dominated convergence in the Gaussian expectation and in $s$ then gives joint continuity of the first and second spatial derivatives in $\mbx$ coordinates.
+
+\medskip
+\textbf{Step \ref{item:poisson}}:
+We now verify that $u$ satisfies the Poisson equation \cref{app:eqn:weighted-poisson-theorem} pointwise.
+By step \ref{item:whiten}, it suffices to show that $\chi$ satisfies the Poisson equation in the transformed coordinates \eqref{app:eqn:whitened-poisson-theorem}.
+
+The estimates established in step \ref{item:reg} show that $(P_s^t g)(\tilde\mbx)$ is twice continuously differentiable in $\tilde\mbx$.
+For each $s>0$, $(P_s^t g)$ is also continuously differentiable in $s$ and satisfies the backward Kolmogorov equation
+\begin{equation*}
+    \frac{\partial}{\partial s}(P_s^t g)(\tilde\mbx) = (\tilde{\cA}_t P_s^t g)(\tilde\mbx), \qquad s>0.
+\end{equation*}
+
+Moreover, the spatial derivatives of $(P_s^t g)$ admit integrable bounds in $s$, locally uniformly in $\tilde\mbx$ for fixed $t$.
+Therefore the operator $\tilde{\cA}_t$ may be passed under the integral sign in \cref{app:eqn:chi-representation-theorem}, yielding
+\begin{equation*}
+\begin{aligned}
+    (\tilde{\cA}_t \chi(\cdot,t))(\tilde\mbx) &= -\int_0^\infty (\tilde{\cA}_t P_s^t g)(\tilde\mbx)ds\\
+    &= -\int_0^\infty \frac{\partial}{\partial s}(P_s^t g)(\tilde\mbx)ds\\
+    &= g(\tilde\mbx,t)-\lim_{R\to\infty}(P_R^t g)(\tilde\mbx).
+\end{aligned}
+\end{equation*}
+By the tail estimate established in step \ref{item:reg},
+\begin{equation*}
+    |(P_R^t g)(\tilde\mbx)| \leq C_t'(1+\|\tilde\mbx\|_2^{m+1})e^{-c_tR} \to 0 \qquad\text{as }R\to\infty,
+\end{equation*}
+for each $(\tilde\mbx,t)$.
+Hence $(\tilde{\cA}_t\chi(\cdot,t))(\tilde\mbx)=g(\tilde\mbx,t)$ for every $(\tilde\mbx,t)$, and consequently
+\begin{equation*}
+    u(\mbx,t) = \chi\left( \mbQ(t)^\top\mbS(t)^{-1/2}(\mbx-\mbm(t)),t \right)
+\end{equation*}
+satisfies \cref{app:eqn:weighted-poisson-theorem} pointwise. The gradient component of the Helmholtz decomposition is then $\nabla_{\mbx}\psi(\mbx,t)=\tfrac{1}{2}\nabla_{\mbx}u(\mbx,t)$.
+
+\medskip
+\textbf{Step \ref{item:unique}}:
+It remains to identify the constructed vector fields with the components of the weak Helmholtz decomposition in
+\Cref{app:thm:hilbert-projection}. 
+The estimates in step \ref{item:reg} show that $\psi$, $\nabla_{\mbx}\psi$, and $\mbh$ have polynomial growth. 
+Since $q(\mbx,t)$ is Gaussian, $\mbSigma(t)\nabla_{\mbx}\psi(\mbx,t)$ and $\mbh(\mbx,t)$ belong to $\cL^2(q(\mbx, t), \bbR^K, \mbSigma(t))^K$.
+
+First, by appealing to integration by parts, the pointwise identity $\nabla_{\mbx}\cdot \left[q(\mbx,t)\mbh(\mbx,t)\right] = 0$ implies that $\mbh(\mbx,t)$ is $q$-divergence-free in the weak sense \cref{app:eqn:div-free-weak}. 
+We next show that $\mbSigma(t)\nabla_{\mbx}\psi(\cdot,t)$ is orthogonal to all weakly $q$-divergence-free vector fields.
+
+Fix $\mbv \in \cV_t$, and define an infinitely differentiable function $\zeta_R$ satisfying $\zeta_R=1$ on the ball of radius $R$, $\zeta_R=0$ outside the ball of radius $3R/2$, and $\|\nabla_{\mbx}\zeta_R\|_2 \leq \frac{C}{R}$.
+$\zeta_R(\mbx)\psi(\mbx,t)$ is twice continuously differentiable and compactly supported on the ball of radius $3R/2$. 
+We may therefore choose $\{\varphi_{R,k}\}_{k=1}^{\infty}$ infinitely differentiable and compactly supported on the ball of radius $2R$ such that
+\begin{equation*}
+    \nabla_{\mbx}\varphi_{R,k} \to \nabla_{\mbx}\left[    \zeta_R\psi(\cdot,t) \right]
+\end{equation*}
+uniformly. Since $\mbv\in\cV_t$,
+\begin{equation*}
+    \int
+    \mbv(\mbx)^\top\nabla_{\mbx}\varphi_{R,k}(\mbx)
+    q(\mbx,t)d\mbx
+    =
+    0
+\end{equation*}
+for every $k$. 
+Cauchy--Schwarz allows us to pass to the limit as $k\to\infty$, producing
+\begin{equation*}
+    \int \mbv(\mbx)^\top \nabla_{\mbx}\left[   \zeta_R(\mbx)\psi(\mbx,t) \right] q(\mbx,t)d\mbx = 0.
+\end{equation*}
+The polynomial growth of $\psi$ and $\nabla_{\mbx}\psi$, together with the Gaussian tails of $q(\mbx,t)$, gives
+\begin{equation*}
+\left\| \mbSigma(t) \nabla_{\mbx}\left[ \zeta_R(\mbx)\psi(\mbx,t) \right] - \mbSigma(t)\nabla_{\mbx}\psi(\mbx,t) \right\|_{q, t} \to 0
+\end{equation*}
+as $R\to\infty$.
+Taking the limit in the preceding identity therefore gives
+$\left\langle \mbv(\mbx), \mbSigma(t)\nabla_{\mbx}\psi(\mbx,t) \right\rangle_{q, t} = 0$. 
+Since this holds for every $\mbv \in \cV_t$, we have the desired result.
+
+Thus,
+\begin{equation*}
+\mbr(\mbx,t) = \mbSigma(t)\nabla_{\mbx}\psi(\mbx,t) + \mbh(\mbx,t)
+\end{equation*}
+is precisely the unique orthogonal decomposition supplied by \Cref{app:thm:hilbert-projection}. 
+In particular, the two vector fields are unique up to $q(\mbx,t)$-almost-everywhere equality among all square-integrable weak Helmholtz decompositions. 
+Because $q(\mbx,t) > 0$ for every $\mbx$ and the constructed vector fields are continuous, almost-everywhere uniqueness implies pointwise uniqueness.
+\end{proof}
+
+\Cref{app:thm:helm-gaussian} implies that for Gaussian marginals and a state-independent diffusion coefficient, the Helmholtz decomposition exists and admits the probabilistic solution
+\begin{equation}\label{app:eq:prob-rep}
+\begin{aligned}
+    \nabla_{\mbx}\psi(\mbx,t)
+    &=
+    \frac{1}{2}\mbS(t)^{-1/2}\mbQ(t)
+    \nabla_{\tilde\mbx}\chi\left(
+        \mbQ(t)^\top\mbS(t)^{-1/2}(\mbx-\mbm(t)),t
+    \right),\\
+    \nabla_{\tilde\mbx}\chi(\tilde\mbx,t)
+    &=
+    -\int_0^\infty
+    \mbA_t(s)\mbB_t(s)^{-1}
+    \bbE_{\mbxi\sim\cN(\mb0,\bbI_K)}
+    \left[
+        \mbxi\,
+        g\left(
+            \mbA_t(s)\tilde\mbx+
+            \mbB_t(s)\mbxi,t
+        \right)
+    \right]ds,\\
+    \mbA_t(s)
+    &=
+    e^{-s\mbLambda(t)/2},
+    \qquad
+    \mbB_t(s)
+    =
+    \left(\bbI_K-e^{-s\mbLambda(t)}\right)^{1/2},\\
+    \mbC(t)
+    &=
+    \mbS(t)^{-1/2}\mbSigma(t)\mbS(t)^{-1/2}
+    =
+    \mbQ(t)\mbLambda(t)\mbQ(t)^\top,\\
+    g(\tilde\mbx,t)
+    &=
+    \nabla_{\tilde\mbx}\cdot
+    \widetilde{\mbrho}(\tilde\mbx,t)
+    -
+    \tilde\mbx^\top\widetilde{\mbrho}(\tilde\mbx,t),\\
+    \widetilde{\mbrho}(\tilde\mbx,t)
+    &=
+    \mbQ(t)^\top\mbS(t)^{-1/2}
+    \mbr\left(
+        \mbm(t)+\mbS(t)^{1/2}\mbQ(t)\tilde\mbx,t
+    \right).
+\end{aligned}
+\end{equation}
+
+\subsection{Polynomial approximation of the optimal correction}
+\label{app:subsec:resid-approx}
+
+In \Cref{subsec:helmholtz-decomp} we showed that at fixed marginals $\{q(\mbx, t)\}_{0 \leq t \leq T}$, the $q$-divergence-free component $\mbh$ of the weighted Helmholtz decomposition is the vector field $\mbv$ that minimizes
+\begin{equation}\label{app:eq:fixed-marginal-objective}
+\int_0^T \bbE_{\bbQ} \left\|\mbSigma(t)^{-1/2} \{\mbr(\mbx(t), t)-\mbv(\mbx(t), t)\}\right\|^2dt.
+\end{equation}
+However, even when $q(\mbx, t)$ is Gaussian, the correction generally admits only the probabilistic solution \cref{app:eqn:helmholtz-soln}.
+In our preliminary experiments, we found that estimating \cref{app:eqn:helmholtz-soln} directly has prohibitively high variance.
+We make the problem tractable by restricting the divergence-free correction $\mbv$ to a finite-dimensional subspace comprised of polynomials of degree at most $\ell$.
+Within this subspace, the minimizer of \cref{app:eq:fixed-marginal-objective} can be computed coefficient by coefficient in a Hermite polynomial basis.
+
+Throughout this subsection, we assume only that $(\mbm(t),\mbS(t))_{0 \leq t \leq T}$, $\mbr(\mbx, t)$, $\mbSigma(t)$ satisfy the regularity conditions in \Cref{app:assum:resid}.
+
+\paragraph{Whiten and rotate.}
+First, we define the whitened coordinates $\tilde\mbx$ just as we did in the proof of \Cref{app:thm:helm-gaussian}:
+\begin{equation}\label{app:eq:hermite-coordinates}
+\tilde\mbx = \mbQ(t)^\top\mbS(t)^{-1/2}(\mbx-\mbm(t)), \quad \widetilde{\mbrho}(\tilde\mbx, t) =\mbQ(t)^\top\mbS(t)^{-1/2}\mbr(\mbm(t)+\mbS(t)^{1/2}\mbQ(t)\tilde\mbx, t),
+\end{equation}
+where $\mbQ(t)\mbLambda(t)\mbQ(t)^\top$ is the eigendecomposition of $\mbC(t)=\mbS(t)^{-1/2}\mbSigma(t)\mbS(t)^{-1/2}$.
+In the whitened coordinates, $\tilde\mbx\sim\cN(\mb0,\bbI_K)$.
+
+Suppose $\mbnu(\tilde\mbx,t)$ is divergence-free with respect to the standard Gaussian density.
+In the original coordinates, this vector field is
+\begin{equation}\label{app:eq:hermite-unwhiten}
+\mbv(\mbx, t) =\mbS(t)^{1/2}\mbQ(t)\mbnu\left(\mbQ(t)^\top\mbS(t)^{-1/2}(\mbx-\mbm(t)), t\right).
+\end{equation}
+The objective and constraint become
+\begin{align}
+&\bbE_{\tilde\mbx\sim\cN(\mb0,\bbI_K)}\left[(\widetilde{\mbrho}(\tilde\mbx,t)-\mbnu(\tilde\mbx,t))^\top\mbLambda(t)^{-1}(\widetilde{\mbrho}(\tilde\mbx,t)-\mbnu(\tilde\mbx,t))\right]\label{app:eq:hermite-objective}\\
+&\nabla_{\tilde\mbx}\cdot\mbnu(\tilde\mbx,t)-\tilde\mbx^\top\mbnu(\tilde\mbx,t)=0.\label{app:eq:hermite-div-free}
+\end{align}
+Indeed, \cref{app:eq:hermite-div-free} is exactly $\nabla_{\mbx}\cdot[q(\mbx,t)\mbv(\mbx,t)]=0$ after the change of variables.
+
+\paragraph{Closed-form Hermite projection.}
+Let $\mathrm{He}_d(u)$, $d\in\bbN$, be the $d$th unnormalized probabilists' Hermite polynomial.
+The collection $\{\mathrm{He}_d(u)/\sqrt{d!}\}_{d=0}^{\infty}$ constitutes an orthonormal basis of the Hilbert space $\cL^2(\cN(0,1);\bbR)$, which is comprised of functions $f:\bbR\to\bbR$ satisfying $\bbE_{u\sim\cN(0,1)}[f(u)^2]<\infty$ with the inner product $\langle f,g\rangle=\bbE_{u\sim\cN(0,1)}[f(u)g(u)]$.
+
+We can extend the univariate Hermite polynomial basis to an orthonormal basis of $\cL^2(\cN(\mb0,\bbI_K);\bbR)$, comprised of functions $f:\bbR^K\to\bbR$ satisfying $\bbE_{\tilde\mbx\sim\cN(\mb0,\bbI_K)}[f(\tilde\mbx)^2]<\infty$ with the analogous inner product.
+Define the collection of multi-indices
+\begin{equation*}
+\cN_{K, \ell} = \left\{ \mbalpha \in \{0, 1, \ldots, \ell\}^K \bigg| \sum_{j=1}^K \mbalpha_j \leq \ell\right\}, \quad \cN_{K, +\infty} = \{0, 1, \ldots\}^K, \quad \ell \geq 0.
+\end{equation*}
+For a multi-index $\mbalpha \in \cN_{K, +\infty}$, we define the corresponding normalized multivariate probabilists' Hermite polynomial
+\begin{equation}\label{app:eq:hermite-basis}
+\hat{H}_{\mbalpha}(\tilde\mbx) =\prod_{i=1}^K \frac{\mathrm{He}_{\mbalpha_i}(\tilde\mbx_i)}{\sqrt{\mbalpha_i!}}.
+\end{equation}
+$\{\hat{H}_{\mbalpha}(\tilde\mbx)\}_{\mbalpha\in\cN_{K,+\infty}}$ forms an orthonormal basis of $\cL^2(\cN(\mb0,\bbI_K);\bbR)$.
+
+By \Cref{app:assum:resid}, $\widetilde{\mbrho}_i(\tilde\mbx,t)$, $1\leq i\leq K$, has polynomial growth and hence is in $\cL^2(\cN(\mb0,\bbI_K);\bbR)$.
+Therefore, we can expand the rotated residual in the multivariate Hermite basis as
+\begin{equation}\label{app:eq:hermite-coefficients}
+\widetilde{\mbrho}_i(\tilde\mbx,t)=\sum_{\mbalpha\in\cN_{K,+\infty}}\widetilde{\mbb}_{\mbalpha,i}(t)\hat{H}_{\mbalpha}(\tilde\mbx), \qquad \widetilde{\mbb}_{\mbalpha,i}(t)=\bbE_{\tilde\mbx\sim\cN(\mb0,\bbI_K)}\left[\widetilde{\mbrho}_i(\tilde\mbx,t)\hat{H}_{\mbalpha}(\tilde\mbx)\right].
+\end{equation}
+We choose this basis expansion because of the identity
+\begin{equation}\label{app:eq:hermite-raising}
+(\partial_{\tilde\mbx_i}-\tilde\mbx_i)\hat{H}_{\mbalpha}(\tilde\mbx) =-\sqrt{\mbalpha_i+1}\,\hat{H}_{\mbalpha+\mbe_i}(\tilde\mbx).
+\end{equation}
+The Gaussian weighted divergence raises the Hermite degree by one and creates no lower-order terms.
+Rather than keeping the infinitely many basis vectors in the expansion of $\widetilde{\mbrho}_i(\tilde\mbx, t)$, we truncate the expansion \cref{app:eq:hermite-coefficients} to $\{\hat{H}_{\mbalpha}(\tilde\mbx)\}_{\mbalpha \in \cN_{K, \ell}}$, which span the $\binom{K + \ell}{\ell}$-dimensional subspace of polynomials having degree at most $\ell$.
+In \Cref{app:prop:hermite-projection}, we show that by doing so, we can obtain the optimal correction to the reference posterior drift restricted to this subspace.
+\begin{proposition}[Hermite projection]\label{app:prop:hermite-projection}
+Among all polynomial fields $\mbnu(\tilde\mbx, t)$ of degree at most $\ell$ satisfying \cref{app:eq:hermite-div-free}, the unique minimizer of \cref{app:eq:hermite-objective} is
+\begin{equation}\label{app:eq:hermite-solution}
+\begin{aligned}
+\mu_{\mbbeta}(t)&=\frac{\sum_{i=1}^K\sqrt{\mbbeta_i}\, \widetilde{\mbb}_{\mbbeta-\mbe_i,i}(t)} {\sum_{i=1}^K\lambda_i(t)\mbbeta_i}, &&\mbbeta \in \cN_{K, \ell+1} \setminus \cN_{K, 0},\\
+\widetilde{\mbc}_{\mbalpha,i}(t) &=\widetilde{\mbb}_{\mbalpha,i}(t) -\lambda_i(t)\sqrt{\mbalpha_i+1}\, \mu_{\mbalpha+\mbe_i}(t), &&\mbalpha \in \cN_{K, \ell},\\
+\mbnu^{(\ell)}(\tilde\mbx, t) &=\sum_{\mbalpha \in \cN_{K, \ell}} \widetilde{\mbc}_{\mbalpha}(t)\hat{H}_{\mbalpha}(\tilde\mbx),
+\end{aligned}
+\end{equation}
+where a coefficient with a negative multi-index is zero.
+The optimal correction $\mbh^{(\ell)}(\mbx, t)$ in the original coordinates is obtained from $\mbnu^{(\ell)}(\tilde\mbx, t)$ using \cref{app:eq:hermite-unwhiten}.
+\end{proposition}
+
+\begin{proof}
+Note that since $\mbnu$ is a polynomial field, its components are in $\cL^2(\cN(\mb0,\bbI_K);\bbR)$.
+Expanding $\mbnu$ in the multivariate Hermite basis $\mbnu_i(\tilde\mbx, t)=\sum_{|\mbalpha|\leq\ell}\widetilde{\mbc}_{\mbalpha,i}(t)\hat{H}_{\mbalpha}(\tilde\mbx)$ and applying \cref{app:eq:hermite-raising} to $\mbnu(\tilde\mbx, t)$ gives
+\begin{equation}\label{app:eq:hermite-stein-action}
+\nabla_{\tilde\mbx}\cdot\mbnu(\tilde\mbx, t) -\tilde\mbx^\top\mbnu(\tilde\mbx, t) =-\sum_{1 \leq |\mbbeta| \leq \ell+1} \left( \sum_{i=1}^K\sqrt{\mbbeta_i}\, \widetilde{\mbc}_{\mbbeta-\mbe_i,i}(t) \right)\hat{H}_{\mbbeta}(\tilde\mbx).
+\end{equation}
+Thus divergence freedom gives one scalar constraint for each $\mbbeta$.
+Moreover, every coefficient $\widetilde{\mbc}_{\mbalpha,i}(t)$ occurs in exactly one constraint, namely $\mbbeta=\mbalpha+\mbe_i$.
+
+By Parseval's identity, the part of the objective that depends on the correction is
+\begin{equation*}
+\sum_{|\mbalpha|\leq\ell} (\widetilde{\mbb}_{\mbalpha}(t)- \widetilde{\mbc}_{\mbalpha}(t))^\top \mbLambda(t)^{-1} (\widetilde{\mbb}_{\mbalpha}(t)- \widetilde{\mbc}_{\mbalpha}(t)).
+\end{equation*}
+For a fixed $\mbbeta$, the relevant coefficients solve
+\begin{equation*}
+\min_{\{c_i\}}\frac{1}{2}\sum_{i:\mbbeta_i>0}\frac{1}{\lambda_i(t)}\left(\widetilde{\mbb}_{\mbbeta-\mbe_i,i}(t)-c_i\right)^2 \quad\text{subject to}\quad \sum_{i:\mbbeta_i>0}\sqrt{\mbbeta_i}\,c_i=0.
+\end{equation*}
+Introducing the Lagrange multiplier $\mu_{\mbbeta}(t)$ and differentiating the Lagrangian yields the first-order conditions
+\begin{equation*}
+c_i = \widetilde{\mbb}_{\mbbeta-\mbe_i,i}(t) -\lambda_i(t)\sqrt{\mbbeta_i}\,\mu_{\mbbeta}(t).
+\end{equation*}
+Substituting this expression into the constraint yields
+\begin{equation*}
+\begin{aligned}
+&\sum_i\sqrt{\mbbeta_i} c_i = \sum_i\sqrt{\mbbeta_i} \widetilde{\mbb}_{\mbbeta-\mbe_i,i}(t) - \mu_{\mbbeta}(t)\sum_i\lambda_i(t)\mbbeta_i=0,\\
+\implies& \mu_{\mbbeta}(t) =\frac{\sum_{i=1}^K\sqrt{\mbbeta_i}\widetilde{\mbb}_{\mbbeta-\mbe_i,i}(t)} {\sum_{i=1}^K\lambda_i(t)\mbbeta_i}.
+\end{aligned}
+\end{equation*}
+Because every $\lambda_i(t)>0$, the objective is strictly convex.
+Consequently, this feasible stationary point is the unique minimizer.
+\end{proof}
+
+Recall from \Cref{app:subsec:helmholtz-compute} that the weighted Helmholtz decomposition can be obtained by solving a Poisson equation \cref{app:eqn:poisson} defined by the infinitesimal generator of the Langevin diffusion \cref{app:eqn:langevin-diffusion}.
+In the whitened coordinates, the Langevin diffusion is a time-rescaled Ornstein--Uhlenbeck process \cref{app:eqn:ou-process-theorem}, and the eigenfunctions of the  infinitesimal generator are the Hermite polynomials.
+Indeed, evaluating \cref{app:eq:hermite-raising} at $\mbalpha - \mbe_i$ and combining it with $\partial_{\mbx_i} \hat{H}_{\mbalpha}(\tilde\mbx) = \sqrt{\mbalpha_i} \hat{H}_{\mbalpha - \mbe_i}(\tilde\mbx)$ produces
+\begin{equation*}
+    (\partial_{\tilde\mbx_i}-\tilde\mbx_i)\partial_{\mbx_i} \hat{H}_{\mbalpha}(\tilde\mbx) = \sqrt{\mbalpha_i} (\partial_{\tilde\mbx_i}-\tilde\mbx_i) \hat{H}_{\mbalpha - \mbe_i}(\tilde\mbx) = - \mbalpha_i \hat{H}_{\mbalpha}(\tilde\mbx).
+\end{equation*}
+Hence, \Cref{app:prop:hermite-projection} can be understood as expanding the left and right-hand sides of the Poisson equation in the orthonormal basis of eigenfunctions and then solving for the coefficients belonging to $\cN_{K, \ell+1}$ (indexed by $\mbbeta$).
+We then differentiate the result to obtain the gradient field $\nabla_{\tilde\mbx} \chi^{(\ell)}(\tilde\mbx,t)$.
+
+\paragraph{Two useful special cases.}
+When $\ell = 0$, $\mbbeta=\mbe_i$, \cref{app:eq:hermite-solution} gives $\widetilde{\mbc}_{\mb0,i}(t)=0$, so a compatible correction has no constant term and cannot change the prescribed mean path.
+For $\ell=1$, write $\mbnu^{(1)}(\tilde\mbx, t)=\widetilde{\mbA}(t)\tilde\mbx$ and set
+\begin{equation*}
+\widetilde{\mbB}_{ij}(t) =\widetilde{\mbb}_{\mbe_j,i}(t) =\bbE_{\tilde\mbx\sim\cN(\mb0,\bbI_K)}\left[\widetilde{\mbrho}_i(\tilde\mbx,t)\tilde\mbx_j\right].
+\end{equation*}
+By Stein's identity, $\widetilde{\mbB}(t)=\bbE_{\tilde\mbx\sim\cN(\mb0,\bbI_K)}[D_{\tilde\mbx}\widetilde{\mbrho}(\tilde\mbx,t)]$.
+The solution reduces to
+\begin{equation}\label{app:eq:hermite-degree1}
+\widetilde{\mbA}_{ij}(t) = \frac{\lambda_j(t)\widetilde{\mbB}_{ij}(t) -\lambda_i(t)\widetilde{\mbB}_{ji}(t)}{\lambda_i(t)+\lambda_j(t)}, \qquad \widetilde{\mbA}_{ii}(t)=0.
+\end{equation}
+Hence the linear correction is skew-symmetric in whitened coordinates.
+If $\mbLambda(t)$ is proportional to the identity, it is simply the antisymmetric part of the averaged Jacobian.
+
+\paragraph{Monte Carlo.}
+Computing the polynomial approximation to the optimal divergence-free vector field requires computing the coefficients of $\widetilde{\mbrho}_i(\tilde\mbx, t)$ in the Hermite basis.
+Generally, these coefficients cannot be computed in closed-form.
+However, they do have the unbiased estimator
+\begin{equation}\label{app:eq:hermite-mc}
+\widehat{\widetilde{\mbb}}_{\mbalpha,i}(t)=\frac{1}{N_{\mathrm{mc}}}\sum_{n=1}^{N_{\mathrm{mc}}}\widetilde{\mbrho}_i(\tilde\mbx^{(n)},t)\hat{H}_{\mbalpha}(\tilde\mbx^{(n)}), \qquad \tilde\mbx^{(n)}\overset{\mathrm{i.i.d.}}{\sim}\cN(\mb0,\bbI_K).
+\end{equation}
+Substituting any estimated coefficients into \cref{app:eq:hermite-solution} still makes \cref{app:eq:hermite-stein-action} vanish identically.
+Thus, the estimated field is $q$-divergence-free, although it will generally not be the optimal degree $\ell$ polynomial $q$-divergence-free vector field.
+In the stochastic VI algorithm, the batch of points $\mbx_{j, k} \overset{\mathrm{i.i.d.}}{\sim} q(\mbx, t_j)$ used to evaluate the path KL $\cL_{\mathrm{path}}$ and the batch used to compute the correction to the reference drift at these points should be independent.
+
+\paragraph{Gauss--Hermite quadrature.}
+Alternatively, for low dimensional latent spaces, we can use Gauss--Hermite quadrature to estimate the Hermite coefficients of the residual vector field. If $N_{\mathrm{quad}}$ is the number of quadrature points along each latent dimension, the estimator is
+\begin{equation}\label{app:eq:hermite-quad}
+\widehat{\widetilde{\mbb}}_{\mbalpha,i}(t)=\frac{1}{N_{\mathrm{quad}}^K}\sum_{n=1}^{N_{\mathrm{quad}}^K} w_n \widetilde{\mbrho}_i(\tilde\mbx_n, t)\hat{H}_{\mbalpha}(\tilde\mbx_n)
+\end{equation}
+where the sum is taken over the Cartesian product of one-dimensional quadrature points $\tilde\mbx_n$, and $w_n$ is the product of the corresponding one-dimensional quadrature weights.
+When $\widetilde{\mbrho}_i(\tilde\mbx, t) \hat{H}_{\mbalpha}(\tilde\mbx)$ is a polynomial of degree at most $2 N_{\mathrm{quad}} - 1$, Gauss--Hermite quadrature computes the Hermite coefficient $\widetilde{\mbb}_{\mbalpha,i}(t)$ exactly.
+
+
+\paragraph{Stein estimand.}
+If derivatives of the residual are available, Stein's identity provides an alternate estimator for $\widetilde{\mbb}_{\mbalpha,i}(t)$.
+For any multi-index $\mbkappa$ such that $\mbkappa_j \leq \mbalpha_j, 1 \leq j \leq K$, repeated integration by parts gives
+\begin{equation}\label{app:eq:stein-estimator}
+\widetilde{\mbb}_{\mbalpha,i}(t)=\sqrt{\frac{(\mbalpha-\mbkappa)!}{\mbalpha!}}\,\bbE_{\tilde\mbx\sim\cN(\mb0,\bbI_K)}\left[\partial_{\tilde\mbx}^{\mbkappa}\widetilde{\mbrho}_i(\tilde\mbx,t)\hat{H}_{\mbalpha-\mbkappa}(\tilde\mbx)\right].
+\end{equation}
+The expectation in \cref{app:eq:stein-estimator} can be approximated using either Monte Carlo or Gauss--Hermite quadrature.
+The choice $\mbkappa=\mb0$ recovers \cref{app:eq:hermite-mc}.
+If derivatives through order $|\mbalpha|$ are available, choosing $\mbkappa=\mbalpha$ removes the Hermite polynomial entirely:
+\begin{equation*}
+\widetilde{\mbb}_{\mbalpha,i}(t) =\frac{1}{\sqrt{\mbalpha!}} \bbE_{\tilde\mbx\sim\cN(\mb0,\bbI_K)}\left[\partial_{\tilde\mbx}^{\mbalpha} \widetilde{\mbrho}_i(\tilde\mbx,t) \right].
+\end{equation*}
+Under the twice-differentiability condition in \Cref{app:assum:resid}, one may use any $\mbkappa \in \cN_{K, 2}$.
+The derivatives with respect to $\tilde\mbx$ can be obtained from spatial derivatives of $\mbr$ through the affine change of coordinates in \cref{app:eq:hermite-coordinates} and evaluated using automatic differentiation.
+
+Although the normalized Hermite polynomials have unit second moments, their higher moments grow rapidly with their degree.
+Integration by parts can therefore reduce the variance of the coefficient estimates by replacing a high-degree Hermite factor with derivatives of the residual.
+This reduction is not guaranteed, since the derivatives may themselves have high variance.
+The choice of $\mbkappa$ trades the degree of the remaining Hermite factor against the cost and variability of higher-order derivatives.
+Regardless of this choice, substituting the resulting coefficient estimates into \cref{app:eq:hermite-solution} preserves the divergence-free constraint exactly.
+
+\paragraph{Computational complexity.}
+There are $K\binom{K+\ell}{\ell}$ vector coefficients.
+Once they have been estimated, \cref{app:eq:hermite-solution} touches each coefficient a constant number of times and costs $O(K\binom{K+\ell}{\ell})$, rather than $O(K \binom{K+\ell}{\ell}^3)$ from a dense linear solve.
+Including residual evaluations, Hermite features, and eigendecomposition, the cost at one time point is
+\begin{equation*}
+O\left(N_{\mathrm{est}}C_{\mbr} + N_{\mathrm{est}} K\binom{K+\ell}{\ell}+K^3\right),
+\end{equation*}
+where $C_{\mbr}$ is the cost of one residual evaluation and $N_{\mathrm{est}}$ is the number of Monte Carlo samples or quadrature points used to approximate the Hermite coefficients.
+When $\ell$ is fixed, $\binom{K+\ell}{\ell} = \Theta(K^{\ell})$, so the coefficient-dependent term scales as $K^{\ell+1}$.
+
+The Stein estimand \cref{app:eq:stein-estimator} additionally requires derivatives of the transformed residual.
+For the full-order choice $\mbkappa=\mbalpha$, the highest-order derivative tensor has $K^\ell$ entries for each of the $K$ output components, and hence $K^{\ell+1}$ entries in total.
+Using automatic differentiation, computing these derivatives costs $O(K^{\ell+1} C_{\mbr})$.
+
+\subsection{Verification of assumptions for the Helmholtz-SDE variational family}
+\label{app:subsec:verify-assumptions}
+
+In \Cref{app:subsec:helmholtz-gaussian,app:subsec:resid-approx} we discussed how to obtain a correction $\mbh^{(\ell)}$ to the reference posterior drift from the weighted Helmholtz decomposition of the residual vector field $\mbr = \mbf_p - \mbf_q$.
+It remains to establish that this correction produces a valid variational SDE.
+In this subsection, we verify that the Gaussian variational family used by Helmholtz-SDE satisfies the assumptions in \Cref{app:subsec:assumptions}.
+
+Let $q(\mbx,t)=\cN(\mbm(t),\mbS(t))$.
+We assume only that $(\mbm(t),\mbS(t))_{0 \leq t \leq T}$, $\mbr(\mbx, t)$, $\mbSigma(t)$ satisfy the regularity conditions in \Cref{app:assum:resid}. \Cref{app:assum:regularity,app:assum:densities,app:ass:path-ac,app:ass:finite-kl,app:ass:fpk-unique} are verified directly from \Cref{app:assum:resid}.
+
+Helmholtz-SDE uses the reference drift
+\begin{equation*}
+    \mbf_q(\mbx,t)  = \frac{d}{dt}\mbm(t) + \left\{ \left(\frac{d}{dt}\mbL(t)\right)\mbL(t)^{-1} -\frac{1}{2}\mbSigma(t)\mbS(t)^{-1} \right\} (\mbx-\mbm(t)),
+\end{equation*}
+where $\mbL(t)$ is the symmetric square root of $\mbS(t)$.
+The full posterior drift is $\mbf_q(\mbx,t)+\mbh^{(\ell)}(\mbx,t)$, where $\mbh^{(\ell)}$ is the degree $\ell$ correction constructed in \Cref{app:subsec:resid-approx}.  
+The posterior initial density is $q(\mbx,0)$, and the prior initial distribution is $\cN(\mbmu_0,\mbV_0)$, with $\mbV_0$ positive definite.
+The verification below applies for $0 \leq \ell \leq 3$.
+
+Because $[0,T]$ is compact, the eigenvalues of $\mbS(t)$ and $\mbSigma(t)$ are bounded above and bounded away from zero.  
+The Hermite coefficients defining $\mbh^{(\ell)}$ are continuous, and hence bounded, in $t$.  
+Indeed, continuity follows from \Cref{app:assum:resid}, dominated convergence under the Gaussian marginals, and the finite-dimensional projection in \Cref{app:prop:hermite-projection}.
+
+\paragraph{Existence and uniqueness.}
+Introduce the whitened variable $\mbz$
+\begin{equation*}
+    \mbz=\mbL(t)^{-1}(\mbx-\mbm(t)), \qquad \mbnu^{(\ell)}(\mbz,t) =\mbL(t)^{-1} \mbh^{(\ell)}(\mbm(t)+\mbL(t)\mbz,t).
+\end{equation*}
+For the symmetric-square-root reference drift, the terms involving $d\mbL(t)/dt$ cancel under this change of variables. 
+Consequently, the posterior SDE becomes
+\begin{equation}
+\label{app:eq:whitened-posterior-sde}
+\begin{aligned}
+    d\mbz(t) &= \left\{ -\frac{1}{2}\mbC(t)\mbz(t) +\mbnu^{(\ell)}(\mbz(t),t) \right\}dt+\mbL(t)^{-1}\mbSigma(t)^{1/2}d\mbw(t),\\\mbC(t) &=\mbS(t)^{-1/2}\mbSigma(t)\mbS(t)^{-1/2}.
+\end{aligned}
+\end{equation}
+The drift in \cref{app:eq:whitened-posterior-sde} is polynomial in $\mbz$, and is therefore locally Lipschitz.  
+This gives a pathwise-unique strong solution up to its explosion time.
+
+It remains to rule out explosion.
+The correction is Gaussian divergence-free, so \cref{app:eq:hermite-div-free} gives
+\begin{equation*}
+    \mbz^\top\mbnu^{(\ell)}(\mbz,t)=\nabla_{\mbz}\cdot\mbnu^{(\ell)}(\mbz,t).
+\end{equation*}
+
+For $\ell=0$, the correction is zero.  For $1\leq\ell\leq3$, the right-hand side is a polynomial of degree at most $\ell-1$, and hence for some constant $C > 0$
+\begin{equation*}
+    \left|\mbz^\top\mbnu^{(\ell)}(\mbz,t)\right| \leq CV(\mbz), \qquad (\mbz,t) \in \bbR^K \times [0,T],
+\end{equation*}
+where $V$ is the Lyapunov function $V(\mbz)=1+\|\mbz\|^2$. 
+The infinitesimal generator of \cref{app:eq:whitened-posterior-sde} satisfies
+\begin{equation*}
+    \cL_t V(\mbz)=-\mbz^\top\mbC(t)\mbz +2\mbz^\top\mbnu^{(\ell)}(\mbz,t) +\mathrm{tr}(\mbC(t)),
+\end{equation*}
+and is therefore bounded above by $C V(\mbz)$.  Moreover,
+\begin{equation*}
+    \lim_{R\to\infty} \inf_{\|\mbz\|>R}V(\mbz)=\infty.
+\end{equation*}
+
+The non-explosion criterion from \citet[Theorem~3.5]{khasminskii2011stochastic} therefore implies that a pathwise-unique, strong solution is defined on all of $[0, T]$. 
+This proves \Cref{app:assum:regularity} for the posterior SDE.
+Notice that our argument does not require the posterior drift to have linear
+growth.
+
+\paragraph{Fokker--Planck equation and Gaussian marginals.}
+By construction, $\{q(\mbx,t)\}_{0 \leq t \leq T}$ is a weak solution to the Fokker--Planck equation for the reference drift $\mbf_q$.  
+Moreover,
+\begin{equation*}
+    \nabla_{\mbx}\cdot  \left[q(\mbx,t)\mbh^{(\ell)}(\mbx,t)\right] =0, \quad (\mbx, t) \in \bbR^K \times [0, T]
+\end{equation*}
+so the same $q(\mbx,t)$ also solves the weak Fokker--Planck equation for the corrected drift $\mbf_q+\mbh^{(\ell)}$.  
+The corrected drift is polynomial, $\mbSigma(t)$ is bounded, and Gaussian distributions have moments of every finite order.  
+Hence $q$ belongs to the regularity class \cref{app:eqn:fpk-regularity-class}.
+
+It remains to show that, within the regularity class \cref{app:eqn:fpk-regularity-class}, the Fokker--Planck equation has a unique solution. 
+The superposition principle (\citet[Theorem~2.5]{trevisan2016well}) states that any weak Fokker--Planck solution $\{\rho(\mbx, t)\}_{0 \leq t \leq T}$ can be lifted to a probability distribution over continuous paths whose one-time marginals are $\{\rho(\mbx, t)\}_{0 \leq t \leq T}$ and which is a weak solution to the SDE with drift $\mbf_q+\mbh^{(\ell)}$ and diffusion coefficient $\mbSigma^{1/2}$.
+
+Suppose $\{q(\mbx, t)\}_{0 \leq t \leq T}$ and $\{\tilde{q}(\mbx, t)\}_{0 \leq t \leq T}$ are two weak solutions to the Fokker--Planck equation with drift $\mbf_q + \mbh^{(\ell)}$ and diffusion coefficient $\mbSigma^{1/2}$. 
+By the superposition principle, we obtain two probability distributions having one-time marginals $\{q(\mbx, t)\}_{0 \leq t \leq T}$ and $\{\tilde{q}(\mbx, t)\}_{0 \leq t \leq T}$ that are weak solutions to the variational SDE  with drift $\mbf_q + \mbh^{(\ell)}$ and diffusion coefficient $\mbSigma^{1/2}$.
+The strong existence and pathwise uniqueness established above imply that this SDE is unique in law.
+Therefore, the two weak solutions have the same path law and hence the same one-time marginals. 
+Thus $q(\mbx,t)=\tilde q(\mbx,t)$ almost everywhere in $\mbx$ for every $t\in[0,T]$.
+This verifies \Cref{app:ass:fpk-unique} for the posterior drift.
+
+\paragraph{Densities.}
+The posterior marginals are non-degenerate Gaussians and hence have smooth, strictly positive Lebesgue densities. 
+This verifies the posterior part of
+\Cref{app:assum:densities}.
+
+\paragraph{Absolute continuity.}
+Define the first exit time from the ball of radius $n$
+\begin{equation*}
+    \tau_n  = \inf\left\{t\in[0,T] \ | \  \|\mbx(t)\|_2\geq n \right\}, \qquad \inf\varnothing=\infty.
+\end{equation*}
+Since the prior and posterior drifts are locally bounded and $\mbSigma(t)^{-1/2}$ is bounded on $[0,T]$, there exists $K_n<\infty$ such that
+\begin{equation*}
+    \sup_{\substack{\|\mby\|_2\leq n\\0\leq t\leq T}} \left\| \mbSigma(t)^{-1/2} \left[ \mbf_q(\mby,t)+\mbh^{(\ell)}(\mby,t) -\mbf_p(\mby,t) \right] \right\|_2 \leq K_n.
+\end{equation*}
+Consequently,
+{\small
+\begin{equation*}
+\begin{aligned}
+    \bbE_{\bbP}\left[ \exp\left\{ \frac{1}{2} \int_0^{T\wedge\tau_n} \left\| \mbSigma(t)^{-1/2} \left[ \mbf_q(\mbx(t),t) +\mbh^{(\ell)}(\mbx(t),t) -\mbf_p(\mbx(t),t) \right] \right\|_2^2dt \right\} \right]  \leq  \exp\left\{\frac{1}{2}K_n^2T\right\} <\infty.
+\end{aligned}
+\end{equation*}
+}
+Thus, Novikov's criterion (\citet[Corollary~3.5.13]{karatzas2014brownian}) holds for the stopped process.
+
+Both initial densities are non-degenerate Gaussian densities and are therefore strictly positive on $\bbR^K$. Define
+{\small
+\begin{equation*}
+\begin{aligned}
+    \cZ_T^{(n)}
+    &= \frac{q(\mbx(0),0)}{p(\mbx(0),0)} \exp\Bigg\{ \sum_{i=1}^K \int_0^{T\wedge\tau_n} \left[ \mbSigma(t)^{-1/2} \left\{ \mbf_q(\mbx(t),t) +\mbh^{(\ell)}(\mbx(t),t) -\mbf_p(\mbx(t),t) \right\} \right]_i d\mbw_i(t)\\
+    &-\frac{1}{2} \int_0^{T\wedge\tau_n} \left\| \mbSigma(t)^{-1/2} \left[ \mbf_q(\mbx(t),t)  +\mbh^{(\ell)}(\mbx(t),t)-\mbf_p(\mbx(t),t) \right] \right\|_2^2dt\Bigg\},
+\end{aligned}
+\end{equation*}
+}
+where $(\mbw(t))_{0\leq t\leq T}$ is a $K$-dimensional Brownian motion with respect to $\bbP$.
+
+Novikov's criterion implies that the stochastic exponential appearing in $\cZ_T^{(n)}$ is a martingale. Conditionally on $\mbx(0)$, it has expectation one, and therefore
+\begin{equation*}
+    \bbE_{\bbP}\left[\cZ_T^{(n)}\right]
+    = \bbE_{\bbP}\left[ \frac{q(\mbx(0),0)}{p(\mbx(0),0)}   \right] = \int \frac{q(\mbx,0)}{p(\mbx,0)} p(\mbx,0)\,d\mbx =1.
+\end{equation*}
+We may therefore define a probability measure
+$\widehat{\bbQ}^{(n)}$ on $\mathcal F_T$ by
+\begin{equation*}
+    \frac{d\widehat{\bbQ}^{(n)}}{d\bbP} = \cZ_T^{(n)}.
+\end{equation*}
+Under $\widehat{\bbQ}^{(n)}$, Girsanov's theorem shows that
+\begin{equation*}
+\begin{aligned}
+    \widehat{\mbw}^{(n)}(t) &= \mbw(t) - \int_0^{t\wedge\tau_n} \mbSigma(s)^{-1/2} \left\{ \mbf_q(\mbx(s),s) +\mbh^{(\ell)}(\mbx(s),s) -\mbf_p(\mbx(s),s) \right\}ds
+\end{aligned}
+\end{equation*}
+is a Brownian motion.
+Hence, up to $\tau_n$, the coordinate process satisfies
+\begin{equation*}
+    d\mbx(t) = \left[ \mbf_q(\mbx(t),t) +\mbh^{(\ell)}(\mbx(t),t) \right]dt + \mbSigma(t)^{1/2} d\widehat{\mbw}^{(n)}(t),
+\end{equation*}
+and its initial density is $q(\mbx,0)$.
+
+Let $\cG_n = \sigma\left\{ \mbx(t\wedge\tau_n):0\leq t\leq T \right\}$ be the sigma-algebra generated by the stopped coordinate process.
+Under both $\widehat{\bbQ}^{(n)}$ and $\bbQ$, the stopped coordinate process has initial density $q(\mbx,0)$ and satisfies the same stopped posterior SDE. 
+Uniqueness in law therefore gives
+\begin{equation*}
+    \left.
+    \widehat{\bbQ}^{(n)}
+    \right|_{\mathcal G_n}
+    =
+    \left.
+    \bbQ
+    \right|_{\mathcal G_n}.
+\end{equation*}
+Because $\mbSigma(t)$ is invertible, the prior Brownian motion up to
+$\tau_n$ is determined by the stopped coordinate process. Hence
+$\cZ_T^{(n)}$ is $\mathcal G_n$-measurable. It follows that, for every
+$A\in\mathcal G_n$,
+\begin{equation*}
+    \bbQ(A)
+    =
+    \widehat{\bbQ}^{(n)}(A)
+    =
+    \bbE_{\bbP}\left[
+        \mathbbm{1}_A\cZ_T^{(n)}
+    \right].
+\end{equation*}
+
+Define the corresponding unstopped stochastic exponential by
+{\small
+\begin{equation*}
+\begin{aligned}
+    \cZ_T &= \frac{q(\mbx(0),0)}{p(\mbx(0),0)} \exp\Bigg\{ \sum_{i=1}^K \int_0^T \left[ \mbSigma(t)^{-1/2} \left\{ \mbf_q(\mbx(t),t) +\mbh^{(\ell)}(\mbx(t),t) -\mbf_p(\mbx(t),t) \right\} \right]_i d\mbw_i(t) \\
+    &- \frac{1}{2} \int_0^T \left\|    \mbSigma(t)^{-1/2} \left[\mbf_q(\mbx(t),t) +\mbh^{(\ell)}(\mbx(t),t)-\mbf_p(\mbx(t),t) \right] \right\|_2^2dt\Bigg\}.
+\end{aligned}
+\end{equation*}
+}
+This random variable is well defined $\bbP$-almost surely by local
+boundedness and non-explosion.
+
+To remove the stopping time, let $E_n=\{\tau_n>T\}$. 
+Since the prior and posterior processes have strong solutions defined on all of $[0,T]$, their paths are continuous and bounded on $[0,T]$. 
+Therefore, $E_n\uparrow\Omega$ both $\bbP$-almost surely and $\bbQ$-almost surely. 
+Moreover, by definition, $\cZ_T^{(n)}=\cZ_T$ on $E_n$. 
+For every $A$ measurable with respect to $\sigma(\mbx(t) \ | \ 0 \leq t \leq T)$, the event $A\cap E_n$ belongs to $\cG_n$, and hence
+\begin{equation*}
+\begin{aligned}
+    \bbQ(A\cap E_n) &= \bbE_{\bbP}\left[ \mathbbm{1}_{A\cap E_n}\cZ_T^{(n)}  \right] = \bbE_{\bbP}\left[\mathbbm{1}_{A\cap E_n}\cZ_T \right].
+\end{aligned}
+\end{equation*}
+Continuity from below under $\bbQ$ and monotone convergence under
+$\bbP$ now give
+\begin{equation*}
+    \bbQ(A) = \lim_{n\to\infty}\bbQ(A\cap E_n) = \lim_{n\to\infty} \bbE_{\bbP}\left[\mathbbm{1}_{A\cap E_n}\cZ_T \right] = \bbE_{\bbP}\left[ \mathbbm{1}_A\cZ_T \right].
+\end{equation*}
+Therefore,
+\begin{equation*}
+    \frac{d\bbQ}{d\bbP}  = \cZ_T.
+\end{equation*}
+In particular, $\bbQ$ is absolutely continuous with respect to $\bbP$. 
+Since $\cZ_T>0$ $\bbP$-almost surely, the reverse absolute continuity also holds. 
+Therefore, the prior and posterior path laws are mutually absolutely continuous.
+
+\paragraph{Finite KL divergence.}
+The initial-distribution term is finite because both initial distributions are non-degenerate Gaussians.
+
+For the path-space term, observe that
+\begin{equation*}
+    \mbf_p(\mbx,t) -\left\{\mbf_q(\mbx,t)+\mbh^{(\ell)}(\mbx,t)\right\}  =\mbr(\mbx,t)-\mbh^{(\ell)}(\mbx,t).
+\end{equation*}
+
+Both terms on the right have polynomial growth in $\mbx$, uniformly for $t\in[0,T]$, while $\mbSigma(t)^{-1}$ is uniformly bounded.
+Since the posterior marginals are Gaussian and their means and covariances are bounded on $[0,T]$, they have uniformly bounded moments of every finite order.
+Consequently,
+\begin{equation*}
+    \int_0^T \bbE_{\bbQ} \left\|    \mbSigma(t)^{-1/2} \left[ \mbf_p(\mbx(t),t) -\left\{\mbf_q(\mbx(t),t) +\mbh^{(\ell)}(\mbx(t),t)\right\}  \right] \right\|^2dt <\infty.
+\end{equation*}
+Thus \Cref{app:ass:finite-kl} holds, and the path-space KL identity \cref{app:eqn:path-kl} is finite.
+
+We have therefore verified the assumptions of \Cref{app:subsec:assumptions} for the Helmholtz-SDE variational family with $0 \leq \ell \leq 3$, conditional on the stated assumptions on the prior.  
+For $\ell \geq 4$, the divergence-free identity still preserves the prescribed Fokker--Planck equation, but the Lyapunov estimate above does not establish non-explosion. 
+Global well-posedness must be verified separately.
+
+\subsection{Optimality of Helmholtz-SDE}
+\label{app:subsec:optimality}
+
+Now that we have established that Helmholtz-SDE produces a valid variational SDE, we study its optimality.
+First, we prove \Cref{thm:helm-optimal}, which shows Helmholtz-SDE approximates the posterior arbitrarily closely in the conjugate setting.
+We then study the nonconjugate setting. 
+We quantify the suboptimality resulting from restricting the $q$-divergence-free correction to a polynomial vector field of degree $\ell$.
+As a result, we get a lower bound on the improvement over the variational family defined by the reference drift.
+
+\subsubsection{Conjugate setting}
+\label{app:subsec:optimality-conj}
+
+\begin{proof}[Proof of \Cref{thm:helm-optimal}]
+Suppose that the prior SDE is linear and that the observation model is linear and Gaussian.
+The posterior path law $\bbQ^\star$ is then Gauss--Markov, its drift $\mbf^\star(\mbx,t)$ is affine in $\mbx$, and its one-time marginals have the form $q^\star(\mbx,t)=\cN(\mbm^\star(t),\mbS^\star(t))$ \citep{kalman1961new,sarkka2023bayesian}.
+The covariance $\mbS^\star(t)$ is positive definite.
+The functions $\mbm^\star(t)$ and $\mbS^\star(t)$ are continuous and piecewise continuously differentiable, with possible derivative jumps at the observation times \citep[Appendix J]{hu2025sing}.
+
+For any continuously differentiable mean and covariance paths $(\mbm(t),\mbS(t))_{0\leq t\leq T}$, Helmholtz-SDE uses the affine reference drift from \Cref{app:prop:gaussian-compatible-drift} and adds the degree-$1$ correction obtained from \Cref{app:prop:hermite-projection}.
+Because the prior and reference drifts are affine, the residual vector field is affine.
+Moreover, the identity \cref{app:eq:hermite-raising} shows that the divergence-free projection preserves the Hermite degree.
+Consequently, the projection onto the subspace $\cV_{t, \ell}$ of $q$-divergence-free vector fields that are degree $\ell$ polynomials is equal to the projection onto the subspace $\cV_t$ of all $q$-divergence-free vector fields.
+Thus, at any prescribed Gaussian marginals, Helmholtz-SDE selects the drift that minimizes the path-space KL divergence to the prior among all admissible drifts having those marginals.
+
+The paths $\mbm^\star$ and $\mbS^\star$ need not be continuously differentiable at the observation times, so $\bbQ^\star$ need not itself belong to the variational family $\cQ_{(1)}$.
+We instead argue that $\bbQ^\star$ can be approximated arbitrarily closely in KL by $\cQ_{(1)}$.
+Fix $\delta>0$, and let $U_\delta\subset[0,T]$ be a union of neighborhoods of the observation times with Lebesgue measure at most $\delta$.
+The mean and covariance paths can be smoothed inside $U_\delta$ to obtain continuously differentiable functions $\mbm^\delta$ and $\mbS^\delta$ that agree with $\mbm^\star$ and $\mbS^\star$ outside $U_\delta$ and converge uniformly to them as $\delta \to 0$.
+The smoothing may be chosen so that the first derivatives remain uniformly bounded in $\delta$.
+For sufficiently small $\delta$, $\mbS^\delta(t)$ remains positive definite because $\lambda_{\min}(\mbS^\star(t))$ is bounded away from zero on $[0,T]$.
+
+Let $\bbQ^\delta$ be the path law produced by degree-$1$ Helmholtz-SDE applied to $\mbm^\delta$ and $\mbS^\delta$.
+Outside $U_\delta$, these marginal paths and their derivatives agree with those of $\bbQ^\star$.
+The corresponding Helmholtz-SDE drift therefore minimizes the fixed-marginal path-space KL objective at $q^\star$.
+The posterior drift $\mbf^\star$ minimizes the same objective, since replacing it by a drift with the same marginals would leave the expected log likelihood and the initial KL term unchanged while changing only the path-space KL term.
+Strict convexity of the fixed-marginal objective gives
+\begin{equation*}
+\mbf_q^\delta(\mbx,t)+\mbh^{(1),\delta}(\mbx,t)=\mbf^\star(\mbx,t), \qquad t\notin U_\delta,
+\end{equation*}
+up to $q^\star(\mbx,t)$-almost-everywhere equality.
+
+The drifts $\mbf_q^\delta + \mbh^{(1),\delta}$ and $\mbf^\star$ are affine in $\mbx$.
+The uniform bounds on the smoothed marginal paths and their derivatives imply that their affine coefficients are uniformly bounded on $U_\delta$.
+The Gaussian marginals of $\bbQ^\delta$ also have uniformly bounded second moments.
+Since $\mbSigma(t)^{-1}$ is bounded on $[0,T]$, there is a constant $C<\infty$, independent of $\delta$, such that
+\begin{equation*}
+\bbE_{\bbQ^\delta}\left\|\mbSigma(t)^{-1/2}\left\{\mbf_q^\delta(\mbx(t),t)+\mbh^{(1),\delta}(\mbx(t),t)-\mbf^\star(\mbx(t),t)\right\}\right\|_2^2\leq C, \qquad t\in U_\delta.
+\end{equation*}
+
+Applying the path-space KL identity to $\bbQ^\delta$ and $\bbQ^\star$ gives
+{\small
+\begin{equation*}
+\begin{aligned}
+&\KL{\bbQ^\delta}{\bbQ^\star}\\
+&=\KL{q^\delta(\mbx,0)}{q^\star(\mbx,0)}+\frac{1}{2}\int_{U_\delta}\bbE_{\bbQ^\delta}\left\|\mbSigma(t)^{-1/2}\left\{\mbf_q^\delta(\mbx(t),t)+\mbh^{(1),\delta}(\mbx(t),t)-\mbf^\star(\mbx(t),t)\right\}\right\|_2^2dt\\
+&\leq\KL{q^\delta(\mbx,0)}{q^\star(\mbx,0)}+\frac{C\delta}{2}.
+\end{aligned}
+\end{equation*}
+}
+The Gaussian initial KL converges to zero by uniform convergence of the mean and covariance paths.
+Hence $\KL{\bbQ^\delta}{\bbQ^\star}\to0$ as $\delta\to0$, and therefore $\inf_{\bbQ\in\cQ_{(1)}}\KL{\bbQ}{\bbQ^\star}=0$.
+\end{proof}
+
+\subsubsection{Nonconjugate setting}
+\label{app:subsec:optimality-nonconj}
+
+In the nonconjugate setting, the posterior generally does not have Gaussian one-time marginals.
+Simulation-free variational inference algorithms that impose Gaussian one-time marginals therefore share a common, irreducible approximation error. 
+Helmholtz-SDE further restricts the variational family by considering a subset of divergence-free vector fields.
+
+As in \Cref{app:thm:hilbert-projection}, we consider the Hilbert space $\cL^2(q(\mbx, t), \bbR^K, \mbSigma(t))^K$ of vector fields satisfying $\bbE_{q(\mbx, t)}\|\mbf(\mbx)\|^2 < \infty$ equipped with the inner product defined in \cref{app:eqn:l2-inner-prod}.
+Let $\cV_t$ be the closed subspace of weakly $q$-divergence-free vector fields, let $\cP_\ell$ be the subspace of polynomial vector fields of degree at most $\ell$, and let $\cV_{t,\ell}=\cV_t\cap\cP_\ell$.
+
+Let $\Pi_\cS$ be the orthogonal projection onto the subspace $\cS$.
+Then the degree $\ell$ correction is $\mbh^{(\ell)}(\mbx,t)= [\Pi_{\cV_{t,\ell}}\mbr(\cdot,t)](\mbx)$.
+First, we quantify the reduction in negative ELBO at \emph{fixed marginals} from increasing the degree of the polynomial correction.
+\begin{proposition}[Improvement at fixed marginals]
+\label{app:prop:polynomial-suboptimality}
+Suppose \Cref{app:assum:resid} holds, and fix one-time marginals $\{q(\mbx, t)\}_{0 \leq t \leq T}$.
+Let $\ell \geq 0$ and $k \geq 1$ be integers for which the degree $\ell$ and $\ell+k$ corrections induce admissible path laws.
+
+The reduction in negative ELBO from using the degree $\ell+k$ correction in place of the degree $\ell$ correction is
+\begin{equation}\label{app:eq:poly-suboptimality}
+\begin{aligned}
+\Delta_{\ell,\ell+k}(q)&=\frac{1}{2}\int_0^T \left\{\|\mbr(\mbx,t)-\mbh^{(\ell)}(\mbx,t)\|_{q,t}^2-\|\mbr(\mbx,t)-\mbh^{(\ell+k)}(\mbx,t)\|_{q,t}^2\right\}dt\\
+&=\frac{1}{2}\int_0^T\|\mbh^{(\ell+k)}(\mbx,t)-\mbh^{(\ell)}(\mbx,t)\|_{q,t}^2dt.
+\end{aligned}
+\end{equation}
+Equivalently,
+\begin{equation}\label{app:eq:degree-est}
+\Delta_{\ell,\ell+k}(q)=\frac{1}{2}\sum_{\ell<|\mbalpha|\leq\ell+k}\int_0^T\widetilde{\mbc}_{\mbalpha}(t)^{\top}\mbLambda(t)^{-1}\widetilde{\mbc}_{\mbalpha}(t)dt.
+\end{equation}
+$\widetilde{\mbc}_{\mbalpha}(t)$ are the coefficients of the $q$-divergence-free vector field in the Hermite basis obtained from \Cref{app:prop:hermite-projection}.
+\end{proposition}
+
+\begin{proof}
+Since the path laws obtained from $\mbh^{(\ell)}$ and $\mbh^{(\ell+k)}$ possess one-time marginals $\{q(\mbx, t)\}_{0 \leq t \leq T}$, their reconstruction losses and initial KL divergences are equal.
+Therefore, the reduction in negative ELBO is the difference between the path-space KL divergences to the prior.
+The second equality in \cref{app:eq:poly-suboptimality} follows from the Pythagorean identity for projections onto the nested subspaces $\cV_{t,\ell}\subseteq\cV_{t,\ell+k}$.
+
+The identity \cref{app:eq:hermite-raising} maps each Hermite degree to the next degree and does not couple different degrees.
+Consequently, $\cV_t$ is the orthogonal direct sum of its Hermite-degree components, and the degree $\ell$ and $\ell+k$ corrections have identical Hermite coefficients through degree $\ell$.
+Orthonormality of the Hermite basis gives \cref{app:eq:degree-est}.
+\end{proof}
+
+\Cref{app:prop:polynomial-suboptimality} compares polynomial degrees at fixed marginals. 
+We now consider optimizing within each variational family.
+Define $\cQ_{(\ell)}$ to be the variational family obtained by applying Helmholtz-SDE to the Gaussian one-time marginals whose mean and covariance satisfy \Cref{app:assum:resid}.
+From \cref{app:eq:degree-est}, we obtain a lower bound on the improvement from using $\cQ_{(\ell + k)}$ over $\cQ_{(\ell)}$.
+\begin{proposition}[Suboptimality of variational families]
+\label{app:prop:error-nonlinear}
+Let $\ell \geq 0$ and $k \geq 1$ be integers for which the degree $\ell$ and $\ell+k$ corrections induce admissible path laws.
+For any $\epsilon>0$, suppose that $\bbQ_\epsilon\in\cQ_{(\ell)}$ has marginals $q_\epsilon(\mbx,t)$ and satisfies
+\begin{equation*}
+\KL{\bbQ_\epsilon}{\bbQ^\star}\leq\inf_{\bbQ\in\cQ_{(\ell)}}\KL{\bbQ}{\bbQ^\star}+\epsilon.
+\end{equation*}
+Let $\mbh_\epsilon^{(\ell)}$ and $\mbh_\epsilon^{(\ell+k)}$ be the degree $\ell$ and $\ell + k$  corrections computed at $q_\epsilon(\mbx,t)$.
+Then
+\begin{equation}\label{app:eq:optimality-bound}
+\begin{aligned}
+&\inf_{\bbQ\in\cQ_{(\ell)}}\KL{\bbQ}{\bbQ^\star}-\inf_{\bbQ\in\cQ_{(\ell + k)}}\KL{\bbQ}{\bbQ^\star}\\
+&\geq\frac{1}{2}\int_0^T\|\mbh_\epsilon^{(\ell + k)}(\mbx,t) - \mbh_\epsilon^{(\ell)}(\mbx,t)\|_{q_\epsilon,t}^2dt-\epsilon.
+\end{aligned}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+Let $\bbQ_\epsilon^{(\ell + k)}$ be the path law obtained by adding $\mbh_\epsilon^{(\ell + k)}$ to the reference drift of $\bbQ_\epsilon$.
+Then $\bbQ_\epsilon^{(\ell + k)}$ and $\bbQ_\epsilon$ have the same one-time marginals because $\mbh_\epsilon^{(\ell + k)}$ is $q_\epsilon$-divergence-free.
+Their reconstruction losses and initial KL divergences are equal.
+The difference between their KL divergences to $\bbQ^\star$ is consequently the difference between their path-space KL divergences to the prior.
+By \Cref{app:prop:polynomial-suboptimality} and the $\epsilon$-optimality of $\bbQ_\epsilon$,
+\begin{equation*}
+\begin{aligned}
+&\inf_{\bbQ\in\cQ_{(\ell)}}\KL{\bbQ}{\bbQ^\star}-\inf_{\bbQ\in\cQ_{(\ell + k)}}\KL{\bbQ}{\bbQ^\star}\\
+&\geq\KL{\bbQ_\epsilon}{\bbQ^\star}-\KL{\bbQ_\epsilon^{(\ell + k)}}{\bbQ^\star}-\epsilon\\
+&= \Delta_{\ell,\ell+k}(q_\epsilon) -\epsilon\\
+&=\frac{1}{2}\int_0^T\|\mbh_\epsilon^{(\ell + k)}(\mbx,t) - \mbh_\epsilon^{(\ell)}(\mbx,t)\|_{q_\epsilon,t}^2dt-\epsilon
+\end{aligned}
+\end{equation*}
+\end{proof}
+In particular, by choosing $\ell = 0$, \Cref{app:prop:error-nonlinear} provides a lower bound on the improvement over the variational family defined by the reference drift (e.g., SVISE \cite{course2023state,course2023amortized} and SDE Matching \cite{bartosh2025sde}).
+
+
+\Cref{app:prop:error-nonlinear} provides a heuristic for estimating the improvement of $\cQ_{(\ell + k)}$ over $\cQ_{(\ell)}$.
+After fitting Helmholtz-SDE with a degree $\ell$ correction, we hold the fitted marginals and generative model parameters fixed, compute the Hermite coefficients through degree $\ell+k$, and evaluate \cref{app:eq:optimality-bound}.
+We use the resulting
+quantity as an estimate of the improvement, taking the unknown
+optimization error $\epsilon$ to be zero.
+With an optimal degree $\ell$ fit and exact coefficient evaluation, this quantity is a lower bound on the improvement between the  variational families.
+We validate this heuristic for the stochastic Lorenz attractor in \Cref{app:subsec:lorenz}.
+
+\subsection{Algorithm summary}
+\label{app:subsec:alg-summary}
+
+We summarize the Hermite implementation of the polynomial correction in \Cref{app:alg:helm_correction} and the resulting Helmholtz-SDE training procedure in \Cref{app:alg:helmholtz_sde}.
+The coefficient samples used by \texttt{HelmCorrection} are independent of the state samples used to estimate the path-space KL.
+
+\clearpage
+\begin{algorithm}[H]
+\caption{\texttt{HelmCorrection}: Hermite approximation to the divergence-free correction}
+\label{app:alg:helm_correction}
+\Require{polynomial order $\ell$; prior drift $\mbf_p$; reference drift $\mbf_q$; diffusion covariance $\mbSigma$; posterior mean $\mbm$ and covariance $\mbS$ at time $t$; number of coefficient samples $N_{\mathrm{mc}}$}
+
+\medskip
+\tcp{Whiten and rotate}
+\AlgStep{Compute the symmetric square root $\mbS^{1/2}$ and its inverse $\mbS^{-1/2}$}
+
+\smallskip
+\AlgStep{Form $\mbC\leftarrow\mbS^{-1/2}\mbSigma(t)\mbS^{-1/2}$ and compute $\mbC=\mbQ\mbLambda\mbQ^\top$ with $\mbLambda=\diag(\lambda_1,\ldots,\lambda_K)$}
+
+\medskip
+\tcp{Estimate the Hermite coefficients of the rotated residual}
+\AlgStep{Sample $\mbv^{(n)}\overset{\mathrm{i.i.d.}}{\sim}\cN(\mb0,\bbI_K)$ for $n=1,\ldots,N_{\mathrm{mc}}$}
+
+\smallskip
+\AlgStep{Set $\mbx^{(n)}\leftarrow\mbm+\mbS^{1/2}\mbQ\mbv^{(n)}$}
+
+\smallskip
+\AlgStep{Compute $\widetilde{\mbrho}^{(n)}\leftarrow\mbQ^\top\mbS^{-1/2}\left\{\mbf_p(\mbx^{(n)},t)-\mbf_q(\mbx^{(n)},t)\right\}$}
+
+\smallskip
+\For{$\mbalpha\in\cN_{K,\ell}$ and $i=1,\ldots,K$}{
+    \AlgStep{$\widehat{\widetilde{\mbb}}_{\mbalpha,i}\leftarrow N_{\mathrm{mc}}^{-1}\sum_{n=1}^{N_{\mathrm{mc}}}\widetilde{\mbrho}^{(n)}_i\hat{H}_{\mbalpha}(\mbv^{(n)})$}
+}
+
+\medskip
+\tcp{Project coefficient by coefficient onto the divergence-free subspace}
+\For{$\mbbeta\in\cN_{K,\ell+1}\setminus\cN_{K,0}$}{
+    \AlgStep{$\widehat\mu_{\mbbeta}\leftarrow\left\{\sum_{i=1}^K\sqrt{\mbbeta_i}\widehat{\widetilde{\mbb}}_{\mbbeta-\mbe_i,i}\right\}\big/\left\{\sum_{i=1}^K\lambda_i\mbbeta_i\right\}$}
+}
+
+\smallskip
+\For{$\mbalpha\in\cN_{K,\ell}$ and $i=1,\ldots,K$}{
+    \AlgStep{$\widehat{\widetilde{\mbc}}_{\mbalpha,i}\leftarrow\widehat{\widetilde{\mbb}}_{\mbalpha,i}-\lambda_i\sqrt{\mbalpha_i+1}\widehat\mu_{\mbalpha+\mbe_i}$}
+}
+
+\medskip
+\tcp{Return the correction in the original coordinates}
+\AlgStep{Define $\widehat{\mbnu}^{(\ell)}(\mbv,t)\leftarrow\sum_{\mbalpha\in\cN_{K,\ell}}\widehat{\widetilde{\mbc}}_{\mbalpha}\hat{H}_{\mbalpha}(\mbv)$}
+
+\smallskip
+\AlgStep{Define $\widehat{\mbh}^{(\ell)}(\mbx,t)\leftarrow\mbS^{1/2}\mbQ\widehat{\mbnu}^{(\ell)}\left(\mbQ^\top\mbS^{-1/2}(\mbx-\mbm),t\right)$}
+
+\smallskip
+\Return $\widehat{\mbh}^{(\ell)}(\mbx,t)$
+\end{algorithm}
+
+
+\begin{algorithm}[H]
+\caption{Helmholtz-SDE training}
+\label{app:alg:helmholtz_sde}
+\Require{dataset $\cD=\{\mby^{(m)}(t_n)\}_{n=1,m=1}^{N,M}$; prior drift $\mbf_p(\mbx,t\mid\mbtheta)$; diffusion covariance $\mbSigma(t\mid\mbtheta)$; observation model $p(\mby(t_n)\mid\mbx(t_n),\mbtheta)$; model parameters $\mbtheta$; parameters $\mbphi$ of the posterior marginal paths $(\mbm^{(m)}(t\mid\mbphi),\mbS^{(m)}(t\mid\mbphi))_{0\leq t\leq T}$; reference drift $\mbf_q$; polynomial order $\ell$; sample sizes $N_{\mathrm{time}}$, $N_{\mathrm{space}}$, and $N_{\mathrm{mc}}$}
+
+\For{learning iterations}{
+    \tcp{Compute the initial KL term}
+    \AlgStep{$\cL_{\mathrm{init}}\leftarrow\sum_{m=1}^M\KL{\cN(\mbm^{(m)}(0\mid\mbphi),\mbS^{(m)}(0\mid\mbphi))}{\cN(\mbmu_0,\mbV_0)}$}
+
+    \medskip
+    \tcp{Estimate the reconstruction term}
+    \AlgStep{Sample $s_j\overset{\mathrm{i.i.d.}}{\sim}\mathrm{Unif}\{t_1,\ldots,t_N\}$ for $j=1,\ldots,N_{\mathrm{time}}$}
+
+    \smallskip
+    \AlgStep{Sample $\mbx_{m,j,k}\overset{\mathrm{i.i.d.}}{\sim}\cN(\mbm^{(m)}(s_j\mid\mbphi),\mbS^{(m)}(s_j\mid\mbphi))$ for $k=1,\ldots,N_{\mathrm{space}}$}
+
+    \smallskip
+    \AlgStep{$\widehat{\cL}_{\mathrm{rec}}\leftarrow-\frac{N}{N_{\mathrm{time}}N_{\mathrm{space}}}\sum_{m=1}^M\sum_{j=1}^{N_{\mathrm{time}}}\sum_{k=1}^{N_{\mathrm{space}}}\log p(\mby^{(m)}(s_j)\mid\mbx_{m,j,k},\mbtheta)$}
+
+    \medskip
+    \tcp{Estimate the path-space KL term}
+    \AlgStep{Sample $s_j\overset{\mathrm{i.i.d.}}{\sim}\mathrm{Unif}[0,T]$ for $j=1,\ldots,N_{\mathrm{time}}$}
+
+    \smallskip
+    \For{$m=1,\ldots,M$ and $j=1,\ldots,N_{\mathrm{time}}$}{
+        \AlgStep{$\widehat{\mbh}_{m,j}^{(\ell)}(\cdot)\leftarrow\text{\texttt{HelmCorrection}}(\ell,\mbf_p,\mbf_q,\mbSigma,\mbm^{(m)}(s_j\mid\mbphi),\mbS^{(m)}(s_j\mid\mbphi),s_j,N_{\mathrm{mc}})$}
+    }
+
+    \smallskip
+    \AlgStep{Independently sample $\mbx_{m,j,k}\overset{\mathrm{i.i.d.}}{\sim}\cN(\mbm^{(m)}(s_j\mid\mbphi),\mbS^{(m)}(s_j\mid\mbphi))$ for $k=1,\ldots,N_{\mathrm{space}}$}
+
+    \smallskip
+    \AlgStep{$\widehat{\cL}_{\mathrm{path}}\leftarrow\frac{T}{2N_{\mathrm{time}}N_{\mathrm{space}}}\sum_{m=1}^M\sum_{j=1}^{N_{\mathrm{time}}}\sum_{k=1}^{N_{\mathrm{space}}}\left\|\mbSigma(s_j\mid\mbtheta)^{-1/2}\left\{\mbf_p(\mbx_{m,j,k},s_j\mid\mbtheta)-\mbf_q(\mbx_{m,j,k},s_j)-\widehat{\mbh}_{m,j}^{(\ell)}(\mbx_{m,j,k})\right\}\right\|_2^2$}
+
+    \medskip
+    \tcp{Update the model and variational parameters}
+    \AlgStep{$\cL\leftarrow\widehat{\cL}_{\mathrm{rec}}+\cL_{\mathrm{init}}+\widehat{\cL}_{\mathrm{path}}$}
+
+    \smallskip
+    \AlgStep{$\mbtheta,\mbphi\leftarrow\texttt{gradient-step}(\cL,\mbtheta,\mbphi)$}
+}
+\end{algorithm}
+\clearpage

@@ -1,0 +1,21 @@
+\section{Introduction}
+Latent stochastic differential equations (SDEs) enable the unsupervised discovery of dynamical systems from noisy, irregularly sampled time series, a setting common across scientific domains. 
+They posit an unobserved latent state that evolves continuously in time and generates observations at a finite set of time points \cite{archambeau2007gaussian, li2020scalable}. 
+Latent SDEs have been applied to neuroscience \cite{elgazzar2024universal, hu2024modeling}, disease modeling \cite{durso2024probabilistic}, and reduced-order fluid dynamics \cite{course2023state}.
+Fitting these models requires both learning the latent dynamics and approximating the posterior over continuous trajectories.
+
+Variational inference (VI) translates the problem of fitting latent SDEs into an optimization problem. 
+However, evaluating the variational objective (ELBO) requires computing an integral over the full time horizon (a path-space KL divergence).
+Simulation-based VI algorithms estimate this term by sweeping across a time discretization at each gradient step, either by integrating an ODE to compute the posterior marginals or by simulating sample trajectories from the variational SDE.
+A recent line of work, simulation-free VI  \cite{course2023state,course2023amortized,bartosh2025sde}, sidesteps sequential simulation using stochastic VI. 
+Rather than integrating, they compute an unbiased estimate of the objective by sampling a random time together with a state at that time.
+They make this estimate efficient by parameterizing the posterior through its one-time marginal distributions, i.e., the distribution of the latent state at each time, allowing states to be sampled directly without simulating the preceding trajectory.
+
+In this work, we show that the family of approximate posterior distributions over which simulation-free VI optimizes is \emph{strictly smaller} than that available to simulation-based VI.
+One-time marginals do not determine a path law.
+Existing simulation-free methods choose a single compatible drift from many possibilities, implicitly restricting the variational posterior. 
+When observations are sparse or noisy, this arbitrary choice can substantially degrade both posterior inference and learned dynamics.
+
+We propose \emph{Helmholtz-SDE}, a simulation-free VI algorithm that removes this restriction. 
+Starting from any drift compatible with the prescribed marginals, we compute a Helmholtz correction that preserves those marginals while optimizing the ELBO. 
+The resulting posterior family remains simulation-free but spans a larger class of path laws, closing the gap to simulation-based VI.
