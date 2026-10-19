@@ -1,0 +1,8 @@
+# Same as lotka_volterra_net.yaml, but the posterior learns the gauge of its drift (Gauge Matching, arXiv
+# 2610.04390), not the fixed gauge of SDE matching.
+base: lotka_volterra_net.yaml
+name: lotka_volterra_net_gauge
+model:
+  posterior:
+    hidden: 64     # load_config merges only one level deep: give every posterior key again
+    gauge: true

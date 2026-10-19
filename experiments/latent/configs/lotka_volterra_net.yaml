@@ -1,0 +1,7 @@
+# Same as lotka_volterra_constant.yaml, but with a diffusion that depends on the state (NetDiagonalDiffusion).
+base: lotka_volterra_constant.yaml
+name: lotka_volterra_net
+model:
+  diffusion:
+    type: net
+    hidden: [32, 32]

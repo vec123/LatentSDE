@@ -1,0 +1,50 @@
+# Stochastic Lotka-Volterra (test_data/scripts/lotka_volterra, G(z) = 0.15 diag(z)), the populations observed
+# directly. The SDE Matching test (Bartosh et al. 2025, appendix): this run has a constant diffusion,
+# lotka_volterra_net.yaml a diffusion that depends on the state; all else is the same.
+name: lotka_volterra_constant
+seed: 0
+data:
+  train:
+    path: test_data/data/lotka_volterra_latent/lotka_volterra_latent_train.csv
+    states: [x1, x2]
+    length: 41     # 10 time units, a bit more than one cycle; the posterior's cost grows with the length
+    stride: 40
+    n_groups: 32   # 1024 trajectories x 4 windows / 32 groups = 128 windows (B) per training step
+  val:             # whole trajectories (40 time units), so the prior simulations show five cycles
+    path: test_data/data/lotka_volterra_latent/lotka_volterra_latent_val.csv
+    states: [x1, x2]
+    length: 161
+    n_groups: 1
+  test:
+    path: test_data/data/lotka_volterra_latent/lotka_volterra_latent_test.csv
+    states: [x1, x2]
+    length: 161
+    n_groups: 1
+model:
+  dim_z: 2
+  encoder:
+    type: none
+  decoder:
+    type: gaussian
+    std_init: 0.1
+  posterior:
+    hidden: 64
+  drift:
+    hidden: [64, 64]
+  diffusion:
+    type: constant
+  g_init: 0.1
+  n_samples: 8
+  n_quad: 32
+train:
+  n_iter: 10000
+  lr: 1.0e-3
+  n_warmup: 1000
+  lr_decay_every: 2000
+output:
+  checkpoint_every: 2500
+  history_every: 50
+  log_every: 500
+  num_threads: 4   # two runs at the same time on 8 threads
+evaluate:
+  n_snapshots: 3
