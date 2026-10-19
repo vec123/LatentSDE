@@ -5,13 +5,23 @@ FCNN and multioutput_gradient: adapted from SVISE, reference/svise/svise/utils.p
 of multioutput_gradient, which needed a torch nightly build, is removed.
 check_nn_dims: adapted from ROM-VISDE, reference/rom-visde/visde/utils.py (GPL-3.0).
 """
-from typing import Callable
+from typing import Callable, Sequence
 
 import torch
 from torch import Tensor
 import torch.nn as nn
 
 from .transforms import Identity
+
+
+def mlp(n_in: int, n_out: int, hidden: Sequence[int] = (64, 64), activation: Callable[[], nn.Module] = nn.SiLU
+        ) -> nn.Sequential:
+    """A feedforward network n_in -> hidden[0] -> ... -> n_out, with activation after each hidden layer."""
+    sizes = (n_in, *hidden, n_out)
+    layers = []
+    for a, b in zip(sizes[:-1], sizes[1:]):
+        layers += [nn.Linear(a, b), activation()]
+    return nn.Sequential(*layers[:-1])
 
 
 class FCNN(nn.Module):
