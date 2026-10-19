@@ -1,0 +1,16 @@
+# simple_multimodal_fixed_noise.yaml (full-covariance posterior, gauge, bridge-time inputs, decoder noise fixed at
+# A 0.1, B 0.05; 30 000 steps) with standardized posterior inputs: each observed column to (x - mean) / std and
+# t - t_0 to (t - t_0) / span, from the training data. In runs/simple_multimodal_fixed_noise_20261017-160921 the
+# GRU read A raw (std 3.5, up to about 20) and t - t_0 up to 100; the posterior variance matched the exact posterior
+# of the learned model, but its mean of x was 0.6 from the exact mean (drive 0.53 for 1, diffusion of x 1.0 for 0).
+base: simple_multimodal_fixed_noise.yaml
+name: simple_multimodal_standardized
+model:
+  posterior:
+    hidden: 64
+    width: 0.75
+    learn_width: false
+    covariance: full
+    gauge: true
+    gap_features: true
+    standardize_inputs: true

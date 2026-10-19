@@ -1,0 +1,16 @@
+# simple_multimodal_fullcov.yaml (300 training trajectories, 25 per step, 50 000 steps, full-covariance posterior
+# with the learned gauge) with the bridge time of each column as an input of the posterior head (gap_features).
+# Without it, the posterior std was almost flat in t (runs/simple_multimodal_width_300_20261017-131926: y2 0.083 to
+# 0.125, the exact smoother 0.044 at a B observation to 0.179 between two; x about as wide at an A observation as
+# between two): a flat v makes the posterior pull z to m at all times, which the prior cannot do, and the ELBO then
+# learns a smaller diffusion and a slower decay (B: 0.11 for 0.19, 0.09 for 0.2).
+base: simple_multimodal_fullcov.yaml
+name: simple_multimodal_fullcov_gaps
+model:
+  posterior:
+    hidden: 64
+    width: 0.75
+    learn_width: false
+    covariance: full
+    gauge: true
+    gap_features: true

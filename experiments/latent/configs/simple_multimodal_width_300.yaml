@@ -1,0 +1,12 @@
+# simple_multimodal_width_50k.yaml (fixed attention width 0.75, 50 000 steps) on 300 training trajectories instead
+# of 100. In runs/simple_multimodal_width_50k_20261017-125828 the train -ELBO fell from 30 000 to 50 000 steps, but
+# val and test became worse (overfit). 12 groups: 25 trajectories per step, as with 100 trajectories in 4 groups,
+# so a step costs the same (batch (25, 87, 3) for (25, 85, 3)). val.h5 and test.h5 of simple_multimodal_test_300
+# are the same as those of simple_multimodal_test.
+base: simple_multimodal_width_50k.yaml
+name: simple_multimodal_width_300
+data:
+  train:
+    path: test_data/data/simple_multimodal_test_300/train.h5
+    modalities: [A, B]
+    n_groups: 12

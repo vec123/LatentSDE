@@ -1,0 +1,6 @@
+# simple_multimodal_width.yaml (fixed attention width 0.75), for 50 000 steps: at 30 000 steps
+# (runs/simple_multimodal_width_20261016-165526) its loss still fell (mean 0.152 at step 20 000, 0.111 at 30 000).
+base: simple_multimodal_width.yaml
+name: simple_multimodal_width_50k
+train:
+  n_iter: 50000

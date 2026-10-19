@@ -1,0 +1,12 @@
+# simple_multimodal_identity.yaml (identity decoder start, KL warm-up 2000, collapse guard, 30 000 steps on the
+# GPU), with a fixed, smaller attention width in the posterior. In runs/simple_multimodal_identity_20261016-163815
+# the learned width grew from 1.0 to 2.0 (B gaps: median 1.35), the posterior y1 and y2 were much smoother than the
+# true OU paths, and the learned rates were too small (B decay 0.08 for 0.2, the drive of x 0.48 for 1). With width
+# 0.75, the context at a time comes mostly from the two nearest B observations.
+base: simple_multimodal_identity.yaml
+name: simple_multimodal_width
+model:
+  posterior:
+    hidden: 64
+    width: 0.75
+    learn_width: false

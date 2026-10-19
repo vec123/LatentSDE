@@ -1,0 +1,47 @@
+# simple_multimodal_test (test_data/scripts/simple_multimodal_test): dx = y1 dt, y1 and y2 independent OU
+# processes with the same law; A sees x rarely, B sees (y1, y2) often; 40% of the trajectories have both
+# modalities, 30% A only, 30% B only. Which driver moves x, and with which sign, only the trajectories with both
+# modalities show. The latent paths are smooth, so the default SequencePosterior (no angles, no integrated
+# posterior), no gauge and a constant diffusion, as lotka_volterra_constant.yaml. The decoder is linear: A and B are
+# linear in the true state, so the latent space is an affine copy of (x, y1, y2).
+name: simple_multimodal
+seed: 0
+data:
+  train:
+    path: test_data/data/simple_multimodal_test/train.h5
+    modalities: [A, B]
+    n_groups: 4    # 25 whole trajectories (100 time units, about 85 observation times each) per step
+  val:
+    path: test_data/data/simple_multimodal_test/val.h5
+    modalities: [A, B]
+  test:
+    path: test_data/data/simple_multimodal_test/test.h5
+    modalities: [A, B]
+model:
+  dim_z: 3
+  encoder:
+    type: none
+  decoder:
+    type: gaussian
+    std_init: 0.1
+  posterior:
+    hidden: 64
+  drift:
+    hidden: [64, 64]
+  diffusion:
+    type: constant
+  g_init: 0.1
+  n_samples: 8
+  n_quad: 64       # one quadrature for the whole 100 time units
+train:
+  n_iter: 10000
+  lr: 1.0e-3
+  n_warmup: 1000
+  lr_decay_every: 2000
+output:
+  checkpoint_every: 2500
+  history_every: 50
+  log_every: 500
+  num_threads: 4   # two runs at the same time on 8 threads
+evaluate:
+  n_snapshots: 3

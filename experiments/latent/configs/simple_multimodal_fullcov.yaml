@@ -1,0 +1,14 @@
+# simple_multimodal_width_300.yaml (300 training trajectories, 25 per step, 50 000 steps, fixed attention width
+# 0.75) with a full-covariance posterior N(m, L L^T) and the learned gauge. In
+# runs/simple_multimodal_width_300_20261017-131926 (diagonal posterior), the drive of x was 0.4 for 1 and x had a
+# diffusion of 0.5 for 0: a diagonal posterior cannot make the noise of x the integral of the noise of y1, so the
+# drift residual of x grows as its diffusion goes to zero. The gauge gives the posterior drift of x a y1 term.
+base: simple_multimodal_width_300.yaml
+name: simple_multimodal_fullcov
+model:
+  posterior:
+    hidden: 64
+    width: 0.75
+    learn_width: false
+    covariance: full
+    gauge: true

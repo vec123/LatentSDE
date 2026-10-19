@@ -1,0 +1,21 @@
+# simple_multimodal_fullcov_gaps.yaml (full-covariance posterior, gauge, bridge-time inputs; 300 training
+# trajectories, 25 per step; 30 000 steps here) on simple_multimodal_test_xnoise: the same data, but x has process noise,
+# dx = y1 dt + 0.2 dW (generate.py --n-train 300 --x-noise 0.2). Without it, x is the integral of y1 with no noise of
+# its own, and in runs/simple_multimodal_fullcov_gaps_20261017-152911 the model still gave x a diffusion of 0.49,
+# a drive of 0.65 for 1, and A a noise of 0.97 for 0.1. With a true diffusion of x, the true posterior is not
+# degenerate, and the learned diffusion of A has a true value (0.2) to compare with.
+base: simple_multimodal_fullcov_gaps.yaml
+name: simple_multimodal_xnoise
+data:
+  train:
+    path: test_data/data/simple_multimodal_test_xnoise/train.h5
+    modalities: [A, B]
+    n_groups: 12
+  val:
+    path: test_data/data/simple_multimodal_test_xnoise/val.h5
+    modalities: [A, B]
+  test:
+    path: test_data/data/simple_multimodal_test_xnoise/test.h5
+    modalities: [A, B]
+train:
+  n_iter: 30000

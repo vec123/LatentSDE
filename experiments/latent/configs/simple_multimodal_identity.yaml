@@ -1,0 +1,22 @@
+# simple_multimodal.yaml again, for 30 000 steps, with three changes against the collapse of y2 in
+# runs/simple_multimodal_20261016-154052 (its decoder gave B2 no weight, so B2 was explained as noise and one latent
+# dimension went unused): the decoder starts at the identity (each latent dimension on one column), the KL weight
+# rises over 2000 steps instead of 1000, and training stops if a column collapses (CollapseGuard,
+# src/latent/train.py: its decoded value varies by less than 0.1 times its noise std, in 3 checks in a row).
+base: simple_multimodal.yaml
+name: simple_multimodal_identity
+model:
+  decoder:
+    type: gaussian
+    std_init: 0.1
+    init: identity
+train:
+  n_iter: 30000
+  n_warmup: 2000
+output:
+  checkpoint_every: 5000
+  device: cuda     # about 11 min for the 30 000 steps; run with environments/torch_gpu_env (run.py)
+collapse_guard:
+  every: 500       # from the end of the KL warm-up (step 2000)
+  ratio: 0.1
+  patience: 3

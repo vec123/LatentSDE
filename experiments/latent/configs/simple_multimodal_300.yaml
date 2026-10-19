@@ -1,0 +1,14 @@
+# simple_multimodal_identity.yaml (identity decoder start, KL warm-up 2000, collapse guard, learned attention width,
+# GPU) on 300 training trajectories instead of 100, for 50 000 steps. test_data/data/simple_multimodal_test_300
+# comes from the same generator and seed (--n-train 300); its val.h5 and test.h5 are the same as those of
+# simple_multimodal_test, so the val and test metrics compare with the earlier runs. 4 groups: 75 trajectories per
+# step (on the GPU, a step of 75 costs about the same as one of 25).
+base: simple_multimodal_identity.yaml
+name: simple_multimodal_300
+data:
+  train:
+    path: test_data/data/simple_multimodal_test_300/train.h5
+    modalities: [A, B]
+    n_groups: 4
+train:
+  n_iter: 50000

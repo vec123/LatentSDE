@@ -1,0 +1,10 @@
+# simple_multimodal.yaml, continued: runs/simple_multimodal_20261016-154052 (10 000 steps) had not converged (its
+# loss and drift residual still fell), so 30 000 more steps from its model.pt, at its decayed learning rate.
+base: simple_multimodal.yaml
+name: simple_multimodal_continued
+train:
+  n_iter: 30000
+  init_from: runs/simple_multimodal_20261016-154052/model.pt
+  step_offset: 10000
+output:
+  checkpoint_every: 5000

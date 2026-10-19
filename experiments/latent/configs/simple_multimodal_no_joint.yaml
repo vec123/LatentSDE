@@ -1,0 +1,11 @@
+# The ablation of simple_multimodal.yaml: the same trajectories (same seeds, same latent paths), but none of the
+# training trajectories has both modalities (50% A only, 50% B only; test_data/data/simple_multimodal_test_no_joint).
+# Then nothing in the training data shows which driver moves x: the learned dynamics should not find it. Scored on
+# the same val and test splits as simple_multimodal.yaml, which do have trajectories with both modalities.
+base: simple_multimodal.yaml
+name: simple_multimodal_no_joint
+data:
+  train:
+    path: test_data/data/simple_multimodal_test_no_joint/train.h5
+    modalities: [A, B]
+    n_groups: 4
