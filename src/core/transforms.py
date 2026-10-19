@@ -4,6 +4,7 @@ Elementwise output transforms and affine data transforms.
 Adapted from SVISE, reference/svise/svise/utils.py (GPL-3.0). Changes: MultivariateStandardizeTransform
 uses torch.linalg.solve_triangular in place of the deprecated torch.triangular_solve.
 """
+import math
 from abc import ABC, abstractmethod
 
 import torch
@@ -17,6 +18,11 @@ def softplus(x: Tensor) -> Tensor:
 
 def inverse_softplus(x: Tensor) -> Tensor:
     return torch.log(torch.exp(x) - 1)
+
+
+def inverse_softplus_scalar(value: float) -> float:
+    """Inverse of softplus, for a python float (e.g. a Parameter's init value)."""
+    return math.log(math.expm1(value))
 
 
 class Identity(nn.Module):
