@@ -1,0 +1,9 @@
+# The framing: encoders map the modalities into one shared latent z; the prior SDE's drift reads the static
+# parameters mu (sex, BMI, BMI missing, current and former smoker) and the treatment u(t); the decoder reads z alone.
+# No static latent w. Posterior: IntegratedPosterior, which also reads mu.
+base: hs_multimodal.yaml
+name: hs_cov
+model:
+  dim_mu: 5
+  dim_u: 7
+  decoder: {type: gaussian, hidden: [64], std_init: 0.5, reads_mu: false}

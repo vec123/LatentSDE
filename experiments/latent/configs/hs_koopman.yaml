@@ -1,0 +1,17 @@
+# Koopman-style latent SDE on the HS data: an 8-dimensional latent z with a LINEAR drift f = W [z, mu, u] (all 38 covariates and
+# the treatment enter the drift, affine), a Kalman posterior (exact closed-form KL, src/posterior/kalman.py) trained as a smoother,
+# and a nonlinear decoder that reads z alone. The scored state is the Kalman forward filter (KalmanPosterior.filtered: no later
+# visit), and its forecast is the exact matrix-exponential prediction of the learned SDE. No mode head here: it tests the dynamics.
+base: hs_cov_sdem.yaml
+name: hs_koopman
+data:
+  train: {source: hs, split: train, covariates: all}
+  val: {source: hs, split: val, covariates: all}
+  test: {source: hs, split: test, covariates: all}
+model:
+  dim_z: 8
+  dim_mu: 38
+  dim_u: 7
+  posterior: {type: kalman, potentials: {hidden: [64, 64], init: random}, dtype: float64}
+  drift: {hidden: []}
+  decoder: {type: gaussian, hidden: [64], std_init: 0.5, reads_mu: false}

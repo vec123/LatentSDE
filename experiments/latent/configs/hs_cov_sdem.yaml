@@ -1,0 +1,7 @@
+# hs_cov.yaml with the SDE-matching posterior (SequencePosterior: a GRU over the visits and a network of state and
+# time, so irregular times need no even grid), as in ROM-VISDE otherwise: encoder, posterior, drift and decoder
+# learned jointly by the ELBO.
+base: hs_cov.yaml
+name: hs_cov_sdem
+model:
+  posterior: {type: sequence, hidden: 64}

@@ -1,0 +1,33 @@
+# Self-contained (no base). A forward SDE-matching posterior (SequencePosterior: forward-only GRU, attention up to t, so the
+# state at a visit uses no later visit) with a NONLINEAR drift f(z, mu, u) = MLP([z, mu, u]), 8 latent dimensions, all 38
+# covariates in mu and the treatment in u; the decoder reads z alone. No mode head. The counterpart of hs_koopman.yaml
+# (linear drift, Kalman posterior), to see whether a nonlinear drift gives the dynamics more to predict.
+name: hs_seq_nonlinear
+seed: 0
+data:
+  train: {source: hs, split: train, covariates: all}
+  val: {source: hs, split: val, covariates: all}
+  test: {source: hs, split: test, covariates: all}
+model:
+  dim_z: 8
+  dim_mu: 38
+  dim_u: 7
+  encoder: {type: multimodal, d_token: 8, hidden: [32]}
+  decoder: {type: gaussian, hidden: [64], std_init: 0.5, reads_mu: false}
+  posterior: {type: sequence, hidden: 64, bidirectional: false, forward_only: true}
+  drift: {hidden: [64, 64]}
+  diffusion: {type: constant}
+  g_init: 0.3
+  n_samples: 4
+  n_quad: 32
+train:
+  n_iter: 3000
+  lr: 0.001
+  n_warmup: 500
+  lr_decay_every: 1000
+output:
+  checkpoint_every: 500
+  history_every: 50
+  log_every: 250
+  num_threads: 1
+  device: cuda

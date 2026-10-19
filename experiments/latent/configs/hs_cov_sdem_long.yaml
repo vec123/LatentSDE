@@ -1,0 +1,10 @@
+# hs_cov_sdem.yaml trained 4 times longer (12000 steps, about 10 minutes on one CPU thread).
+base: hs_cov_sdem.yaml
+name: hs_cov_sdem_long
+train:
+  n_iter: 12000
+  n_warmup: 1500
+  lr_decay_every: 4000
+output:
+  checkpoint_every: 2000
+  log_every: 1000

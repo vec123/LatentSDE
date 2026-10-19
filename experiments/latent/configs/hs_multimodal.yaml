@@ -1,0 +1,30 @@
+# test_data/data/multimodal, cohorts specialist_imaging and biomarker_study (src/data/hs.py): four modalities (exam,
+# photo, ultrasound, serum), one network each, the tokens concatenated (src/encoders/multimodal.py). The posterior is
+# IntegratedPosterior: the visits are sparse and irregular next to the flares, and the drift is a network.
+name: hs_multimodal
+seed: 0
+data:
+  train: {source: hs, split: train}
+  val: {source: hs, split: val}
+  test: {source: hs, split: test}
+model:
+  dim_z: 4
+  encoder: {type: multimodal, d_token: 8, hidden: [32]}
+  decoder: {type: gaussian, hidden: [64], std_init: 0.5}
+  posterior: {type: integrated, hidden: 64}
+  drift: {hidden: [64, 64]}
+  diffusion: {type: constant}
+  g_init: 0.3
+  n_samples: 4
+  n_quad: 32
+train:
+  n_iter: 3000
+  lr: 0.001
+  n_warmup: 500
+  lr_decay_every: 1000
+output:
+  checkpoint_every: 500
+  history_every: 50
+  log_every: 250
+  num_threads: 1
+  device: cpu
