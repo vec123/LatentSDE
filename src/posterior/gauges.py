@@ -8,9 +8,11 @@ satisfies A S + S A^T + Q = dS/dt, so the marginals are those of the posterior.
     sym   A symmetric. SVISE (reference/svise/svise/sde_learning/_marginal_sde.py, GPL-3.0) solves the
           Lyapunov equation; ROM-VISDE's drift residual is the diagonal case.
     sqrt  A = (d/dt S^1/2) S^-1/2 - Q S^-1 / 2, the drift of SDE matching (Bartosh et al. 2025) for an affine
-          flow z = m + S^1/2 eps; written from the paper. It also allows a state-dependent diffusion.
+          flow z = m + S^1/2 eps; written from the paper.
 
-For diagonal S both gauges give the same drift.
+For diagonal S both gauges give the same drift. For a diffusion that depends on z, the functions here are not
+sufficient: the drift needs 1/2 div(G G^T) in addition, and the sym gauge stays correct only if S and G are both
+diagonal (arXiv 2606.16138, appendix). src/latent/model.py's posterior_drift is the sqrt/Cholesky gauge with that term.
 """
 from torch import Tensor
 
