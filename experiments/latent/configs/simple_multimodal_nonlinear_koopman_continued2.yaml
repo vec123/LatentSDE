@@ -1,0 +1,12 @@
+# simple_multimodal_nonlinear_koopman_continued.yaml, continued: 2000 steps in total gave a good posterior but an
+# unstable prior (simulation of the learned SDE reaches +-30 000; y decay about 0, true 0.2). 2500 more steps from
+# its model.pt, to a total of 4500. Fresh Adam, lr from 1e-3 times 0.9 per 5000 steps.
+base: simple_multimodal_nonlinear_koopman.yaml
+name: simple_multimodal_nonlinear_koopman_continued2
+train:
+  n_iter: 2500
+  lr: 1.0e-3
+  lr_decay_every: 5000
+  init_from: runs/simple_multimodal_nonlinear_koopman_continued_20261018-092946/model.pt
+  new_posterior: false
+  step_offset: 2000

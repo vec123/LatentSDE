@@ -1,0 +1,58 @@
+# simple_multimodal_test_nonlinear (dx = (y1 + 3 (y2^2 - 0.09)) dt + 0.2 dW) in its own coordinates: 3 latent
+# dimensions on (x, y1, y2) (identity decoder, fixed: the latent units are the observation units), an MLP drift and a
+# constant diagonal noise, the true structure (additive noise). The Koopman lifts are Gaussian (constant noise: y2 and
+# y2^2 uncorrelated) or did not learn the exact noise (simple_multimodal_nonlinear_koopman_affine_20261018-104503: noise
+# of the drive nearly independent of y2). Posterior: Kalman marginals with statistical linearization of the drift over
+# each gap (src/posterior/marginal_kalman.py), 2 passes, the exact potentials of the decoder. From scratch, 2500 steps
+# from 1e-3 on the CPU (1 thread).
+name: simple_multimodal_nonlinear_drift
+seed: 0
+data:
+  train:
+    path: test_data/data/simple_multimodal_test_nonlinear/train.h5
+    modalities: [A, B]
+    n_groups: 25
+  val:
+    path: test_data/data/simple_multimodal_test_nonlinear/val.h5
+    modalities: [A, B]
+  test:
+    path: test_data/data/simple_multimodal_test_nonlinear/test.h5
+    modalities: [A, B]
+model:
+  dim_z: 3
+  encoder:
+    type: none
+  decoder:
+    type: gaussian
+    std_init: 0.1
+    init: identity
+    learn_mean: false
+    std_fixed: [0.1, 0.05, 0.05]   # columns A, B1, B2
+  posterior:
+    type: kalman_marginal
+    potentials: decoder
+    n_passes: 2
+  drift:
+    hidden: [64, 64]
+  diffusion:
+    type: constant
+  g_init: 0.1
+  n_samples: 8
+  n_quad: 64
+train:
+  n_iter: 2500
+  lr: 1.0e-3
+  n_warmup: 500
+  lr_decay_every: 5000
+output:
+  checkpoint_every: 500
+  history_every: 50
+  log_every: 250
+  num_threads: 1
+  device: cpu
+evaluate:
+  n_snapshots: 3
+collapse_guard:
+  every: 500
+  ratio: 0.1
+  patience: 3

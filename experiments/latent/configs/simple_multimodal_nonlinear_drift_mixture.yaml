@@ -1,0 +1,59 @@
+# simple_multimodal_nonlinear_drift.yaml with a mixture of 2 Kalman smoothers as the posterior
+# (src/posterior/mixture_kalman.py): the first linearization of the components at y2 = +0.3 and -0.3, then each its
+# own smoothed marginals (3 passes); equal weights. In runs/simple_multimodal_nonlinear_drift_20261018-110755 (one
+# Gaussian) the learned y2^2 term was 1.2 for the true 3: in the trajectories with A only, the increments of x show
+# y2^2 but not the sign of y2, the true posterior of y2 has two modes, and one Gaussian learns nothing about y2 from A
+# (-ELBO of the true model there 7.4, against 1.5 for the Gaussian lift). With two components, each of them learns
+# |y2| from A. 4 samples per component (8 in all, as before). From scratch, 2500 steps from 1e-3 on the CPU (1 thread).
+name: simple_multimodal_nonlinear_drift_mixture
+seed: 0
+data:
+  train:
+    path: test_data/data/simple_multimodal_test_nonlinear/train.h5
+    modalities: [A, B]
+    n_groups: 25
+  val:
+    path: test_data/data/simple_multimodal_test_nonlinear/val.h5
+    modalities: [A, B]
+  test:
+    path: test_data/data/simple_multimodal_test_nonlinear/test.h5
+    modalities: [A, B]
+model:
+  dim_z: 3
+  encoder:
+    type: none
+  decoder:
+    type: gaussian
+    std_init: 0.1
+    init: identity
+    learn_mean: false
+    std_fixed: [0.1, 0.05, 0.05]   # columns A, B1, B2
+  posterior:
+    type: kalman_mixture
+    potentials: decoder
+    offsets: [[0.0, 0.0, 0.3], [0.0, 0.0, -0.3]]
+    n_passes: 3
+  drift:
+    hidden: [64, 64]
+  diffusion:
+    type: constant
+  g_init: 0.1
+  n_samples: 4                     # per component
+  n_quad: 64
+train:
+  n_iter: 2500
+  lr: 1.0e-3
+  n_warmup: 500
+  lr_decay_every: 5000
+output:
+  checkpoint_every: 500
+  history_every: 50
+  log_every: 250
+  num_threads: 1
+  device: cpu
+evaluate:
+  n_snapshots: 3
+collapse_guard:
+  every: 500
+  ratio: 0.1
+  patience: 3

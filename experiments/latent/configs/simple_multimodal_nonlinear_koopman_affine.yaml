@@ -1,0 +1,60 @@
+# The exact Koopman lift of simple_multimodal_test_nonlinear (dx = (y1 + 3 (y2^2 - 0.09)) dt + 0.2 dW): in
+# z = (x, y1, y2, w = y2^2 - 0.09) the drift is linear (dw = -(2 / tau) w dt) and the noise of w is 2 a y2 dW_2,
+# the same dW_2 as y2 (a = sigma sqrt(2 / tau) = 0.19). AffineCholeskyDiffusion holds this noise (row w, column y2,
+# slope 2 a on z_y2; a small diagonal of w). The constant-noise lifts (simple_multimodal_nonlinear_koopman*, d 5 and
+# 10) are Gaussian, so y2 and y2^2 are uncorrelated in them and the B values cannot predict the y2^2 part of the
+# drive: noise of x 0.30 (true 0.2), change of x over 10 time units 0.76 of the true one.
+# Posterior: Kalman marginals with the prior's own G(z) (src/posterior/marginal_kalman.py), 2 passes, the exact
+# potentials of the linear decoder (identity start: x, y1, y2 on z_0..z_2; w unobserved). From scratch, 2500 steps
+# from 1e-3 on the CPU (1 thread).
+name: simple_multimodal_nonlinear_koopman_affine
+seed: 0
+data:
+  train:
+    path: test_data/data/simple_multimodal_test_nonlinear/train.h5
+    modalities: [A, B]
+    n_groups: 25
+  val:
+    path: test_data/data/simple_multimodal_test_nonlinear/val.h5
+    modalities: [A, B]
+  test:
+    path: test_data/data/simple_multimodal_test_nonlinear/test.h5
+    modalities: [A, B]
+model:
+  dim_z: 4
+  encoder:
+    type: none
+  decoder:
+    type: gaussian
+    std_init: 0.1
+    init: identity
+    learn_mean: true
+    std_fixed: [0.1, 0.05, 0.05]   # columns A, B1, B2
+  posterior:
+    type: kalman_marginal
+    potentials: decoder
+    n_passes: 2
+  drift:
+    hidden: []
+  diffusion:
+    type: affine
+  g_init: 0.1
+  n_samples: 8
+  n_quad: 64
+train:
+  n_iter: 2500
+  lr: 1.0e-3
+  n_warmup: 500
+  lr_decay_every: 5000
+output:
+  checkpoint_every: 500
+  history_every: 50
+  log_every: 250
+  num_threads: 1
+  device: cpu
+evaluate:
+  n_snapshots: 3
+collapse_guard:
+  every: 500
+  ratio: 0.1
+  patience: 3

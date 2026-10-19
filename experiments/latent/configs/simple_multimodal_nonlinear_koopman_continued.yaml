@@ -1,0 +1,12 @@
+# simple_multimodal_nonlinear_koopman.yaml, continued: the first run was stopped at step 1000 (about 300 ms per step,
+# so 5000 steps would take 26 min); 1000 more steps from its checkpoint, to a total of 2000. Fresh Adam, the KL
+# weight at full value (the continue path sets n_warmup 0).
+base: simple_multimodal_nonlinear_koopman.yaml
+name: simple_multimodal_nonlinear_koopman_continued
+train:
+  n_iter: 1000
+  lr: 1.0e-3
+  lr_decay_every: 5000
+  init_from: runs/simple_multimodal_nonlinear_koopman_20261018-091539/checkpoints/model_001000.pt
+  new_posterior: false
+  step_offset: 1000

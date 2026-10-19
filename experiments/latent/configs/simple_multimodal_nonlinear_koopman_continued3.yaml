@@ -1,0 +1,12 @@
+# simple_multimodal_nonlinear_koopman_continued2.yaml, continued: at 4500 steps the posterior is good and the prior
+# stable, but the learned change of x over 10 time units is 0.76 of the true one (true-law reference 0.95), and the
+# diffusion of x is 0.31 (true 0.2). 2500 more steps from its model.pt, to a total of 7000. Fresh Adam.
+base: simple_multimodal_nonlinear_koopman.yaml
+name: simple_multimodal_nonlinear_koopman_continued3
+train:
+  n_iter: 2500
+  lr: 1.0e-3
+  lr_decay_every: 5000
+  init_from: runs/simple_multimodal_nonlinear_koopman_continued2_20261018-093643/model.pt
+  new_posterior: false
+  step_offset: 4500

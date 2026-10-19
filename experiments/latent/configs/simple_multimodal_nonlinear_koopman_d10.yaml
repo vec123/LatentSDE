@@ -1,0 +1,38 @@
+# simple_multimodal_nonlinear_koopman.yaml with 10 latent dimensions (not 5), from scratch, 5000 steps. At 7000 steps
+# with d = 5 (runs/simple_multimodal_nonlinear_koopman_continued3_20261018-094925) the learned change of x over 10 time
+# units was 0.72 of the true one. Against throttling: 10 trajectories per step (n_groups 30 of 300; 12 before), 1 CPU thread.
+base: simple_multimodal_nonlinear_koopman.yaml
+name: simple_multimodal_nonlinear_koopman_d10
+data:
+  train:
+    path: test_data/data/simple_multimodal_test_nonlinear/train.h5
+    modalities: [A, B]
+    n_groups: 30
+  val:
+    path: test_data/data/simple_multimodal_test_nonlinear/val.h5
+    modalities: [A, B]
+  test:
+    path: test_data/data/simple_multimodal_test_nonlinear/test.h5
+    modalities: [A, B]
+model:
+  dim_z: 10
+  decoder:
+    type: gaussian
+    std_init: 0.1
+    hidden: [32]
+    learn_mean: true
+    std_fixed: [0.1, 0.05, 0.05]
+train:
+  n_iter: 5000
+  lr: 1.0e-3
+  n_warmup: 2000
+  lr_decay_every: 5000
+  init_from: null
+  new_posterior: false
+  step_offset: 0
+output:
+  checkpoint_every: 1000
+  history_every: 50
+  log_every: 500
+  num_threads: 1
+  device: cpu

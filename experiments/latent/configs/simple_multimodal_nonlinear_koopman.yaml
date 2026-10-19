@@ -1,0 +1,34 @@
+# Koopman-style latent SDE on simple_multimodal_test_nonlinear (dx = (y1 + 3 (y2^2 - 0.09)) dt + 0.2 dW): 5 latent
+# dimensions with a linear drift f(z) = F z + b, so that the Kalman posterior is exact for the prior, and a nonlinear
+# decoder (MLP 5 -> 32 -> 3) that holds the nonlinearity. Decoder noise fixed at A 0.1, B 0.05. From scratch; 5000
+# steps from 1e-3 on the CPU (1 thread), approx. 110 ms per step in the earlier Kalman runs.
+base: simple_multimodal_linear_xnoise_dense_x_kalman.yaml
+name: simple_multimodal_nonlinear_koopman
+# (the config merge is one level deep: data and model.decoder are written out in full)
+data:
+  train:
+    path: test_data/data/simple_multimodal_test_nonlinear/train.h5
+    modalities: [A, B]
+    n_groups: 25
+  val:
+    path: test_data/data/simple_multimodal_test_nonlinear/val.h5
+    modalities: [A, B]
+  test:
+    path: test_data/data/simple_multimodal_test_nonlinear/test.h5
+    modalities: [A, B]
+model:
+  dim_z: 5
+  decoder:
+    type: gaussian
+    std_init: 0.1
+    hidden: [32]
+    learn_mean: true
+    std_fixed: [0.1, 0.05, 0.05]
+train:
+  n_iter: 5000
+  lr: 1.0e-3
+  n_warmup: 2000
+  lr_decay_every: 5000
+  init_from: null
+  new_posterior: false
+  step_offset: 0
