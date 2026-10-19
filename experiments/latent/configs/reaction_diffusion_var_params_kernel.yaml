@@ -1,0 +1,28 @@
+# Same KernelPosterior setup as reaction_diffusion_pca_kernel.yaml, but on reaction_diffusion_var_params: beta
+# (the reaction rate) varies per trajectory and is read as mu, so the drift and decoder see it.
+base: reaction_diffusion_pca_kernel.yaml
+name: reaction_diffusion_var_params_kernel
+data:
+  train:
+    path: test_data/data/reaction_diffusion_var_params/reaction_diffusion_batch.h5
+    field: u
+    param: beta
+    length: 1000
+    n_groups: 10
+  val:
+    path: test_data/data/reaction_diffusion_var_params/reaction_diffusion_val.h5
+    field: u
+    param: beta
+    length: 1000
+    n_groups: 1
+  test:
+    path: test_data/data/reaction_diffusion_var_params/reaction_diffusion_test.h5
+    field: u
+    param: beta
+    length: 1000
+    n_groups: 1
+model:
+  dim_mu: 1
+  encoder:
+    type: pca
+    model_path: test_data/data/reaction_diffusion_var_params/PCA/model.pt

@@ -1,0 +1,13 @@
+# Same data and model as multimodal_reaction_constant.yaml, but with IntegratedPosterior (the mean is the
+# closed-form integral of a rate interpolated between the observation times) and latent dimension 0 an angle (the
+# drift and the decoder see its cos and sin, src/latent/angles.py). The first run's SequencePosterior could not
+# follow (cos phi, sin phi) through the gaps between the images: the decoded phase did not turn between visits
+# (runs/multimodal_reaction_constant_20261016-141919/latent_dynamics_test.png). Here the angle grows smoothly at
+# the rotation rate, and the turns between two images come from the integral of that rate.
+base: multimodal_reaction_constant.yaml
+name: multimodal_reaction_integrated
+model:
+  angles: [0]      # dim_z 3: the phase, and two free dimensions (gamma, and the slow change of the pattern)
+  posterior:
+    type: integrated
+    hidden: 64

@@ -1,0 +1,9 @@
+# Same as reaction_diffusion_pca.yaml, but with the svise-type KernelPosterior (ROM-VISDE) instead of
+# SequencePosterior (SDE matching).
+base: reaction_diffusion_pca.yaml
+name: reaction_diffusion_pca_kernel
+model:
+  posterior:
+    type: kernel
+    num_window: 5
+    hidden: [128, 128]

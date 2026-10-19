@@ -1,0 +1,49 @@
+# multimodal_reaction_test (test_data/scripts/multimodal_reaction_test): a lambda-omega spiral turned by a hidden
+# OU forcing gamma(t), seen by two modalities at their own irregular times, images (rare; 30 PCA codes) and a
+# biomarker of gamma (frequent; 1 standardized value), merged on one time grid by src/data/multimodal.py. Only both
+# together give the latent trajectory (leak_check.txt). The true latent state is the rotation phase (a circle,
+# 2 dims) and gamma (1 dim): d phase = (omega(beta) + gamma) dt, gamma an OU process with a constant diffusion;
+# beta is known per trajectory (mu). No gauge and a constant diffusion, as lotka_volterra_constant.yaml.
+name: multimodal_reaction_constant
+seed: 0
+data:
+  train:
+    path: test_data/data/multimodal_reaction_test/observations_train.h5
+    pca_dir: test_data/data/multimodal_reaction_test/PCA
+    n_groups: 1    # all 20 whole trajectories (200 time units, about 110 observation times each) per step
+  val:
+    path: test_data/data/multimodal_reaction_test/observations_val.h5
+    pca_dir: test_data/data/multimodal_reaction_test/PCA
+  test:
+    path: test_data/data/multimodal_reaction_test/observations_test.h5
+    pca_dir: test_data/data/multimodal_reaction_test/PCA
+model:
+  dim_z: 3
+  dim_mu: 1
+  encoder:
+    type: none
+  decoder:
+    type: gaussian
+    hidden: [64, 64]   # the image codes hold higher harmonics of the phase, so not a linear map of z
+    std_init: 0.1
+  posterior:
+    hidden: 64
+  drift:
+    hidden: [64, 64]
+  diffusion:
+    type: constant
+  g_init: 0.1
+  n_samples: 8
+  n_quad: 64       # one quadrature for the whole 200 time units, so more points than the 10-unit Lotka windows
+train:
+  n_iter: 10000
+  lr: 1.0e-3
+  n_warmup: 1000
+  lr_decay_every: 2000
+output:
+  checkpoint_every: 2500
+  history_every: 50
+  log_every: 500
+  num_threads: 4
+evaluate:
+  n_snapshots: 3
