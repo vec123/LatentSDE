@@ -1,0 +1,117 @@
+\begin{thebibliography}{10}
+\providecommand{\url}[1]{\texttt{#1}}
+\providecommand{\urlprefix}{URL }
+\providecommand{\doi}[1]{https://doi.org/#1}
+
+\bibitem{UncertaintySurvey}
+Abdar, M., et~al.: A review of uncertainty quantification in deep learning: Techniques, applications and challenges. Information Fusion  (2021)
+
+\bibitem{BayesianMedicineSurvey}
+Ashby, D.: Bayesian statistics in medicine: A 25 year review. Statistics in medicine  (2006)
+
+\bibitem{Crogging}
+Barrow, D.K., Crone, S.F.: Crogging (cross-validation aggregation) for forecasting — a novel algorithm of neural network ensembles on time series subsamples. In: The 2013 International Joint Conference on Neural Networks (IJCNN) (2013)
+
+\bibitem{DEFINE}
+Bomprezzi, R.: Dimethyl fumarate in the treatment of relapsing–remitting multiple sclerosis: an overview. Therapeutic Advances in Neurological Disorders  (2015)
+
+\bibitem{ADVANCE_ATTAIN}
+Calabresi, P.A., et~al.: Pegylated interferon beta-1a for relapsing-remitting multiple sclerosis ({ADVANCE}): a randomised, phase 3, double-blind study. The Lancet Neurology  (2014)
+
+\bibitem{Chen2018}
+Chen, T., et~al.: Neural ordinary differential equations. CoRR  (2018)
+
+\bibitem{DeBrouwer2019}
+De~Brouwer, E., et~al.: Gru-ode-bayes: Continuous modeling of sporadically-observed time series. Advances in Neural Information Processing Systems  (2019)
+
+\bibitem{dursofinley2023improving}
+Durso-Finley, J., Falet, J.P., Mehta, R., Arnold, D.L., Pawlowski, N., Arbel, T.: Improving image-based precision medicine with uncertainty-aware causal models (2023)
+
+\bibitem{dursofinley2022personalized}
+Durso-Finley, J., Falet, J.P.R., Nichyporuk, B., Arnold, D.L., Arbel, T.: {Personalized Prediction of Future Lesion Activity and Treatment Effect in Multiple Sclerosis from Baseline MRI} (2022)
+
+\bibitem{eshaghi2021}
+{Eshaghi}, A., et~al.: {Identifying multiple sclerosis subtypes using unsupervised machine learning and MRI data}. Nature Communications  (2021)
+
+\bibitem{FANGCovid}
+Fang, C., et~al.: Deep learning for predicting covid-19 malignant progression. Medical Image Analysis  (2021)
+
+\bibitem{DEFINEextendedstudy}
+Gold, R., et~al.: Safety and efficacy of delayed-release dimethyl fumarate in patients with relapsing-remitting multiple sclerosis: 9 years' follow-up of define, confirm, and endorse. her Adv Neurol Disord  (2020)
+
+\bibitem{OPERA}
+Hauser, S.L., et~al.: Ocrelizumab versus interferon beta-1a in relapsing multiple sclerosis. New England Journal of Medicine  (2017)
+
+\bibitem{He2016}
+He, K., et~al.: Deep residual learning for image recognition. IEEE Conference on Computer Vision and Pattern Recognition (CVPR)  (2016)
+
+\bibitem{Imbens2015}
+Imbens, G., Rubin, D.: Causal inference for statistics, social, and biomedical sciences. Cambridge University Press  (2015)
+
+\bibitem{ASCEND}
+Kapoor, R., et~al.: Effect of natalizumab on disease progression in secondary progressive multiple sclerosis ({ASCEND}): A phase 3, randomised, double-blind, placebo-controlled trial with an open-label extension. The Lancet Neurology  (2018)
+
+\bibitem{Kidger2021}
+Kidger, P., et~al.: {Neural SDEs as Infinite-Dimensional GANs}. International Conference on Machine Learning  (2021)
+
+\bibitem{litjens2017survey}
+Litjens, G., et~al.: A survey on deep learning in medical image analysis. Medical image analysis  (2017)
+
+\bibitem{NeuralODEpharmakinetics}
+Lu, J., et~al.: {Neural-ODE for pharmacokinetics modeling and its advantage to alternative machine learning models in predicting new dosing regimens}. iScience  (2021)
+
+\bibitem{MSheterogeneity}
+Lucchinetti, C., et~al.: Heterogeneity of multiple sclerosis lesions: Implications for the pathogenesis of demyelination. Annals of neurology  (2000)
+
+\bibitem{Montalban2017}
+Montalban, X., et~al.: Ocrelizumab versus placebo in primary progressive multiple sclerosis. N Engl J Med.  (2017)
+
+\bibitem{AIMSsurvey}
+Naji, Y., et~al.: Artificial intelligence and multiple sclerosis: Up-to-date review. Cureus  (2023)
+
+\bibitem{Norcliffe2023}
+Norcliffe, A., et~al.: Benchmarking continuous time models for predicting multiple sclerosis progression. Transactions on Machine Learning Research  (2023)
+
+\bibitem{PearlDoCalculus}
+Pearl, J.: The foundations of causal inference. Sociological Methodology  (2010)
+
+\bibitem{pontillo2022}
+Pontillo, G., et~al.: Stratification of multiple sclerosis patients using unsupervised machine learning: a single-visit mri-driven approach. European Radiology  (2022)
+
+\bibitem{VDSintegratingNODE}
+Qian, Z., et~al.: Integrating expert {ODE}s into neural {ODE}s: Pharmacology and disease progression. In: Advances in Neural Information Processing Systems (2021)
+
+\bibitem{BalancedMSE}
+Ren, J., et~al.: Balanced {MSE} for imbalanced visual regression. In: IEEE Conference on Computer Vision and Pattern Recognition (CVPR) (2022)
+
+\bibitem{UncertaintyEDSS}
+Rudick, R.A., et~al.: {Disability Progression in a Clinical Trial of Relapsing-Remitting Multiple Sclerosis: Eight-Year Follow-up}. Archives of Neurology  (11 2010)
+
+\bibitem{SotosCMLhealthcare}
+Sanchez, P., et~al.: Causal machine learning for healthcare and precision medicine. Royal Society Open Science  (2022)
+
+\bibitem{shalit2017TARNET}
+Shalit, U., et~al.: Estimating individual treatment effect: generalization bounds and algorithms. PMLR  (2017)
+
+\bibitem{SerstinskyRNN}
+Sherstinsky, A.: Fundamentals of recurrent neural network {(RNN)} and long short-term memory {(LSTM)} network. CoRR  (2018)
+
+\bibitem{Tang2022}
+Tang, W., et~al.: Soden: A scalable continuous-time survival model through ordinary differential equation networks. The Journal of Machine Learning Research  (2022)
+
+\bibitem{tousignant2019}
+Tousignant, A., et~al.: Prediction of disease progression in multiple sclerosis patients using deep learning analysis of mri data. In: Proceedings of The 2nd International Conference on Medical Imaging with Deep Learning. PMLR (2019)
+
+\bibitem{Verhelst2023}
+Verhelst, T., et~al.: Uplift vs. predictive modeling: a theoretical analysis. arXiv  (2023)
+
+\bibitem{BRAVO}
+Vollmer, T.L., et~al.: {{A} randomized placebo-controlled phase {I}{I}{I} trial of oral laquinimod for multiple sclerosis}. J Neurology  (2014)
+
+\bibitem{ma2023treatmentHemmorage}
+Wenao, M., et~al.: Treatment outcome prediction for intracerebral hemorrhage via generative prognostic model with imaging and tabular data (2023)
+
+\bibitem{Xuechen2020}
+Xuechen, L., et~al.: Scalable gradients for stochastic differential equations. CoRR  (2020)
+
+\end{thebibliography}
