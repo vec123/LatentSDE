@@ -1,0 +1,16 @@
+# simple_multimodal_fullcov_gaps.yaml (full-covariance posterior, gauge, bridge-time inputs; 300 training
+# trajectories with x = the integral of y1, 25 per step), 30 000 steps, with the decoder noise fixed at the true
+# values of the data (A 0.1, B 0.05). A diagnostic: in runs/simple_multimodal_fullcov_gaps_20261017-152911 and
+# runs/simple_multimodal_xnoise_20261017-155309 the learned noise of A grew to about 1.0, the posterior of x then
+# missed the A points by about 1, and the model learned a false diffusion of x and a drive of 0.5 to 0.65 for 1.
+# If the drive goes to about 1 and the diffusion of x to about 0 here, the learned noise of A is the cause.
+base: simple_multimodal_fullcov_gaps.yaml
+name: simple_multimodal_fixed_noise
+model:
+  decoder:
+    type: gaussian
+    std_init: 0.1
+    init: identity
+    std_fixed: [0.1, 0.05, 0.05]   # columns A, B1, B2
+train:
+  n_iter: 30000

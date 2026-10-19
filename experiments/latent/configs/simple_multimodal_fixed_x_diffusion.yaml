@@ -1,0 +1,20 @@
+# simple_multimodal_fixed_noise.yaml (full-covariance posterior, gauge, bridge-time inputs, decoder noise fixed at
+# the true A 0.1, B 0.05; 30 000 steps) with the diffusion of x fixed small, 0.05 (true 0), and the decoder mean
+# fixed at the identity (A = z0, B1 = z1, B2 = z2), so that the latent units are those of the data and A gets no
+# diffusion from z1 or z2 through the decoder. The diffusion of B stays learned. In
+# runs/simple_multimodal_fixed_noise_20261017-160921 the posterior of x was a random walk between the A
+# observations (std 1.57 in the middle of an A gap, about 0.2 with B), the model learned a diffusion of x of 1.0
+# and a drive of 0.53 for 1. If the drive goes to about 1 here, the model can learn x = the integral of y1 when its
+# diffusion cannot grow; if not, the posterior network cannot represent it.
+base: simple_multimodal_fixed_noise.yaml
+name: simple_multimodal_fixed_x_diffusion
+model:
+  decoder:
+    type: gaussian
+    std_init: 0.1
+    init: identity
+    learn_mean: false
+    std_fixed: [0.1, 0.05, 0.05]   # columns A, B1, B2
+  diffusion:
+    type: constant
+    fixed: [0.05, null, null]      # x fixed, y1 and y2 learned

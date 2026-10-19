@@ -1,0 +1,18 @@
+# simple_multimodal_fixed_noise.yaml (full-covariance posterior, gauge, bridge-time inputs, decoder noise fixed at
+# A 0.1, B 0.05, diffusion and decoder mean learned; 30 000 steps) on simple_multimodal_test_xnoise, where x has a
+# diffusion of its own: dx = y1 dt + 0.2 dW (the observation noise is the same). On the data with no noise on x
+# (runs/simple_multimodal_fixed_noise_20261017-160921), the model learned a diffusion of x of 1.0 for 0 and a drive
+# of 0.53 for 1.
+base: simple_multimodal_fixed_noise.yaml
+name: simple_multimodal_fixed_noise_xnoise
+data:
+  train:
+    path: test_data/data/simple_multimodal_test_xnoise/train.h5
+    modalities: [A, B]
+    n_groups: 12
+  val:
+    path: test_data/data/simple_multimodal_test_xnoise/val.h5
+    modalities: [A, B]
+  test:
+    path: test_data/data/simple_multimodal_test_xnoise/test.h5
+    modalities: [A, B]
