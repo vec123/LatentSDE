@@ -1,7 +1,6 @@
 *cache*
 *.png
 *.env
-*reference
 *notes
 *test_data/data
 *runs
