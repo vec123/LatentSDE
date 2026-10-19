@@ -3,6 +3,6 @@
 *.env
 *reference
 *notes
-*test_data
+*test_data/data
 *runs
 *Claude.md
