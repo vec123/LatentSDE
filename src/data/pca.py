@@ -89,6 +89,7 @@ class PCA(nn.Module):
         percent_cutoff: float = 0.95,
         max_evecs: int = 30,
         rescale: bool = True,
+        random_state: int = 0,
     ) -> Tuple[PCA, Tensor]:
         """Initialize a pca decomposition and return the transformed
         code vectors
@@ -99,13 +100,15 @@ class PCA(nn.Module):
                 getting a rough estimate for the rank of the covariance matrix
             max_evecs (int): maximum number of eigenvectors to compute
             rescale (bool): whether to rescale the code vectors so that variance of the max is 1
+            random_state (int): seed of the randomized SVD, so the selected rank and the components are
+                reproducible; the rank (not just the components) can otherwise vary run to run
 
         Returns:
             pca_model, z
         """
 
         z, rank, evecs, mean = cls._fit_init(
-            y=y, percent_cutoff=percent_cutoff, max_evecs=max_evecs
+            y=y, percent_cutoff=percent_cutoff, max_evecs=max_evecs, random_state=random_state
         )
         scale = torch.ones(z.shape[1])
         if rescale:
@@ -115,7 +118,7 @@ class PCA(nn.Module):
         return lin_model, z
 
     @classmethod
-    def _fit_init(cls, y: Tensor, percent_cutoff: float, max_evecs: int):
+    def _fit_init(cls, y: Tensor, percent_cutoff: float, max_evecs: int, random_state: int = 0):
         """Comutes pca transformation selecting rank using
         pca_log_mll ranking. Used sklearn randomized_svd to compute
         eigenvectors and eigenvalues
@@ -132,7 +135,7 @@ class PCA(nn.Module):
         with torch.no_grad():
             max_evecs = min(max_evecs, *y.shape)
             u, s, vh = randomized_svd(
-                (y - mean).numpy(), n_components=max_evecs, random_state=None
+                (y - mean).numpy(), n_components=max_evecs, random_state=random_state
             )
             u, s, vh = torch.as_tensor(u), torch.as_tensor(s), torch.as_tensor(vh)
 
