@@ -70,7 +70,7 @@ def make_regime(times_dense, states_dense, n_observations, noise_fraction, name,
 
 
 def main():
-    output_dir = Path(__file__).resolve().parent / "data"
+    output_dir = Path(__file__).resolve().parents[2] / "data" / "lorenz_63"
     output_dir.mkdir(parents=True, exist_ok=True)
     dense_times, dense_states = rk4_trajectory()
     rng = np.random.default_rng(SEED)

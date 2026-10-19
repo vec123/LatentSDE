@@ -3,8 +3,8 @@ import jax.numpy as jnp
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
-from src.test_data.euler_mayurama import simulate_batch
-from src.test_data.systems import linear_2d, nonlinear_2d, vanderpol_2d
+from test_data.src.euler_mayurama import simulate_batch
+from test_data.src.systems import linear_2d, nonlinear_2d, vanderpol_2d
 
 # --- 1. Run Simulation ---
 N = 50
