@@ -1,3 +1,8 @@
 *cache*
 *.png
 *.env
+*reference
+*notes
+*test_data
+*runs
+*Claude.md
