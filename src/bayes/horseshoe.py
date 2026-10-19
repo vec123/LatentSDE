@@ -365,9 +365,12 @@ class CenteredHorseshoePrior(SparsityPrior):
 
 def make_sparsity_prior(parameterization: str, d: int, tau: Union[float, Tensor], w_init: Tensor = None,
                         **kwargs) -> SparsityPrior:
-    """"noncentered" (SVISE, the default in the Duffing study) or "centered"."""
+    """"noncentered" (SVISE, the default in the Duffing study), "centered" or "collapsed"."""
     if parameterization == "noncentered":
         return SVIHalfCauchyPrior(d=d, tau=tau, w_init=w_init)
     if parameterization == "centered":
         return CenteredHorseshoePrior(d=d, tau=tau, w_init=w_init, **kwargs)
-    raise ValueError(f"Unknown parameterization '{parameterization}', choose 'noncentered' or 'centered'")
+    if parameterization == "collapsed":
+        from .collapsed_horseshoe import CollapsedNonCenteredHorseshoe  # it imports this module
+        return CollapsedNonCenteredHorseshoe(d=d, tau=tau, w_init=w_init, **kwargs)
+    raise ValueError(f"Unknown parameterization '{parameterization}', choose 'noncentered', 'centered' or 'collapsed'")
