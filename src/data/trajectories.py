@@ -11,13 +11,20 @@ import torch
 from torch import Tensor
 
 
-def load_trajectories(filepath: str, state_columns: Sequence[str] = ("x1", "x2")) -> Tensor:
-    """(n_trajectories, n_steps, len(state_columns)) states, sorted by trajectory and time step."""
+def load_trajectories(filepath: str, state_columns: Sequence[str] = ("x1", "x2"), time_column: Optional[str] = None):
+    """
+    (n_trajectories, n_steps, len(state_columns)) states, sorted by trajectory and time step. With time_column,
+    (t, states), with t (n_steps,) the times of the first trajectory: all trajectories must share them.
+    """
     df = pd.read_csv(filepath).sort_values(by=["trajectory_id", "time_step"])
     n_trajectories = df["trajectory_id"].nunique()
     n_steps = df["time_step"].nunique()
+    dtype = torch.get_default_dtype()
     values = df[list(state_columns)].to_numpy().reshape(n_trajectories, n_steps, len(state_columns))
-    return torch.as_tensor(values, dtype=torch.get_default_dtype())
+    states = torch.as_tensor(values, dtype=dtype)
+    if time_column is None:
+        return states
+    return torch.as_tensor(df[time_column].to_numpy()[:n_steps], dtype=dtype), states
 
 
 def load_observations(filepath: str, trajectory: int = 0, state_columns: Sequence[str] = ("x1", "x2"),
