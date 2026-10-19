@@ -4,8 +4,9 @@ The approximate posterior of SVISE: a Markov Gaussian process given by its margi
 between the posterior drift and a prior drift at a batch of times.
 
 Adapted from SVISE, reference/svise/svise/sde_learning/_marginal_sde.py (GPL-3.0). Changes: the posterior drift
-comes from src/posterior/gauges.py, SpectralMarginalSDE takes gauge ("sym", SVISE, or "sqrt"), and the drift
-squeezes only its last axis (SVISE squeezed all axes of size 1).
+comes from src/posterior/gauges.py, SpectralMarginalSDE takes gauge ("sym", SVISE, or "sqrt"), the drift
+squeezes only its last axis (SVISE squeezed all axes of size 1), and SpectralMarginalSDE.forward evaluates the
+mean GLM once (SVISE: twice).
 """
 from abc import ABC, abstractmethod
 from typing import Callable, Iterator, Tuple, Union
@@ -427,7 +428,8 @@ class SpectralMarginalSDE(MarginalSDE):
         return self._drift_fast(t, z, U, dUdt, D, dDdt)
 
     def _drift_fast(
-        self, t: Tensor, z: Tensor, U: Tensor, dUdt: Tensor, D: Tensor, dDdt: Tensor
+        self, t: Tensor, z: Tensor, U: Tensor, dUdt: Tensor, D: Tensor, dDdt: Tensor, m: Tensor = None,
+        dmdt: Tensor = None,
     ) -> Tensor:
         """
         Compute the drift function of the equivalent SDE at times t using intermediate quantities.
@@ -439,6 +441,7 @@ class SpectralMarginalSDE(MarginalSDE):
             dUdt (Tensor): (bs, d, d) batch of time derivatives of orthogonal matrices
             D (Tensor): (bs,d) batch of eigenvalues of the covariance matrix
             dDdt (Tensor): (bs,d) batch of time derivatives of eigenvalues of the covariance matrix
+            m, dmdt (Tensor, optional): (bs, d) mean and its time derivative, if already computed
 
         Returns:
             Tensor: (..., bs, d) batch of drift function evaluations
@@ -447,7 +450,8 @@ class SpectralMarginalSDE(MarginalSDE):
         if U.shape[0] != p_noise.shape[0] and p_noise.dim() == 3:
             p_noise = p_noise.unsqueeze(1)
         # computing mean and time derivitve of mean
-        m, dmdt = self.m(t, return_grad=True)
+        if m is None:
+            m, dmdt = self.m(t, return_grad=True)
         return GAUGES[self.gauge](z, m, dmdt, U, dUdt, D, dDdt, p_noise)
 
     def unweighted_residual_loss(self, drift: Tensor, f: Tensor) -> Tensor:
@@ -486,18 +490,18 @@ class SpectralMarginalSDE(MarginalSDE):
         else:
             U = self.orthogonal(t, return_grad=False)
             D = self.eigenvals(t, return_grad=False)
-        # (len(t), d, d)
-        L = U.mul(D.sqrt().unsqueeze(-2))
-        # should I generate samples for at each time stamp, or can they be shared between stamps
-        # for now we will generate independent samples at each time stamp
-        v = torch.randn(num_samples, len(t), self.d, 1, dtype=t.dtype, device=t.device)
-        # get mean at each time stamp
-        mu = self.mean(t)
-        zs = mu + (L @ v).squeeze(-1)
+        zs = self._samples(t, num_samples, U, D, self.mean(t))
         if return_intermediates:
             return zs, U, dUdt, D, dDdt
         else:
             return zs
+
+    def _samples(self, t: Tensor, num_samples: int, U: Tensor, D: Tensor, mu: Tensor) -> Tensor:
+        """(num_samples, len(t), d) samples of N(mu, U diag(D) U^T), independent at each time stamp."""
+        # (len(t), d, d)
+        L = U.mul(D.sqrt().unsqueeze(-2))
+        v = torch.randn(num_samples, len(t), self.d, 1, dtype=t.dtype, device=t.device)
+        return mu + (L @ v).squeeze(-1)
 
     def forward(
         self, t: Tensor, f: Callable[[Tensor, Tensor], Tensor], num_samples: int
@@ -513,10 +517,11 @@ class SpectralMarginalSDE(MarginalSDE):
         Returns:
             Tensor: (bs,) approximate residual loss
         """
-        # compute residual loss making good use of intermediate quantities
-        zs, U, dUdt, D, dDdt = self.generate_samples(
-            t, num_samples, return_intermediates=True
-        )
-        drift = self._drift_fast(t, zs, U, dUdt, D, dDdt)
+        # compute residual loss making good use of intermediate quantities; the mean GLM once for samples and drift
+        U, dUdt = self.orthogonal(t, return_grad=True)
+        D, dDdt = self.eigenvals(t, return_grad=True)
+        m, dmdt = self.m(t, return_grad=True)
+        zs = self._samples(t, num_samples, U, D, m)
+        drift = self._drift_fast(t, zs, U, dUdt, D, dDdt, m, dmdt)
         f_samples = f(t, zs)
         return self.unweighted_residual_loss(drift, f_samples).mean(0)
