@@ -1,0 +1,20 @@
+# simple_multimodal_neighbors.yaml (full-covariance posterior with gauge, bridge times and neighbor context; decoder
+# noise fixed at A 0.1, B 0.05; 30 000 steps) with the diffusion of x fixed small, 0.05 (true 0), and the decoder
+# mean fixed at the identity, as simple_multimodal_fixed_x_diffusion.yaml. With the neighbor context, the posterior
+# matched the exact posterior of its model, but the drive of x rose slowly (0.58 at 60 000 steps) while the
+# diffusion of x stayed at 0.44 (runs/simple_multimodal_neighbors_continued_20261017-174026). Without the neighbor
+# context and with x fixed at 0.05, the drive stopped at 0.65 and the posterior missed the A points
+# (runs/simple_multimodal_fixed_x_diffusion_20261017-162625). If the drive goes to about 1 here, the slow coupling of
+# drive and diffusion of x is the remaining problem.
+base: simple_multimodal_neighbors.yaml
+name: simple_multimodal_neighbors_fixed_x_diffusion
+model:
+  decoder:
+    type: gaussian
+    std_init: 0.1
+    init: identity
+    learn_mean: false
+    std_fixed: [0.1, 0.05, 0.05]   # columns A, B1, B2
+  diffusion:
+    type: constant
+    fixed: [0.05, null, null]      # x fixed, y1 and y2 learned

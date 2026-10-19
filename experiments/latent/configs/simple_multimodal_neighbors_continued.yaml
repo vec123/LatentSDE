@@ -1,0 +1,13 @@
+# simple_multimodal_neighbors.yaml, continued: in runs/simple_multimodal_neighbors_20261017-172121 (30 000 steps)
+# the posterior matched the exact posterior of its model and the B dynamics were right, but the drive of x still
+# rose (0.20 at 10 000 steps, 0.38 at 30 000) while the learning rate had decayed to about 2e-4. 30 000 more steps
+# from its model.pt with a slower decay: from 4e-4 (step_offset 0: the learning rate starts at train.lr), times 0.9
+# every 5000 steps (to about 2.1e-4 at the end).
+base: simple_multimodal_neighbors.yaml
+name: simple_multimodal_neighbors_continued
+train:
+  n_iter: 30000
+  lr: 4.0e-4
+  lr_decay_every: 5000
+  init_from: runs/simple_multimodal_neighbors_20261017-172121/model.pt
+  step_offset: 0

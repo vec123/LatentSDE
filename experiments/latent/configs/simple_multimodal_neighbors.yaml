@@ -1,0 +1,17 @@
+# simple_multimodal_fixed_noise.yaml (full-covariance posterior, gauge, bridge-time inputs, decoder noise fixed at
+# A 0.1, B 0.05, raw inputs; 30 000 steps) with the neighbor context: the posterior head also reads, for each
+# column, the GRU outputs at the column's previous and next observation. In
+# runs/simple_multimodal_fixed_noise_20261017-160921 the posterior mean of x was 0.6 from the exact posterior mean
+# of the learned model (its variance was right): in the middle of an A gap (about 10 time units), the attention
+# (width 0.75) sees only B steps. Input standardization did not help (runs/simple_multimodal_standardized_*).
+base: simple_multimodal_fixed_noise.yaml
+name: simple_multimodal_neighbors
+model:
+  posterior:
+    hidden: 64
+    width: 0.75
+    learn_width: false
+    covariance: full
+    gauge: true
+    gap_features: true
+    neighbor_context: true
