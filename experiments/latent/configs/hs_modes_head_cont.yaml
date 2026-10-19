@@ -1,0 +1,9 @@
+# hs_modes_head.yaml trained 3000 steps more from its model.pt (step offset 3000: the learning rate goes on, no new warm-up),
+# with the balance term on the mean usage of the modes (src/latent/modes.py).
+base: hs_modes_head.yaml
+name: hs_modes_head_cont
+model:
+  mode_head: {n: 4, hidden: [64], balance: 0.5}
+train:
+  init_from: runs/hs_modes_head_20261018-173355/model.pt
+  step_offset: 3000

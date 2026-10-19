@@ -1,0 +1,5 @@
+# Transfer lift for hs_modes_forward.yaml: trained on the biomarker study alone.
+base: hs_modes_path_biomarker_alone.yaml
+name: hs_modes_forward_biomarker_alone
+model:
+  posterior: {type: sequence, hidden: 64, bidirectional: false, forward_only: true}

@@ -1,0 +1,7 @@
+# A discrete mode c, predicted from the covariates (prior) and from the covariates and the posterior path (posterior):
+# src/latent/modes.py. The drift and the posterior read the covariates only; the decoder reads z and c. Otherwise
+# hs_cov_sdem.yaml (SDE-matching posterior, treatment as forcing).
+base: hs_cov_sdem.yaml
+name: hs_modes_head
+model:
+  mode_head: {n: 4, hidden: [64]}

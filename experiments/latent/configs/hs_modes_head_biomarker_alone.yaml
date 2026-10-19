@@ -1,0 +1,8 @@
+# Transfer lift: hs_modes_head.yaml trained on the biomarker study alone (3 visits per patient, the data-poor target).
+# Compare its scores on the biomarker patients with those of hs_modes_head (all cohorts): experiments/latent/lift_hs.py.
+base: hs_modes_head.yaml
+name: hs_modes_head_biomarker_alone
+data:
+  train: {source: hs, split: train, cohorts: [biomarker_study]}
+  val: {source: hs, split: val, cohorts: [biomarker_study]}
+  test: {source: hs, split: test, cohorts: [biomarker_study]}

@@ -1,0 +1,9 @@
+# One dynamical mode per subpopulation (src/latent/switching.py): 4 modes, each its own drift and posterior path, trained
+# on the exact marginal over the modes; the subtype of a patient is the mode that explains its trajectory best. Otherwise
+# hs_cov_sdem.yaml: SDE-matching posterior, drift reads the covariates and the treatment, decoder reads z alone.
+# A smaller diffusion than before, so that the drift residual is a stronger signal for the mode.
+base: hs_cov_sdem.yaml
+name: hs_modes
+model:
+  n_modes: 4
+  g_init: 0.05

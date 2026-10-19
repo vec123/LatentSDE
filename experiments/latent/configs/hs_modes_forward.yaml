@@ -1,0 +1,7 @@
+# hs_modes_path.yaml with a forward posterior (a filter): forward-only GRU and attention on the steps up to t, so the
+# latent state m(t_k) of a patient uses no later visit (src/encoders/sequence.py, forward_only). The prior of the mode still reads
+# the whole path: the subtype of a patient is static and read retrospectively.
+base: hs_modes_path.yaml
+name: hs_modes_forward
+model:
+  posterior: {type: sequence, hidden: 64, bidirectional: false, forward_only: true}

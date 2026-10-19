@@ -1,0 +1,5 @@
+# Transfer lift for hs_modes_path.yaml: trained on the biomarker study alone.
+base: hs_modes_exact_biomarker_alone.yaml
+name: hs_modes_path_biomarker_alone
+model:
+  mode_head: {n: 4, hidden: [64], balance: 0.5}

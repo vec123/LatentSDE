@@ -1,0 +1,13 @@
+# The mode c with the exact posterior from the pooled evidence of all the visits, q(c) = pi(c | mu) exp(E sum_k log
+# p(x_k | z_k, c)) (src/latent/modes.py), and every static covariate in mu (src/data/hs.py, covariates: all): they
+# condition the drift and the posterior network as in ROM-VISDE, and the prior pi(c | mu) of the mode. c enters the
+# decoder alone. Balance: an entropy penalty on the mean usage of the modes.
+base: hs_cov_sdem.yaml
+name: hs_modes_exact
+data:
+  train: {source: hs, split: train, covariates: all}
+  val: {source: hs, split: val, covariates: all}
+  test: {source: hs, split: test, covariates: all}
+model:
+  dim_mu: 38
+  mode_head: {n: 4, hidden: [64], balance: 0.5}

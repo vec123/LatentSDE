@@ -1,0 +1,7 @@
+# Transfer lift for hs_modes_exact.yaml: trained on the biomarker study alone (the data-poor target).
+base: hs_modes_exact.yaml
+name: hs_modes_exact_biomarker_alone
+data:
+  train: {source: hs, split: train, covariates: all, cohorts: [biomarker_study]}
+  val: {source: hs, split: val, covariates: all, cohorts: [biomarker_study]}
+  test: {source: hs, split: test, covariates: all, cohorts: [biomarker_study]}

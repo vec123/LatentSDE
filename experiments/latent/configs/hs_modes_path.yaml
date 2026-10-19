@@ -1,0 +1,4 @@
+# hs_modes_exact.yaml with the prior of the mode also reading a summary of the posterior path m(t) (level, spread, slope):
+# pi(c | mu, path), the exact evidence of the visits on top. The severity and the growth rate enter the mode through the path.
+base: hs_modes_exact.yaml
+name: hs_modes_path
