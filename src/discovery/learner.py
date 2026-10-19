@@ -5,8 +5,9 @@ paper: sparse polynomial drift (equation discovery), second-order systems, known
 neural drift.
 
 Adapted from SVISE, reference/svise/svise/sde_learning/_sde_learner.py and sdeint.py (GPL-3.0). Changes:
-SparsePolynomialSDE takes drift_parameterization, diffusion_parameterization ("noncentered" by default) and
-gauge ("sym" by default); solve_sde uses Euler-Maruyama in place of torchsde.
+SparsePolynomialSDE takes drift_parameterization, diffusion_parameterization ("noncentered" by default),
+gauge ("sym" by default) and quad_single_call (False by default); solve_sde uses Euler-Maruyama in place of
+torchsde; resample_sde_params(n) also works for priors without samples (DriftFCNN); sample_paths is new.
 """
 from typing import Callable, List, Optional, Tuple, Union
 
@@ -189,16 +190,17 @@ class SDELearner(nn.Module):
         Args:
             n (int, optional): number of samples to use when resampling
         """
+        # point estimates (e.g. DriftFCNN) have no samples
+        sampled = [p for p in (self.sde_prior, self.diffusion_prior) if hasattr(p, "n_reparam_samples")]
+        n_reparam_samples = [p.n_reparam_samples for p in sampled]
         if n is not None:
-            n_reparam_samples = self.sde_prior.n_reparam_samples
-            self.sde_prior.n_reparam_samples = n
-            self.diffusion_prior.n_reparam_samples = n
+            for p in sampled:
+                p.n_reparam_samples = n
         self.sde_prior.resample_weights()
         self.diffusion_prior.resample_weights()
         # reset n_reparam_samples
-        if n is not None:
-            self.sde_prior.n_reparam_samples = n_reparam_samples
-            self.diffusion_prior.n_reparam_samples = n_reparam_samples
+        for p, n_old in zip(sampled, n_reparam_samples):
+            p.n_reparam_samples = n_old
 
 
 class SparsePolynomialSDE(SDELearner):
@@ -224,6 +226,8 @@ class SparsePolynomialSDE(SDELearner):
         n_quad (int, optional): number of quadrature nodes to use
         quad_percent (float, optional): 1 - quad_percent of the quad_nodes will be sampled uniformly in the time window
         n_tau (int, optional): number of centers for the RBF models
+        quad_single_call (bool, optional): one residual evaluation at the quadrature nodes and the Monte Carlo
+            times together; faster, but the random numbers come in another order than in SVISE
     """
 
     def __init__(
@@ -245,6 +249,7 @@ class SparsePolynomialSDE(SDELearner):
         drift_parameterization: str = "noncentered",
         diffusion_parameterization: str = "noncentered",
         gauge: str = "sym",
+        quad_single_call: bool = False,
     ) -> None:
         assert quad_percent > 0 and quad_percent < 1, "quad_percent must be in (0, 1)"
         Q_diag = torch.ones(d) * 1e-0
@@ -280,7 +285,7 @@ class SparsePolynomialSDE(SDELearner):
             gauge=gauge,
         )
         quad_scheme = UnbiasedGaussLegendreQuad(
-            t_span[0], t_span[1], n_quad, quad_percent=quad_percent
+            t_span[0], t_span[1], n_quad, quad_percent=quad_percent, single_call=quad_single_call
         )
         likelihood = IndepGaussLikelihood(G, num_meas, measurement_noise)
         features = SparsePolynomialFeatures(d, degree=degree, input_labels=input_labels)
@@ -629,3 +634,22 @@ def solve_sde(sde: SDELearner, x0: Tensor, t_eval: Tensor) -> Tensor:
     if L.dim() == 2:
         L = L.expand(x0.shape[0], *L.shape)
     return sdeint_euler(lambda t, x: sde.drift(t, x), lambda t, x: L, x0, t_eval, noise_type="general")
+
+
+def sample_paths(sde: SDELearner, t_eval: Tensor, n: int) -> Tensor:
+    """
+    Paths of the posterior, the learned SDE: z(t_0) from the approximate variational posterior q(z(t_0)), and for
+    each path one draw of the drift and diffusion parameters from their approximate variational posteriors. Point
+    estimates (e.g. DriftFCNN) are the same for all paths. Call sde.eval() first, so the feature scales stay fixed.
+
+    Args:
+        t_eval (Tensor): (T,) time grid, starting at t_0
+        n (int): number of paths
+
+    Returns:
+        Tensor: (T, n, d) paths
+    """
+    with torch.no_grad():
+        sde.resample_sde_params(n)
+        x0 = sde.marginal_sde.generate_samples(t_eval[:1], n)[:, 0]
+        return solve_sde(sde, x0, t_eval)

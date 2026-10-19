@@ -2,7 +2,7 @@ import numpy as np
 import torch
 
 from ..discovery import learner
-from ..discovery.learner import NeuralSDE, StateEstimator, solve_sde
+from ..discovery.learner import NeuralSDE, StateEstimator, sample_paths, solve_sde
 from ..discovery.likelihood import IndepGaussLikelihood
 from ._reference import run_tests, svise_module, use_float64
 
@@ -75,6 +75,26 @@ def test_state_estimator_and_neural_sde_elbos_are_finite():
                        **common)
     for sde in (estimator, neural):
         assert torch.isfinite(sde.elbo(T_OBS, Y_OBS, 1.0, len(T_OBS)))
+
+
+def test_sample_paths_start_from_the_variational_posterior():
+    _seeded()
+    common = dict(d=d, t_span=(0.0, 10.0), n_reparam_samples=4, G=torch.eye(d), measurement_noise=NOISE,
+                  train_t=T_OBS, train_x=Y_OBS, n_quad=16, n_tau=40)
+    neural = NeuralSDE(drift_layer_description=[16, 16], nonlinearity=torch.nn.Tanh(), Q_diag=torch.full((d,), 1e-16), **common)
+    t, n = torch.linspace(0.0, 1.0, 11), 4000
+    for sde in (_build(learner), neural):
+        sde.eval()
+        paths = sample_paths(sde, t, n)
+        assert paths.shape == (11, n, d) and torch.isfinite(paths).all()
+        sd = sde.marginal_sde.K(t[:1])[0].diagonal().sqrt()
+        torch.testing.assert_close(paths[0].mean(0), sde.marginal_sde.mean(t[:1])[0], atol=5 * sd.max().item() / n**0.5, rtol=0)
+        torch.testing.assert_close(paths[0].std(0), sd, rtol=0.1, atol=0)
+    # fixed weights and no diffusion: paths from the same start are the same
+    x0 = paths[0, :1].repeat(3, 1)
+    neural.resample_sde_params(3)
+    same = solve_sde(neural, x0, t)
+    torch.testing.assert_close(same[-1], same[-1, :1].expand(3, -1))
 
 
 if __name__ == "__main__":
