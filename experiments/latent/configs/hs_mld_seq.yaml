@@ -1,0 +1,38 @@
+# Self-contained. The tokens ARE z (MLD, Bounoua et al.): the frozen deterministic autoencoders of runs/mld_ae encode each visit
+# per modality, the standardized latents are concatenated into z = [exam 8, photo 10, ultrasound 4, serum 8] = 30 values
+# (experiments/latent/hs_mld.py), and the latent SDE models the path of z over the visits in place of MLD's diffusion model.
+# Identity decoder with a fixed noise 0.3 (a fixed observation model, no learned compression; 0.1 was too sharp: NaN), a forward SDE-matching posterior
+# (SequencePosterior: forward-only GRU, attention up to t) and a nonlinear drift f(z, mu, u) with all 38 covariates and the
+# treatment. input_dropout: modality dropout of the posterior's input (each block of a patient dropped with probability 0.25,
+# the reconstruction still counts it): the posterior learns to infer a modality from the others, as MLD's masked conditioning.
+name: hs_mld_seq
+seed: 0
+data:
+  train: {source: hs_mld, split: train, covariates: all}
+  val: {source: hs_mld, split: val, covariates: all}
+  test: {source: hs_mld, split: test, covariates: all}
+model:
+  dim_z: 30
+  dim_mu: 38
+  dim_u: 7
+  encoder: {type: none}
+  decoder: {type: gaussian, hidden: [], init: identity, learn_mean: false, std_fixed: 0.3, reads_mu: false}
+  posterior: {type: sequence, hidden: 64, bidirectional: false, forward_only: true}
+  drift: {hidden: [64, 64]}
+  diffusion: {type: constant}
+  g_init: 0.3
+  n_samples: 4
+  n_quad: 32
+  input_dropout: {p: 0.25, sizes: [8, 10, 4, 8]}
+train:
+  n_iter: 3000
+  lr: 0.001
+  n_warmup: 500
+  lr_decay_every: 1000
+  clip_grad: 10.0
+output:
+  checkpoint_every: 500
+  history_every: 50
+  log_every: 250
+  num_threads: 1
+  device: cuda

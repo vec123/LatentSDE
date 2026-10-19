@@ -1,0 +1,40 @@
+# END TO END (experiments/latent/e2e.py): the modality autoencoders of runs/mld_ae are modules of the model (warm start from
+# their weights) and are trained together with the latent SDE by one ELBO: encoders e_m -> forward SDE-matching posterior over
+# the 30-value latent z -> decoders d_m (z_m + the mode's shift) -> the likelihood of the raw rows.
+# TRANSFORMER drift (the latent dimensions attend to each other; d_model 32, and n_samples 2, n_quad 16: a light load for the laptop GPU, which throttled at 70 W with the bigger setting) conditioned on the 38 covariates and the treatment; the mode as before (pi(c | mu, path) times the exact
+# evidence of all visits; c acts on the decoders only); DIAGONAL, LEARNABLE constant diffusion (diffusion: constant, learned
+# from g_init). Modality dropout on the posterior's input. Lower learning rate than the frozen runs: the autoencoders are
+# pretrained.
+name: hs_mld_e2e_tf
+seed: 0
+data:
+  train: {source: hs_mld, split: train, covariates: all, raw: true}
+  val: {source: hs_mld, split: val, covariates: all, raw: true}
+  test: {source: hs_mld, split: test, covariates: all, raw: true}
+model:
+  dim_z: 30
+  dim_mu: 38
+  dim_u: 7
+  encoder: {type: none}
+  decoder: {type: residual, hidden: [64], std_fixed: 0.3}
+  e2e: {mld_dir: runs/mld_ae, modalities: [exam, photo, ultrasound, serum], std: 0.3}
+  posterior: {type: sequence, hidden: 64, bidirectional: false, forward_only: true}
+  drift: {type: transformer, d_model: 32, n_layers: 2, n_heads: 4}
+  mode_head: {n: 4, hidden: [64], balance: 0.5}
+  diffusion: {type: constant}
+  g_init: 0.3
+  n_samples: 2
+  n_quad: 16
+  input_dropout: {p: 0.25, sizes: [8, 10, 4, 8]}
+train:
+  n_iter: 3000
+  lr: 0.0005
+  n_warmup: 500
+  lr_decay_every: 1000
+  clip_grad: 10.0
+output:
+  checkpoint_every: 500
+  history_every: 50
+  log_every: 250
+  num_threads: 1
+  device: cuda
