@@ -126,8 +126,8 @@ def solve_lyapunov_diag(K_diag: Tensor, RHS_diag: Tensor) -> Tensor:
     Returns:
         Tensor: (..., n) diagonal of the solution
     """
-    if RHS_diag.dim() == 3:
-        pass  # batch of samples, as in SVI
+    if RHS_diag.dim() >= 3:
+        pass  # batch of samples, as in SVI; broadcasts against K_diag, any number of leading dims
     elif K_diag.shape[0] != RHS_diag.shape[0]:
         RHS_diag = RHS_diag.unsqueeze(1)
     return 0.5 * RHS_diag / K_diag
