@@ -9,3 +9,5 @@ matplotlib
 numpyro
 diffrax
 pyyaml
+h5py
+imageio-ffmpeg
