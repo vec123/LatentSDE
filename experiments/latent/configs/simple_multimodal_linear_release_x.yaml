@@ -1,0 +1,13 @@
+# simple_multimodal_linear_fixed_x.yaml (linear drift, d = 3, identity decoder fixed, decoder noise fixed, neighbor-
+# context posterior; 12 trajectories per step; 30 000 steps) with a schedule for the diffusion of x: fixed at 0.05
+# for the first 15 000 steps, then learned from 0.05 (ReleaseDiffusion). Learned from the start, it grew to 0.51 and
+# the drive stayed at 0.48 (runs/simple_multimodal_linear_d10_continued_20261017-184055); fixed throughout, the
+# drive reached 0.86 (runs/simple_multimodal_linear_fixed_x_20261017-190012). The question: once the posterior and
+# the drift are fitted, does a learned diffusion of x stay small (true 0) and keep the drive?
+base: simple_multimodal_linear_fixed_x.yaml
+name: simple_multimodal_linear_release_x
+model:
+  diffusion:
+    type: constant
+    fixed: [0.05, null, null]      # x fixed, y1 and y2 learned
+    release_at: 15000              # then x learned too, from 0.05

@@ -1,0 +1,13 @@
+# simple_multimodal_linear_xnoise_dense_x_continued.yaml with a penalty for a small diffusion: does a smaller diffusion
+# of x let the drive of x rise? In runs/simple_multimodal_linear_xnoise_dense_x_continued_20261017-203658 (60 000 steps
+# in all) the drive is 0.70 and g_x 0.35 (true and exact maximum likelihood 1.006 and 0.206). diffusion_penalty 3 adds
+# 3 tr(G G^T) per observed value. With that posterior fixed, the loss rises by 0.23 from g_x 0.35 to 0.2 (curvature
+# about 23 in g_x, 96 in g_y), so the penalized minimum is at g_x about 0.26, and g_y moves by about -0.01.
+# 15 000 steps from its model.pt, with the same learning rate schedule as the continued run (its first 15 000 steps:
+# drive 0.61 -> 0.66).
+base: simple_multimodal_linear_xnoise_dense_x_continued.yaml
+name: simple_multimodal_linear_xnoise_dense_x_gpenalty
+train:
+  n_iter: 15000
+  init_from: runs/simple_multimodal_linear_xnoise_dense_x_continued_20261017-203658/model.pt
+  diffusion_penalty: 3.0

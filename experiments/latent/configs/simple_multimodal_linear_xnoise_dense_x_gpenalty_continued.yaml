@@ -1,0 +1,11 @@
+# simple_multimodal_linear_xnoise_dense_x_gpenalty.yaml, continued: in runs/simple_multimodal_linear_xnoise_dense_x_gpenalty_20261017-222730
+# (15 000 steps) the drive of x still rose (0.76, 0.79, 0.84 at 5000, 10 000, 15 000 steps) and g_x still fell (0.19,
+# 0.19, 0.18; maximum likelihood 1.006 and 0.206), while g_y fell to 0.15 and the decay of y to 0.12-0.14 (true 0.19,
+# 0.2). 15 000 more steps from its model.pt; step_offset 15000 goes on with its learning rate, so both runs together
+# have the schedule of runs/simple_multimodal_linear_xnoise_dense_x_continued_20261017-203658 (30 000 steps, no penalty).
+base: simple_multimodal_linear_xnoise_dense_x_gpenalty.yaml
+name: simple_multimodal_linear_xnoise_dense_x_gpenalty_continued
+train:
+  n_iter: 15000
+  init_from: runs/simple_multimodal_linear_xnoise_dense_x_gpenalty_20261017-222730/model.pt
+  step_offset: 15000

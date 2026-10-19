@@ -1,0 +1,20 @@
+# simple_multimodal_linear_xnoise.yaml on simple_multimodal_test_xnoise_dense_x: the same true paths (dx = y1 dt +
+# 0.2 dW), but A observes x 3 times as often (mean gap 3.33, not 10; approx. 30 A values per trajectory, not 10).
+# On the sparse data the learned drive stopped at 0.53 and the diffusion of x went to 0.52 (true 1 and 0.2)
+# (runs/simple_multimodal_linear_xnoise_20261017-195711). Does denser x remove this trade-off?
+base: simple_multimodal_linear_fixed_x.yaml
+name: simple_multimodal_linear_xnoise_dense_x
+data:
+  train:
+    path: test_data/data/simple_multimodal_test_xnoise_dense_x/train.h5
+    modalities: [A, B]
+    n_groups: 25
+  val:
+    path: test_data/data/simple_multimodal_test_xnoise_dense_x/val.h5
+    modalities: [A, B]
+  test:
+    path: test_data/data/simple_multimodal_test_xnoise_dense_x/test.h5
+    modalities: [A, B]
+model:
+  diffusion:
+    type: constant                 # all learned, from g_init 0.1

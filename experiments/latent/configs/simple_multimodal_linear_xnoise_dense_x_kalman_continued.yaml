@@ -1,0 +1,15 @@
+# simple_multimodal_linear_xnoise_dense_x_kalman.yaml, continued with a fresh Adam. In
+# runs/simple_multimodal_linear_xnoise_dense_x_kalman_20261018-000158 (5000 steps) the posterior is close to the exact
+# smoother and the gradient on the drive of x is exact and consistent (mean / RMS -0.98 over 30 draws at step 5000), but
+# the drive rose only from 0.70 to 0.75: Adam's second moment still held the gradients of the first steps with random
+# potentials (d loss / d kappa about -500 at step 0 against -0.03 at step 5000), so its steps were about 100 times too
+# small. A fresh optimizer from its model.pt (potentials kept), 1000 steps from 1e-3.
+base: simple_multimodal_linear_xnoise_dense_x_kalman.yaml
+name: simple_multimodal_linear_xnoise_dense_x_kalman_continued
+train:
+  n_iter: 1000
+  init_from: runs/simple_multimodal_linear_xnoise_dense_x_kalman_20261018-000158/model.pt
+  new_posterior: false
+output:
+  checkpoint_every: 250
+  log_every: 250

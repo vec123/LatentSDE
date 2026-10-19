@@ -1,0 +1,30 @@
+# simple_multimodal_linear_xnoise_dense_x with the structured posterior (src/posterior/kalman.py): a Kalman smoother of
+# the model's own linear prior, given Gaussian potentials of each observed value from a recognition network
+# (GaussianPotentials: W random, S at the decoder's std, MLP corrections from zero). In
+# runs/simple_multimodal_linear_xnoise_dense_x_continued_20261017-203658 (60 000 steps with SequencePosterior) the
+# drive of x is 0.70 and g_x 0.35, an EM-like loop of the drift and the network posterior; true and exact maximum
+# likelihood 1.006 and 0.206. Here q follows the drift at once. Prior and decoder from that model.pt, a new
+# posterior; 5000 steps from 1e-3 (the potentials start from random), a checkpoint every 1000 steps. On the CPU
+# (1 thread) about 110 ms per step (SequencePosterior 218 ms); on the GPU 95 ms (SequencePosterior 32 ms), but
+# runs/simple_multimodal_linear_xnoise_dense_x_kalman_20261017-232747 throttled the laptop GPU at once.
+base: simple_multimodal_linear_xnoise_dense_x_continued.yaml
+name: simple_multimodal_linear_xnoise_dense_x_kalman
+model:
+  posterior:
+    type: kalman
+    standardize_inputs: true
+    potentials:
+      hidden: [64, 64]
+      init: random
+      s_init: decoder
+train:
+  n_iter: 5000
+  lr: 1.0e-3
+  lr_decay_every: 5000
+  init_from: runs/simple_multimodal_linear_xnoise_dense_x_continued_20261017-203658/model.pt
+  new_posterior: true
+  step_offset: 0
+output:
+  checkpoint_every: 1000
+  device: cpu
+  num_threads: 1

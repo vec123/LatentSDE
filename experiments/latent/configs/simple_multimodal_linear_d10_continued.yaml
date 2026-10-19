@@ -1,0 +1,22 @@
+# simple_multimodal_linear_d10.yaml, continued from its step-5000 checkpoint: the first run
+# (runs/simple_multimodal_linear_d10_20261017-182900) was stopped at step 6500, when the laptop GPU throttled to
+# 300 MHz (SW power cap and SW thermal slowdown, 210 ms per step for 32). Less load per step against that: 12
+# trajectories per step (n_groups 25 of 300) for 25, and 2 CPU threads for 4. 25 000 more steps; step_offset 5000
+# continues the learning rate schedule (1e-3 * 0.9^(5000 / 2000)) with no second KL warm-up.
+base: simple_multimodal_linear_d10.yaml
+name: simple_multimodal_linear_d10_continued
+data:
+  train:
+    path: test_data/data/simple_multimodal_test_300/train.h5
+    modalities: [A, B]
+    n_groups: 25
+train:
+  n_iter: 25000
+  init_from: runs/simple_multimodal_linear_d10_20261017-182900/checkpoints/model_005000.pt
+  step_offset: 5000
+output:
+  checkpoint_every: 5000
+  history_every: 50
+  log_every: 500
+  num_threads: 2
+  device: cuda

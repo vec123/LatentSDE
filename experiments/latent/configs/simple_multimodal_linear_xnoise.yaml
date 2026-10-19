@@ -1,0 +1,22 @@
+# simple_multimodal_linear_fixed_x.yaml (linear drift, d = 3, identity decoder fixed, decoder noise fixed at A 0.1,
+# B 0.05, neighbor-context posterior; 12 trajectories per step; 30 000 steps) on simple_multimodal_test_xnoise, where
+# x has a diffusion of its own (dx = y1 dt + 0.2 dW), with all diffusions learned from the start. On the data with
+# no noise on x, a learned diffusion of x grew to absorb the error of the posterior and the drive stopped at 0.77
+# (runs/simple_multimodal_linear_release_x_20261017-193808), with a better ELBO than the run with it fixed near the
+# truth. Here the true diffusion of x is 0.2: are it and the drive (true 1) learned when x is not degenerate?
+base: simple_multimodal_linear_fixed_x.yaml
+name: simple_multimodal_linear_xnoise
+data:
+  train:
+    path: test_data/data/simple_multimodal_test_xnoise/train.h5
+    modalities: [A, B]
+    n_groups: 25
+  val:
+    path: test_data/data/simple_multimodal_test_xnoise/val.h5
+    modalities: [A, B]
+  test:
+    path: test_data/data/simple_multimodal_test_xnoise/test.h5
+    modalities: [A, B]
+model:
+  diffusion:
+    type: constant                 # all learned, from g_init 0.1

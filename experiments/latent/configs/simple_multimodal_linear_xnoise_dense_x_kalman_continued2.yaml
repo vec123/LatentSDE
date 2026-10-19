@@ -1,0 +1,8 @@
+# simple_multimodal_linear_xnoise_dense_x_kalman_continued.yaml, continued. In
+# runs/simple_multimodal_linear_xnoise_dense_x_kalman_continued_20261018-001419 (1000 steps, fresh Adam) the drive of x
+# rose 0.75 -> 0.983 and g_x fell 0.35 -> 0.220, still moving (+0.013 and -0.014 in the last 250 steps); exact maximum
+# likelihood 1.006 (SE 0.008) and 0.206 (SE 0.003). 1000 more steps from its model.pt, same settings.
+base: simple_multimodal_linear_xnoise_dense_x_kalman_continued.yaml
+name: simple_multimodal_linear_xnoise_dense_x_kalman_continued2
+train:
+  init_from: runs/simple_multimodal_linear_xnoise_dense_x_kalman_continued_20261018-001419/model.pt

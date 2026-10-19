@@ -1,0 +1,13 @@
+# simple_multimodal_linear_fixed_x.yaml, continued: in runs/simple_multimodal_linear_fixed_x_20261017-190012 (30 000
+# steps) the drive of x still rose (0.72 at 10 000 steps, 0.86 at 30 000) while the learning rate had decayed to
+# about 2e-4. 30 000 more steps from its model.pt with a slower decay: from 4e-4 (step_offset 0: the learning rate
+# starts at train.lr), times 0.9 every 5000 steps (to about 2.1e-4 at the end). 12 trajectories per step and 2 CPU
+# threads, against GPU throttling.
+base: simple_multimodal_linear_fixed_x.yaml
+name: simple_multimodal_linear_fixed_x_continued
+train:
+  n_iter: 30000
+  lr: 4.0e-4
+  lr_decay_every: 5000
+  init_from: runs/simple_multimodal_linear_fixed_x_20261017-190012/model.pt
+  step_offset: 0

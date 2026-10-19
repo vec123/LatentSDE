@@ -1,0 +1,13 @@
+# simple_multimodal_neighbors.yaml (full-covariance posterior with gauge, bridge times and neighbor context;
+# decoder noise fixed at A 0.1, B 0.05; 30 000 steps) as a lifted linear SDE: 10 latent dimensions, a linear drift
+# f(z) = F z + b (drift hidden: []) and a learned linear decoder 10 -> 3 (identity start on the first 3
+# dimensions), all diffusions learned. In runs/simple_multimodal_neighbors_fixed_x_diffusion_20261017-180049 the MLP
+# drift had dead zones: where a modality was missing, the posterior parked its latent (x of the B-only trajectories
+# at 0, y2 of the A-only ones at -1.4 to -3.3) where the drift did nothing. A linear drift has the same coupling at
+# every state, so it cannot; the 7 extra dimensions are observed by no modality.
+base: simple_multimodal_neighbors.yaml
+name: simple_multimodal_linear_d10
+model:
+  dim_z: 10
+  drift:
+    hidden: []

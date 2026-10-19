@@ -1,0 +1,22 @@
+# simple_multimodal_neighbors_fixed_x_diffusion.yaml (neighbor-context posterior, identity decoder fixed, decoder
+# noise fixed at A 0.1, B 0.05, diffusion of x fixed at 0.05; 30 000 steps) with a linear drift f(z) = F z + b in
+# d = 3. Its MLP drift had dead zones where the latents of a missing modality were parked; the lifted linear model
+# (runs/simple_multimodal_linear_d10_continued_20261017-184055) had none, but learned a diffusion of x of 0.51 and a
+# drive of 0.48. Here neither is possible. Against GPU throttling: 12 trajectories per step (n_groups 25 of 300) and
+# 2 CPU threads, as in simple_multimodal_linear_d10_continued.yaml.
+base: simple_multimodal_neighbors_fixed_x_diffusion.yaml
+name: simple_multimodal_linear_fixed_x
+data:
+  train:
+    path: test_data/data/simple_multimodal_test_300/train.h5
+    modalities: [A, B]
+    n_groups: 25
+model:
+  drift:
+    hidden: []
+output:
+  checkpoint_every: 5000
+  history_every: 50
+  log_every: 500
+  num_threads: 2
+  device: cuda
