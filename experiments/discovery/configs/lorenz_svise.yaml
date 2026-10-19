@@ -1,0 +1,5 @@
+# lorenz_port.yaml with the original SVISE (reference/svise), for parity checks; needs gpytorch.
+base: lorenz_port.yaml
+name: lorenz_x123_svise
+model:
+  implementation: svise

@@ -1,0 +1,27 @@
+# Duffing oscillator, both states observed with low noise and few data, the port of SVISE.
+name: duffing_x12_port
+seed: 0
+data:
+  path: test_data/data/duffing/duffing_discovery_low_noise_low_data.csv
+  trajectory: 0
+  states: [x1, x2]
+model:
+  implementation: port
+  degree: 5
+  n_reparam_samples: 32
+train:
+  n_iters: 20000
+  transition_iters: 5000
+  lr: 1.0e-3
+  lr_sde: 1.0e-2
+  lr_decay: 0.9
+  batch_size: 128
+output:
+  checkpoint_every: 5000
+  history_every: 100
+  log_every: 1000
+evaluate:
+  system: duffing
+  x0: [3.0, 2.0]
+  t_end: 20.0
+  n_paths: 256
