@@ -1,0 +1,8 @@
+# Transfer lift: hs_static.yaml trained on the biomarker study alone (3 visits per patient). Compare its scores on
+# the biomarker test patients with those of hs_static (trained on both cohorts).
+base: hs_static.yaml
+name: hs_static_biomarker_alone
+data:
+  train: {source: hs, split: train, cohorts: [biomarker_study]}
+  val: {source: hs, split: val, cohorts: [biomarker_study]}
+  test: {source: hs, split: test, cohorts: [biomarker_study]}

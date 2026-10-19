@@ -1,0 +1,6 @@
+# Ablation of hs_static.yaml: no dynamics prior (beta_max 0 drops the drift residual and the KL terms), a multimodal
+# autoencoder with a GRU over the visits.
+base: hs_static.yaml
+name: hs_static_nosde
+train:
+  beta_max: 0.0

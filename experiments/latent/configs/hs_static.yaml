@@ -1,0 +1,7 @@
+# hs_multimodal.yaml plus a static latent w (dim 4, src/encoders/static.py: the subpopulation and the rates of the patient)
+# and the treatment as the forcing u(t) of the drift (src/data/hs.py: 7 classes).
+base: hs_multimodal.yaml
+name: hs_static
+model:
+  dim_w: 4
+  dim_u: 7

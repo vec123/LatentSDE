@@ -1,0 +1,5 @@
+# hs_static.yaml with a 16-dimensional static latent w: room for the subpopulation next to the stage and the rates.
+base: hs_static.yaml
+name: hs_static_w16
+model:
+  dim_w: 16

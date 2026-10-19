@@ -1,0 +1,4 @@
+# Seed 1 of hs_static.yaml (the data split keeps seed 0).
+base: hs_static.yaml
+name: hs_static_s1
+seed: 1

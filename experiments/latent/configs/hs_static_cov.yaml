@@ -1,0 +1,7 @@
+# hs_static.yaml with the static covariates mu (sex, BMI, BMI missing, current and former smoker: src/data/hs.py) as
+# parameters of the prior SDE: the drift, the decoder and the posterior read them, and the prior of w is conditional,
+# p(w | mu) = N(g(mu), I) (src/encoders/static.py).
+base: hs_static.yaml
+name: hs_static_cov
+model:
+  dim_mu: 5

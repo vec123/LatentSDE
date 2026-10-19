@@ -1,0 +1,5 @@
+# hs_static.yaml with a mixture prior for w, 4 components: a subpopulation is a component (src/encoders/static.py).
+base: hs_static.yaml
+name: hs_static_mix
+model:
+  w_components: 4
